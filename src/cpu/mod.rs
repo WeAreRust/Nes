@@ -46,16 +46,17 @@ impl Core {
     }
 
     /// Indirect address.
+    ///
+    /// The 6502 processor has a bug in which only the high byte is incremented instead of the
+    /// whole 16-bit address when computing the indirect address. See
+    /// http://www.6502.org/tutorials/6502opcodes.html#JMP for details.
     pub fn indr_addr(&mut self) -> u16 {
         let lo_addr = self.memory.fetch(self.reg.pc) as u16;
         let hi_addr = self.memory.fetch(self.reg.pc + 1) as u16;
         self.reg.pc += 2;
 
-        /// The 6502 processor has a bug in which only the high byte is incremented instead of the
-        /// whole 16-bit address when computing the indirect address. See
-        /// http://www.6502.org/tutorials/6502opcodes.html#JMP for details.
         let lo_adjusted = lo_addr + 1 | hi_addr << 8;
-        let hi_adjusted = lo_addr | hi_addr << 88;
+        let hi_adjusted = lo_addr | hi_addr << 8;
 
         let lo = self.memory.fetch(lo_adjusted) as u16;
         let hi = self.memory.fetch(hi_adjusted) as u16;

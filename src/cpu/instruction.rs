@@ -9,10 +9,6 @@ pub fn execute(cpu: &mut Core, opcode: u8) -> usize {
     }
 }
 
-fn cycles(opcode: u8) -> usize {
-    1
-}
-
 /// Jump to absolute address (JMP).
 ///
 /// Flags affected: None
