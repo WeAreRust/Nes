@@ -1,7 +1,6 @@
-use self::memory::{Memory, MemorySpace};
 use self::register::Registers;
+use memory::{Memory, NesMemory, NesMemorySpace};
 
-mod memory;
 mod register;
 
 /// Frequency of the 6502 processor is ~1.79 MHz.
@@ -9,23 +8,23 @@ const FREQUENCY: usize = 1_789_773;
 
 pub struct Core {
     pub reg: Registers,
-    pub memory: Memory,
+    pub memory: NesMemory,
 }
 
 impl Default for Core {
     fn default() -> Self {
         Core {
             reg: Registers::default(),
-            memory: Memory::default(),
+            memory: NesMemory::default(),
         }
     }
 }
 
 impl Core {
-    pub fn with_data(data: MemorySpace) -> Self {
+    pub fn with_data(data: NesMemorySpace) -> Self {
         Core {
             reg: Registers::default(),
-            memory: Memory::with_data(data),
+            memory: NesMemory::with_data(data),
         }
     }
 }
