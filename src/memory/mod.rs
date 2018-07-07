@@ -22,11 +22,11 @@ impl NesMemory {
         }
     }
 
-    fn fetch(&self, addr: u16) -> u8 {
+    pub fn fetch(&self, addr: u16) -> u8 {
         self.memory.fetch(addr)
     }
 
-    fn store(&mut self, addr: u16, value: u8) -> u8 {
+    pub fn store(&mut self, addr: u16, value: u8) -> u8 {
         self.memory.store(addr, value)
     }
 }

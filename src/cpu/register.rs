@@ -5,39 +5,39 @@
 /// do not have generic groups of registers like say, R0 through R7.
 pub struct Registers {
     /// Accumulator register (A)
-    pub a: u8,
+    pub acc: u8,
 
     /// Index register (X)
     ///
     /// It can be set to a value retrieved from memory and can be used to get or set the value of
     /// the stack pointer.
-    pub x: u8,
+    pub x_idx: u8,
 
     /// Index register (Y)
     ///
     /// It can be set to a value retrieved from memory but cannot be used to get or set the value
     /// of the stack pointer.
-    pub y: u8,
+    pub y_idx: u8,
 
     /// Program counter (PC)
-    pc: u16,
+    pub pc: u16,
 
     /// Stack pointer (SP)
-    sp: u8,
+    pub stack: u8,
 
     /// Status register (P)
-    p: StatusFlags,
+    pub status: StatusFlags,
 }
 
 impl Default for Registers {
     fn default() -> Self {
         Registers {
-            a: 0,
-            x: 0,
-            y: 0,
+            acc: 0,
+            x_idx: 0,
+            y_idx: 0,
             pc: 0xc00,
-            sp: 0x24,
-            p: StatusFlags::default(),
+            stack: 0x24,
+            status: StatusFlags::default(),
         }
     }
 }
