@@ -1,5 +1,6 @@
 use self::register::Registers;
 
+mod memory;
 mod register;
 
 /// Frequency of 6502 processor is ~1.79 MHz.
