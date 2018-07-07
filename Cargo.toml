@@ -5,3 +5,7 @@ authors = ["Josh Leeb-du Toit <josh.leebdutoit@gmail.com>"]
 
 [dependencies]
 bitflags = "1.0.3"
+
+[[bin]]
+name = "nes"
+path = "src/bin/main.rs"
