@@ -1,13 +1,13 @@
 use sdl2::audio::{AudioCallback};
 use std::sync::mpsc::{Receiver};
 
-use apu::state;
+use apu::channel;
 
 
-type PulseCallback = ChannelCallback<state::PulseState, state::PulseDelta>;
-type TriangleCallback = ChannelCallback<state::TriangleState, state::TriangleDelta>;
-type PulseReceiver = Receiver<state::PulseDelta>;
-type TriangleReceiver = Receiver<state::TriangleDelta>;
+type PulseCallback = ChannelCallback<channel::PulseState, channel::PulseDelta>;
+type TriangleCallback = ChannelCallback<channel::TriangleState, channel::TriangleDelta>;
+type PulseReceiver = Receiver<channel::PulseDelta>;
+type TriangleReceiver = Receiver<channel::TriangleDelta>;
 
 struct ChannelCallback<State, Delta> {
     receiver: Receiver<Delta>,
@@ -16,26 +16,30 @@ struct ChannelCallback<State, Delta> {
 
 pub struct NesAudioProcess {
     tick: u64,
+    base_frequency: f32,
     pulse_1: PulseCallback,
     pulse_2: PulseCallback,
     triangle: TriangleCallback,
 }
 
-impl<S, D> ChannelCallback<S, D> where S: state::ChannelState<Delta = D> {
+impl<S, D> ChannelCallback<S, D> where S: channel::ChannelState<Delta = D> {
     fn new(receiver: Receiver<D>) -> ChannelCallback<S, D> {
-        let state = S::initial_state();
+        let state = S::default();
         ChannelCallback { receiver, state }
     }
 
     fn apply_transforms(self: &mut Self) -> () {
-        self.state = self.receiver.try_iter().fold(
-            self.state.clone(),
-            |acc, delta| acc.transform(delta),
-        );
+        let init_state = self.state.clone();
+        self.state = self.receiver
+            .try_iter()
+            .fold(init_state, |acc, delta| acc.transform(delta));
     }
 
-    fn signal_at(self: &Self, tick: u64) -> f32 {
-        self.state.signal_at(tick)
+    fn signal(self: &Self) -> f32 {
+        self.state.signal_at(channel::ChannelTuning {
+            tick: self.tick.clone(),
+            base_frequency: self.base_frequency.clone(),
+        })
     }
 }
 
