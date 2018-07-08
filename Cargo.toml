@@ -6,6 +6,9 @@ authors = ["Josh Leeb-du Toit <josh.leebdutoit@gmail.com>"]
 [dependencies]
 bitflags = "1.0.3"
 
+[dev-dependencies]
+asm6502 = "0.1.2"
+
 [[bin]]
 name = "nes"
 path = "src/bin/main.rs"
