@@ -26,12 +26,28 @@ fn main() {
         .unwrap();
 
     device.resume();
-    random_tune(send);
+    _arp(&send);
+    _random_tune(&send);
+    _decend(&send);
 }
 
-fn random_tune(send: Sender<ApuChannelDelta>) {
+
+fn _arp(send: &Sender<ApuChannelDelta>) {
+    for note in 40..80 {
+        for offset in [0, 4, 7, 4].iter() {
+            pew_all(send, vec![
+                ApuChannelDelta::Pulse1(PulseDelta::SetVolume(64)),
+                ApuChannelDelta::Pulse1(PulseDelta::SetPeriod(from_note(note + *offset))),
+                ApuChannelDelta::Pulse1(PulseDelta::SetPulseWidth(PulseWidth::Duty0)),
+            ]);
+            std::thread::sleep(std::time::Duration::from_millis(20));
+        }
+    }
+}
+
+fn _random_tune(send: &Sender<ApuChannelDelta>) {
     for note in 0..80 {
-        pew_all(&send, vec![
+        pew_all(send, vec![
             ApuChannelDelta::Pulse1(PulseDelta::SetVolume(64)),
             ApuChannelDelta::Pulse1(PulseDelta::SetPeriod(from_note(note))),
             ApuChannelDelta::Pulse1(PulseDelta::SetPulseWidth(PulseWidth::Duty0)),
@@ -47,13 +63,13 @@ fn from_note(note: u16) -> u16 {
     return (ntsc_octave_base / rel_freq).round() as u16 - 1;
 }
 
-fn _accend(send: Sender<ApuChannelDelta>) {
+fn _decend(send: &Sender<ApuChannelDelta>) {
     let total_steps = 1u32 << 16;
     let start_step = 1u32 << 4;
     let _scale_volume = <u8>::max_value() as f32 / total_steps as f32;
     let scale_peroid = ((1 << 11) - 1) as f32 / total_steps as f32;
 
-    pew_all(&send, vec![
+    pew_all(send, vec![
         ApuChannelDelta::Pulse1(PulseDelta::SetVolume(64)),
         ApuChannelDelta::Pulse2(PulseDelta::SetVolume(64)),
         ApuChannelDelta::Pulse1(PulseDelta::SetPulseWidth(PulseWidth::Duty0)),
@@ -74,13 +90,13 @@ fn _accend(send: Sender<ApuChannelDelta>) {
 
         println!("p1 {} p2 {} nv {}", pulse_1_pitch, pulse_2_pitch, noise_volume);
 
-        pew_all(&send, vec![
+        pew_all(send, vec![
            ApuChannelDelta::Noise(NoiseDelta::SetVolume(noise_volume as u8)),
            ApuChannelDelta::Pulse1(PulseDelta::SetPeriod(pulse_1_pitch as u16)),
            ApuChannelDelta::Pulse2(PulseDelta::SetPeriod(pulse_2_pitch as u16)),
            // ApuChannelDelta::Triangle(TriangleDelta::SetPeriod(triangle_pitch as u16)),
         ]);
-        std::thread::sleep(std::time::Duration::from_millis(10));
+        std::thread::sleep(std::time::Duration::from_millis(1));
     }
 }
 
