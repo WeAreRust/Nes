@@ -27,22 +27,16 @@ fn main() {
 
     device.resume();
     random_tune(send);
-
-    for i in 0..80 {
-        println!("note {} as {}", i, from_note(i));
-    }
 }
 
 fn random_tune(send: Sender<ApuChannelDelta>) {
-    for shift in 0..7 {
+    for note in 0..80 {
         pew_all(&send, vec![
             ApuChannelDelta::Pulse1(PulseDelta::SetVolume(64)),
-            ApuChannelDelta::Pulse1(PulseDelta::SetPeriod(from_note(0 + shift*12))),
-            ApuChannelDelta::Pulse2(PulseDelta::SetPeriod(from_note(5 + shift*12))),
+            ApuChannelDelta::Pulse1(PulseDelta::SetPeriod(from_note(note))),
             ApuChannelDelta::Pulse1(PulseDelta::SetPulseWidth(PulseWidth::Duty0)),
-            ApuChannelDelta::Pulse2(PulseDelta::SetPulseWidth(PulseWidth::Duty0)),
         ]);
-        std::thread::sleep(std::time::Duration::from_millis(500));
+        std::thread::sleep(std::time::Duration::from_millis(200));
     }
 }
 
@@ -56,7 +50,7 @@ fn from_note(note: u16) -> u16 {
 fn _accend(send: Sender<ApuChannelDelta>) {
     let total_steps = 1u32 << 16;
     let start_step = 1u32 << 4;
-    let scale_volume = <u8>::max_value() as f32 / total_steps as f32;
+    let _scale_volume = <u8>::max_value() as f32 / total_steps as f32;
     let scale_peroid = ((1 << 11) - 1) as f32 / total_steps as f32;
 
     pew_all(&send, vec![
@@ -76,7 +70,7 @@ fn _accend(send: Sender<ApuChannelDelta>) {
 
         let pulse_1_pitch = f_step * scale_peroid;
         let pulse_2_pitch = (f_step * 0.75) * scale_peroid;
-        let triangle_pitch = f_step_left * scale_peroid;
+        let _triangle_pitch = f_step_left * scale_peroid;
 
         println!("p1 {} p2 {} nv {}", pulse_1_pitch, pulse_2_pitch, noise_volume);
 

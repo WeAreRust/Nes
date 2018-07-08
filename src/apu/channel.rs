@@ -71,14 +71,16 @@ use std::clone::Clone;
 use rand::{Rng, thread_rng};
 use cpu::FREQUENCY as cpu_freq;
 
+const MAX_PEROID: u16 = (1 << 12) - 1;
+
 #[derive(Copy, Clone, Debug)]
 pub enum Envelope {
     Constant(u64),
 }
 
 pub struct ChannelTuning {
-    pub tick: u64,
-    pub base_frequency: u32,
+    pub sample: u64,
+    pub sample_rate: u32,
 }
 
 pub trait ChannelState: Clone + Default {
@@ -90,12 +92,11 @@ pub trait ChannelState: Clone + Default {
 pub trait ChannelFrequency {
     fn get_period(self: &Self) -> u16;
 
-    fn get_frequency(self: &Self) -> Option<f32> {
-        let period = self.get_period();
-        let max_period = <u16>::max_value();
-        if period < 8 { return None; }
+    fn get_frequency(self: &Self, config: &ChannelTuning) -> Option<f32> {
+        let period = self.get_period() & ((1 << 12) - 1);
+        if period < 8 || period > MAX_PEROID { return None; }
 
-        let f_divider = 16.0 / ((max_period - self.get_period()) as f32 + 1.0);
+        let f_divider = 16.0 / ((MAX_PEROID - period) as f32 + 1.0);
         return Some((cpu_freq as f32) / f_divider);
     }
 }
@@ -292,12 +293,12 @@ impl ChannelState for PulseState {
             Some(a) => a,
         };
 
-        let frequency = match self.get_frequency() {
+        let frequency = match self.get_frequency(config) {
             None => return 0.0,
             Some(f) => f,
         };
 
-        let freq_tick = (((config.tick * (config.base_frequency as u64)) as f32) * 120.0) as u64;
+        let freq_tick = (((config.sample * (config.sample_rate as u64)) as f32) * 120.0) as u64;
         let mod_tick = (freq_tick % frequency as u64) as f32;
         let tick_percentage = (mod_tick) / frequency;
         let signal = amplitude * self.pulse_width.pulse_sign(tick_percentage);

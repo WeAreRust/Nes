@@ -5,8 +5,8 @@ use apu::channel;
 use apu::channel::{ChannelState};
 
 pub struct NesAudioProcess {
-    tick: u64,
-    base_frequency: u32,
+    sample: u64,
+    sample_rate: u32,
     channels: channel::ApuChannelState,
     delta_stream: Receiver<channel::ApuChannelDelta>,
 }
@@ -14,16 +14,16 @@ pub struct NesAudioProcess {
 impl AudioCallback for NesAudioProcess {
     type Channel = f32;
 
-    fn callback(&mut self, out: &mut [Self::Channel]) {
+    fn callback(&mut self, samples: &mut [Self::Channel]) {
         self.apply_transforms();
 
-        for elem in out.iter_mut() {
+        for elem in samples.iter_mut() {
             let config = channel::ChannelTuning {
-                tick: self.tick,
-                base_frequency: self.base_frequency,
+                sample: self.sample,
+                sample_rate: self.sample_rate,
             };
             *elem = self.channels.signal_at(&config);
-            self.tick += 1;
+            self.sample += 1;
         }
     }
 }
@@ -31,9 +31,9 @@ impl AudioCallback for NesAudioProcess {
 impl NesAudioProcess {
     pub fn new(delta_stream: Receiver<channel::ApuChannelDelta>, playback_freq: u32) -> Self {
         NesAudioProcess {
-            tick: 0,
+            sample: 0,
             channels: channel::ApuChannelState::default(),
-            base_frequency: playback_freq,
+            sample_rate: playback_freq,
             delta_stream: delta_stream,
         }
     }
