@@ -69,6 +69,7 @@
 
 use std::clone::Clone;
 use rand::{Rng, thread_rng};
+use cpu::FREQUENCY as cpu_freq;
 
 #[derive(Copy, Clone, Debug)]
 pub enum Envelope {
@@ -77,13 +78,36 @@ pub enum Envelope {
 
 pub struct ChannelTuning {
     pub tick: u64,
-    pub base_frequency: f32,
+    pub base_frequency: u32,
 }
 
 pub trait ChannelState: Clone + Default {
   type Delta;
   fn transform(self: Self, delta: Self::Delta) -> Self;
   fn signal_at(self: &Self, config: &ChannelTuning) -> f32;
+}
+
+pub trait ChannelFrequency {
+    fn get_period(self: &Self) -> u16;
+
+    fn get_frequency(self: &Self) -> Option<f32> {
+        let period = self.get_period();
+        let max_period = <u16>::max_value();
+        if period < 8 { return None; }
+
+        let f_divider = 16.0 / ((max_period - self.get_period()) as f32 + 1.0);
+        return Some((cpu_freq as f32) / f_divider);
+    }
+}
+
+pub trait ChannelAmplitude {
+    fn get_volume(self: &Self) -> u8;
+
+    fn get_amplitude(self: &Self) -> Option<f32> {
+        let volume = self.get_volume();
+        if volume == 0 { return None; }
+        return Some((volume as f32) / (u8::max_value() as f32));
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -148,21 +172,77 @@ impl ChannelState for ApuChannelState {
 
 ////////////////////////////////////////////////////////////////////////////
 
+const FREQ_CHUNK: f32 = 0.125;
+
+/// Read more about the wave pulse [here].
+///
+/// [here]: https://wiki.nesdev.com/w/index.php/APU_Pulse
+#[derive(Copy, Clone, Debug)]
+pub enum PulseWidth {
+    /// Has a waveform like `0 1 0 0 0 0 0 0` where 12.5%
+    /// of the waveform positive.
+    Duty0,
+    /// Has a waveform like `0 1 1 0 0 0 0 0` where 25%
+    /// of the waveform positive.
+    Duty1,
+    /// Has a waveform like `0 1 1 1 1 0 0 0` where 50%
+    /// of the waveform positive.
+    Duty2,
+    /// Has a waveform like `0 1 1 1 1 0 0 0` where 75%
+    /// of the waveform positive.
+    Duty3,
+}
+
+impl PulseWidth {
+    fn pulse_sign(self: &Self, frequency_progress: f32) -> f32 {
+        if frequency_progress > 1.0 {
+            panic!("expected frequency >= 1");
+        }
+        return match self {
+            // wave: 0 1 0 0 0 0 0 0
+            Duty0 => match frequency_progress {
+                f if f < FREQ_CHUNK => -1.0,
+                f if f > FREQ_CHUNK * 2.0 => -1.0,
+                _ => 1.0,
+            },
+            // wave: 0 1 1 0 0 0 0 0
+            Duty1 => match frequency_progress {
+                f if f < FREQ_CHUNK => -1.0,
+                f if f > FREQ_CHUNK * 3.0 => -1.0,
+                _ => 1.0,
+            },
+            // wave: 0 1 1 1 1 0 0 0
+            Duty2 => match frequency_progress {
+                f if f < FREQ_CHUNK => -1.0,
+                f if f > FREQ_CHUNK * 5.0 => -1.0,
+                _ => 1.0,
+            },
+            // wave: 0 1 1 1 1 1 1 0
+            Duty3 => match frequency_progress {
+                f if f < FREQ_CHUNK => -1.0,
+                f if f > FREQ_CHUNK * 7.0 => -1.0,
+                _ => 1.0,
+            },
+        };
+    }
+}
+
 #[derive(Copy, Clone, Debug)]
 pub struct PulseState {
     frame_count: u64,
-    pulse_width: u8,
+    pulse_width: PulseWidth,
     envelope: Envelope,
-    frequency: f32,
+    period: u16,
     volume: u8,
 }
 
 #[derive(Copy, Clone, Debug)]
 pub enum PulseDelta {
     SetFrameCount(u64),
-    SetPulseWidth(u8),
+    SetPulseWidth(PulseWidth),
     SetVolume(u8),
     SetEnvelope(Envelope),
+    SetPeriod(u16),
 }
 
 impl Default for PulseState {
@@ -170,10 +250,22 @@ impl Default for PulseState {
         PulseState {
             frame_count: 0,
             volume: 0,
-            frequency: 440.0,
-            pulse_width: 0,
+            period: 0,
+            pulse_width: PulseWidth::Duty0,
             envelope: Envelope::Constant(0),
         }
+    }
+}
+
+impl ChannelFrequency for PulseState {
+    fn get_period(self: &Self) -> u16 {
+        return self.period;
+    }
+}
+
+impl ChannelAmplitude for PulseState {
+    fn get_volume(self: &Self) -> u8 {
+        return self.volume;
     }
 }
 
@@ -182,6 +274,7 @@ impl ChannelState for PulseState {
 
     fn transform(self: Self, delta: PulseDelta) -> Self {
         match delta {
+            PulseDelta::SetPeriod(p) => Self { period: p, ..self },
             PulseDelta::SetVolume(v) => Self { volume: v, ..self },
             PulseDelta::SetFrameCount(f) => Self { frame_count: f, ..self },
             PulseDelta::SetPulseWidth(w) => Self { pulse_width: w, ..self },
@@ -189,8 +282,26 @@ impl ChannelState for PulseState {
         }
     }
 
+    /// When the peroid is below `8` the pulse wave is silient.
+    /// [Read more here][Pitch].
+    ///
+    /// [Pitch]: https://wiki.nesdev.com/w/index.php/APU#Pulse_.28.244000-4007.29
     fn signal_at(self: &Self, config: &ChannelTuning) -> f32 {
-        return 0.0;
+        let amplitude = match self.get_amplitude() {
+            None => return 0.0,
+            Some(a) => a,
+        };
+
+        let frequency = match self.get_frequency() {
+            None => return 0.0,
+            Some(f) => f,
+        };
+
+        let freq_tick = (((config.tick * (config.base_frequency as u64)) as f32) * 120.0) as u64;
+        let mod_tick = (freq_tick % frequency as u64) as f32;
+        let tick_percentage = (mod_tick) / frequency;
+        let signal = amplitude * self.pulse_width.pulse_sign(tick_percentage);
+        return signal;
     }
 }
 
@@ -198,20 +309,22 @@ impl ChannelState for PulseState {
 
 #[derive(Copy, Clone, Debug)]
 pub struct TriangleState {
-    frame_count: u64,
+    period: u16,
+    volume: u8,
 }
 
 #[derive(Copy, Clone, Debug)]
 pub enum TriangleDelta {
-    SetFrameCount(u8),
     SetVolume(u8),
-    SetEnvelope(Envelope),
-    PlayNote(u8),
+    SetPeriod(u16),
 }
 
 impl Default for TriangleState {
     fn default() -> Self {
-        TriangleState { frame_count: 0 }
+        TriangleState {
+            period: 0,
+            volume: 0,
+        }
     }
 }
 
@@ -219,8 +332,10 @@ impl ChannelState for TriangleState {
     type Delta = TriangleDelta;
 
     fn transform(self: Self, delta: TriangleDelta) -> Self {
-        // TODO
-        self
+        match delta {
+            TriangleDelta::SetVolume(v) => Self { volume: v, ..self },
+            TriangleDelta::SetPeriod(p) => Self { period: p, ..self },
+        }
     }
 
     fn signal_at(self: &Self, config: &ChannelTuning) -> f32 {
@@ -240,6 +355,12 @@ pub enum NoiseDelta {
     SetVolume(u8),
 }
 
+impl ChannelAmplitude for NoiseState {
+    fn get_volume(self: &Self) -> u8 {
+        return self.volume;
+    }
+}
+
 impl Default for NoiseState {
     fn default() -> Self {
         NoiseState { volume: 0 }
@@ -256,12 +377,11 @@ impl ChannelState for NoiseState {
     }
 
     fn signal_at(self: &Self, _config: &ChannelTuning) -> f32 {
-        match self.volume {
-            0 => 0.0,
-            volume => {
-                let amplitude = (volume as f32) / (u8::max_value() as f32);
+        match self.get_amplitude() {
+            None => 0.0,
+            Some(max_amplitude) => {
                 let mut random = thread_rng();
-                random.gen_range(-amplitude, amplitude)
+                random.gen_range(-max_amplitude, max_amplitude)
             }
         }
     }

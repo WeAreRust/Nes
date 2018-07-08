@@ -5,7 +5,7 @@ mod instruction;
 mod register;
 
 /// Frequency of the 6502 processor is ~1.79 MHz.
-const FREQUENCY: usize = 1_789_773;
+pub const FREQUENCY: usize = 1_789_773;
 
 pub struct Core {
     pub reg: Registers,

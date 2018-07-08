@@ -6,7 +6,7 @@ use apu::channel::{ChannelState};
 
 pub struct NesAudioProcess {
     tick: u64,
-    base_frequency: f32,
+    base_frequency: u32,
     channels: channel::ApuChannelState,
     delta_stream: Receiver<channel::ApuChannelDelta>,
 }
@@ -29,11 +29,11 @@ impl AudioCallback for NesAudioProcess {
 }
 
 impl NesAudioProcess {
-    pub fn new(delta_stream: Receiver<channel::ApuChannelDelta>) -> Self {
+    pub fn new(delta_stream: Receiver<channel::ApuChannelDelta>, playback_freq: u32) -> Self {
         NesAudioProcess {
             tick: 0,
             channels: channel::ApuChannelState::default(),
-            base_frequency: 44100.0,
+            base_frequency: playback_freq,
             delta_stream: delta_stream,
         }
     }
