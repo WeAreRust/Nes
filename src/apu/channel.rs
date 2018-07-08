@@ -88,6 +88,66 @@ pub trait ChannelState: Clone + Default {
 
 ////////////////////////////////////////////////////////////////////////////
 
+#[derive(Debug)]
+pub enum ApuChannelDelta {
+    Pulse1(PulseDelta),
+    Pulse2(PulseDelta),
+    Noise(NoiseDelta),
+    Triangle(TriangleDelta),
+    Many(Vec<ApuChannelDelta>),
+}
+
+#[derive(Copy, Clone, Debug)]
+pub struct ApuChannelState {
+    pub pulse_1: PulseState,
+    pub pulse_2: PulseState,
+    pub triangle: TriangleState,
+    pub noise: NoiseState,
+}
+
+impl Default for ApuChannelState {
+    fn default() -> Self {
+        ApuChannelState {
+            pulse_1: PulseState::default(),
+            pulse_2: PulseState::default(),
+            triangle: TriangleState::default(),
+            noise: NoiseState::default(),
+        }
+    }
+}
+
+impl ChannelState for ApuChannelState {
+    type Delta = ApuChannelDelta;
+
+    fn transform(self: Self, delta: ApuChannelDelta) -> Self {
+        match delta {
+            ApuChannelDelta::Pulse1(d) =>
+                Self { pulse_1: self.pulse_1.transform(d), ..self },
+            ApuChannelDelta::Pulse2(d) =>
+                Self { pulse_2: self.pulse_2.transform(d), ..self },
+            ApuChannelDelta::Triangle(d) =>
+                Self { triangle: self.triangle.transform(d), ..self },
+            ApuChannelDelta::Noise(d) =>
+                Self { noise: self.noise.transform(d), ..self },
+            ApuChannelDelta::Many(deltas) =>
+                deltas.into_iter().fold(
+                    self,
+                    |state, sub_delta| state.transform(sub_delta),
+                )
+        }
+    }
+
+    fn signal_at(self: &Self, config: &ChannelTuning) -> f32 {
+        0.0
+        + self.pulse_1.signal_at(&config)
+        + self.pulse_2.signal_at(&config)
+        + self.triangle.signal_at(&config)
+        + self.noise.signal_at(&config)
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////
+
 #[derive(Copy, Clone, Debug)]
 pub struct PulseState {
     frame_count: u64,
@@ -97,7 +157,7 @@ pub struct PulseState {
     volume: u8,
 }
 
-#[derive(Debug)]
+#[derive(Copy, Clone, Debug)]
 pub enum PulseDelta {
     SetFrameCount(u64),
     SetPulseWidth(u8),
@@ -141,7 +201,7 @@ pub struct TriangleState {
     frame_count: u64,
 }
 
-#[derive(Debug)]
+#[derive(Copy, Clone, Debug)]
 pub enum TriangleDelta {
     SetFrameCount(u8),
     SetVolume(u8),
@@ -175,7 +235,7 @@ pub struct NoiseState {
     volume: u8,
 }
 
-#[derive(Debug)]
+#[derive(Copy, Clone, Debug)]
 pub enum NoiseDelta {
     SetVolume(u8),
 }
