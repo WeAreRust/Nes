@@ -1,15 +1,12 @@
 #[macro_use]
 extern crate bitflags;
 extern crate sdl2;
-
-mod apu;
-mod cpu;
-mod io;
+extern crate nes;
 
 use sdl2::audio::{AudioSpecDesired};
 use std::sync::mpsc;
-use apu::state::{PulseDelta};
-use io::audio::NesAudioProcess;
+use nes::apu::channel::{NoiseDelta};
+use nes::io::audio::NesAudioProcess;
 
 fn main() {
     let sdl_context = sdl2::init().unwrap();
@@ -20,16 +17,16 @@ fn main() {
         samples: None,
     };
 
-    let (p1_send, p1_recv) = mpsc::channel();
+    let (_, p1_recv) = mpsc::channel();
     let (_, p2_recv) = mpsc::channel();
     let (_, t_recv) = mpsc::channel();
+    let (n_send, n_recv) = mpsc::channel();
 
     let device = audio_subsystem.open_playback(None, &desired_spec, |_| {
-        NesAudioProcess::new(p1_recv, p2_recv, t_recv)
+        NesAudioProcess::new(p1_recv, p2_recv, t_recv, n_recv)
     }).unwrap();
 
     device.resume();
-    p1_send.send(PulseDelta::SetVolume(32)).unwrap();
-    p1_send.send(PulseDelta::PlayNote(32)).unwrap();
+    n_send.send(NoiseDelta::SetVolume(64)).unwrap();
     std::thread::sleep(std::time::Duration::from_millis(2000));
 }

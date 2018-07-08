@@ -64,18 +64,20 @@
 //!   $4003  |  $4007  | LLLL LTTT
 //!
 //! [Pulse]: https://wiki.nesdev.com/w/index.php/APU_Pulse
-//! [Env]:
+//! [Env]: https://wiki.nesdev.com/w/index.php/APU_Envelope
+//! [Sweep]: https://wiki.nesdev.com/w/index.php/APU_Sweep
 
 use std::clone::Clone;
+use rand::{Rng, thread_rng};
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub enum Envelope {
     Constant(u64),
 }
 
 pub struct ChannelTuning {
-    tick: u64,
-    base_frequency: f32,
+    pub tick: u64,
+    pub base_frequency: f32,
 }
 
 pub trait ChannelState: Clone + Default {
@@ -84,7 +86,9 @@ pub trait ChannelState: Clone + Default {
   fn signal_at(self: &Self, config: &ChannelTuning) -> f32;
 }
 
-#[derive(Copy, Clone)]
+////////////////////////////////////////////////////////////////////////////
+
+#[derive(Copy, Clone, Debug)]
 pub struct PulseState {
     frame_count: u64,
     pulse_width: u8,
@@ -93,12 +97,12 @@ pub struct PulseState {
     volume: u8,
 }
 
+#[derive(Debug)]
 pub enum PulseDelta {
     SetFrameCount(u64),
     SetPulseWidth(u8),
     SetVolume(u8),
     SetEnvelope(Envelope),
-    PlayNote(u8),
 }
 
 impl Default for PulseState {
@@ -130,18 +134,19 @@ impl ChannelState for PulseState {
     }
 }
 
+////////////////////////////////////////////////////////////////////////////
 
+#[derive(Copy, Clone, Debug)]
+pub struct TriangleState {
+    frame_count: u64,
+}
 
+#[derive(Debug)]
 pub enum TriangleDelta {
     SetFrameCount(u8),
     SetVolume(u8),
     SetEnvelope(Envelope),
     PlayNote(u8),
-}
-
-#[derive(Copy, Clone)]
-pub struct TriangleState {
-    frame_count: u64,
 }
 
 impl Default for TriangleState {
@@ -160,5 +165,44 @@ impl ChannelState for TriangleState {
 
     fn signal_at(self: &Self, config: &ChannelTuning) -> f32 {
         return 0.0;
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////
+
+#[derive(Copy, Clone, Debug)]
+pub struct NoiseState {
+    volume: u8,
+}
+
+#[derive(Debug)]
+pub enum NoiseDelta {
+    SetVolume(u8),
+}
+
+impl Default for NoiseState {
+    fn default() -> Self {
+        NoiseState { volume: 0 }
+    }
+}
+
+impl ChannelState for NoiseState {
+    type Delta = NoiseDelta;
+
+    fn transform(self: Self, delta: NoiseDelta) -> Self {
+        match delta {
+            NoiseDelta::SetVolume(v) => Self { volume: v, ..self },
+        }
+    }
+
+    fn signal_at(self: &Self, _config: &ChannelTuning) -> f32 {
+        match self.volume {
+            0 => 0.0,
+            volume => {
+                let amplitude = (volume as f32) / (u8::max_value() as f32);
+                let mut random = thread_rng();
+                random.gen_range(-amplitude, amplitude)
+            }
+        }
     }
 }
