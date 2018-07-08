@@ -31,9 +31,10 @@ impl Core {
 
     pub fn execute(&mut self) {
         let opcode = self.memory.fetch(self.reg.pc);
-        let cycles = instruction::execute(self, opcode);
+        self.reg.pc += 1;
 
-        // TODO(joshleeb): Timing.
+        let _cycles = instruction::execute(self, opcode);
+        // TODO(joshleeb): Timing (use cycles).
     }
 
     /// Absolute address.

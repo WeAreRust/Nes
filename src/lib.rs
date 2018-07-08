@@ -1,5 +1,8 @@
 #![feature(fixed_size_array)]
 
+#[cfg(test)]
+extern crate asm6502;
+
 #[macro_use]
 extern crate bitflags;
 
