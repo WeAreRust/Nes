@@ -91,10 +91,12 @@ pub trait ChannelState: Clone + Default {
 
 pub trait ChannelFrequency {
     fn get_period(self: &Self) -> u16;
+    fn get_period_min(self: &Self) -> u16;
 
     fn get_frequency(self: &Self) -> Option<f32> {
         let period = self.get_period();
-        if period < 8 || period > MAX_PEROID { return None; }
+        let min = self.get_period_min();
+        if period < min || period > MAX_PEROID { return None; }
 
         let f_divider = 16.0 / (period as f32 + 1.0);
         return Some((cpu_freq as f32) / f_divider);
@@ -258,16 +260,18 @@ impl Default for PulseState {
     }
 }
 
+
+/// When the peroid is below `8` the pulse wave is silient.
+/// [Read more here][Pitch].
+///
+/// [Pitch]: https://wiki.nesdev.com/w/index.php/APU#Pulse_.28.244000-4007.29
 impl ChannelFrequency for PulseState {
-    fn get_period(self: &Self) -> u16 {
-        return self.period;
-    }
+    fn get_period(self: &Self) -> u16 { self.period }
+    fn get_period_min(self: &Self) -> u16 { 8 }
 }
 
 impl ChannelAmplitude for PulseState {
-    fn get_volume(self: &Self) -> u8 {
-        return self.volume;
-    }
+    fn get_volume(self: &Self) -> u8 { self.volume }
 }
 
 impl ChannelState for PulseState {
@@ -283,10 +287,6 @@ impl ChannelState for PulseState {
         }
     }
 
-    /// When the peroid is below `8` the pulse wave is silient.
-    /// [Read more here][Pitch].
-    ///
-    /// [Pitch]: https://wiki.nesdev.com/w/index.php/APU#Pulse_.28.244000-4007.29
     fn signal_at(self: &Self, config: &ChannelTuning) -> f32 {
         let amplitude = match self.get_amplitude() {
             None => return 0.0,
@@ -311,22 +311,27 @@ impl ChannelState for PulseState {
 #[derive(Copy, Clone, Debug)]
 pub struct TriangleState {
     period: u16,
-    volume: u8,
+    control_flag: bool,
 }
 
 #[derive(Copy, Clone, Debug)]
 pub enum TriangleDelta {
-    SetVolume(u8),
     SetPeriod(u16),
+    SetControlFlag(bool),
 }
 
 impl Default for TriangleState {
     fn default() -> Self {
         TriangleState {
             period: 0,
-            volume: 0,
+            control_flag: false,
         }
     }
+}
+
+impl ChannelFrequency for TriangleState {
+    fn get_period(self: &Self) -> u16 { self.period }
+    fn get_period_min(self: &Self) -> u16 { 1 }
 }
 
 impl ChannelState for TriangleState {
@@ -334,13 +339,26 @@ impl ChannelState for TriangleState {
 
     fn transform(self: Self, delta: TriangleDelta) -> Self {
         match delta {
-            TriangleDelta::SetVolume(v) => Self { volume: v, ..self },
             TriangleDelta::SetPeriod(p) => Self { period: p, ..self },
+            TriangleDelta::SetControlFlag(c) => Self { control_flag: c, ..self },
         }
     }
 
     fn signal_at(self: &Self, config: &ChannelTuning) -> f32 {
-        return 0.0;
+        use std::f32::consts::PI;
+
+        if !self.control_flag { return 0.0; }
+
+        let amplitude = 1.0;
+        let frequency = match self.get_frequency() {
+            None => return 0.0,
+            Some(f) => f,
+        };
+
+        let sample_offset = config.sample * (config.sample_rate as u64);
+        let sample_mod = (sample_offset % frequency as u64) as f32;
+        let frequent_percent = sample_mod / frequency;
+        return amplitude * (frequent_percent * 2.0 * PI).sin();
     }
 }
 

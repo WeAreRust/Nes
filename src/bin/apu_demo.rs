@@ -31,7 +31,6 @@ fn main() {
     _decend(&send);
 }
 
-
 fn _arp(send: &Sender<ApuChannelDelta>) {
     for note in 40..80 {
         for offset in [0, 4, 7, 4].iter() {
@@ -51,9 +50,13 @@ fn _random_tune(send: &Sender<ApuChannelDelta>) {
             ApuChannelDelta::Pulse1(PulseDelta::SetVolume(64)),
             ApuChannelDelta::Pulse1(PulseDelta::SetPeriod(from_note(note))),
             ApuChannelDelta::Pulse1(PulseDelta::SetPulseWidth(PulseWidth::Duty0)),
+            ApuChannelDelta::Triangle(TriangleDelta::SetPeriod(from_note(note))),
+            ApuChannelDelta::Triangle(TriangleDelta::SetControlFlag(true)),
         ]);
         std::thread::sleep(std::time::Duration::from_millis(200));
     }
+
+    pew_all(send, vec![ApuChannelDelta::Triangle(TriangleDelta::SetControlFlag(false))]);
 }
 
 fn from_note(note: u16) -> u16 {
@@ -86,7 +89,7 @@ fn _decend(send: &Sender<ApuChannelDelta>) {
 
         let pulse_1_pitch = f_step * scale_peroid;
         let pulse_2_pitch = (f_step * 0.75) * scale_peroid;
-        let _triangle_pitch = f_step_left * scale_peroid;
+        let triangle_pitch = f_step_left * scale_peroid;
 
         println!("p1 {} p2 {} nv {}", pulse_1_pitch, pulse_2_pitch, noise_volume);
 
@@ -94,7 +97,7 @@ fn _decend(send: &Sender<ApuChannelDelta>) {
            ApuChannelDelta::Noise(NoiseDelta::SetVolume(noise_volume as u8)),
            ApuChannelDelta::Pulse1(PulseDelta::SetPeriod(pulse_1_pitch as u16)),
            ApuChannelDelta::Pulse2(PulseDelta::SetPeriod(pulse_2_pitch as u16)),
-           // ApuChannelDelta::Triangle(TriangleDelta::SetPeriod(triangle_pitch as u16)),
+           ApuChannelDelta::Triangle(TriangleDelta::SetPeriod(triangle_pitch as u16)),
         ]);
         std::thread::sleep(std::time::Duration::from_millis(1));
     }
