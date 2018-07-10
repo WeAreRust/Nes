@@ -1,17 +1,20 @@
 use cartridge::mapper::Mapper;
 
 const INES_HEADER: [u8; 4] = [0x4e, 0x45, 0x53, 0x1a];
+
 const LEN_NES: usize = 4;
 const IDX_NUM_PRG_ROM: usize = 4;
 const IDX_NUM_CHR_ROM: usize = 5;
 const IDX_CB1: usize = 6;
 const IDX_CB2: usize = 7;
+
 const CB1_BIT_MIRRORING: u8 = 0x01;
 const CB1_BIT_BATTERY_RAM: u8 = 0x02;
 const CB1_BIT_TRAINER: u8 = 0x04;
 const CB1_BIT_FOUR_SCREEN_MIRRORING: u8 = 0x08;
 const CB1_MASK_MAPPER: u8 = 0xF0;
 const CB2_MASK_MAPPER: u8 = 0xF0;
+
 const MAPPER_NROM: u8 = 0;
 const MAPPER_NINTENDO_MMC1: u8 = 1;
 const MAPPER_CNROM_SWITCH: u8 = 3;
