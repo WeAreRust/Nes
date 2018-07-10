@@ -1,7 +1,9 @@
 mod ines;
 mod mapper;
+mod mirroring;
 
 use cartridge::mapper::Mapper;
+use cartridge::mirroring::Mirroring;
 
 pub struct Cartridge {
   pub mirroring: Mirroring,
@@ -11,24 +13,9 @@ pub struct Cartridge {
 impl Cartridge {
   fn try_from_ines(rom: ines::Rom) -> Result<Self, ParseError> {
     Ok(Cartridge{
-      mirroring: Mirroring::from(rom.mirror),
+      mirroring: rom.mirror,
       memory_mapper: rom.mapper,
     })
-  }
-}
-
-#[derive(PartialEq, Debug)]
-pub enum Mirroring {
-  Horizontal,
-  Vertical,
-}
-
-impl From<ines::MirrorType> for Mirroring {
-  fn from(t: ines::MirrorType) -> Self {
-    match t {
-      ines::MirrorType::Horizontal => Mirroring::Horizontal,
-      ines::MirrorType::Vertical => Mirroring::Vertical,
-    }
   }
 }
 

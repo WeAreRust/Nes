@@ -1,4 +1,5 @@
 use cartridge::mapper::Mapper;
+use cartridge::mirroring::Mirroring;
 
 const INES_HEADER: [u8; 4] = [0x4e, 0x45, 0x53, 0x1a];
 
@@ -20,14 +21,8 @@ const MAPPER_NINTENDO_MMC1: u8 = 1;
 const MAPPER_CNROM_SWITCH: u8 = 3;
 const MAPPER_INES_211: u8 = 211;
 
-#[derive(PartialEq, Debug)]
-pub enum MirrorType {
-    Horizontal,
-    Vertical,
-}
-
 pub struct Rom {
-    pub mirror: MirrorType,
+    pub mirror: Mirroring,
     pub mapper: Mapper,
     pub four_screen_mirroring: bool,
 }
@@ -70,10 +65,10 @@ fn count_chr_rom_banks(data: &[u8]) -> u8 {
     data[IDX_NUM_CHR_ROM]
 }
 
-fn detect_mirror_type(data: &[u8]) -> MirrorType {
+fn detect_mirror_type(data: &[u8]) -> Mirroring {
     match data[IDX_CB1] & CB1_BIT_MIRRORING == 0 {
-        true => MirrorType::Horizontal,
-        false => MirrorType::Vertical,
+        true => Mirroring::Horizontal,
+        false => Mirroring::Vertical,
     }
 }
 
@@ -126,13 +121,13 @@ mod tests {
     #[test]
     pub fn test_detect_mirror_type_horizontal() {
         let data = [0x4e, 0x45, 0x53, 0x1a, 0x10, 0x20, 0x30, 0xd0];
-        assert_eq!(detect_mirror_type(&data), MirrorType::Horizontal);
+        assert_eq!(detect_mirror_type(&data), Mirroring::Horizontal);
     }
 
     #[test]
     pub fn test_detect_mirror_type_vertical() {
         let data = [0x4e, 0x45, 0x53, 0x1a, 0x10, 0x20, 0x31, 0xd0];
-        assert_eq!(detect_mirror_type(&data), MirrorType::Vertical);
+        assert_eq!(detect_mirror_type(&data), Mirroring::Vertical);
     }
 
     #[test]
@@ -207,7 +202,7 @@ mod tests {
         data[..8].clone_from_slice(&[0x4e, 0x45, 0x53, 0x1a, 0x02, 0x02, 0x31, 0x00]);
 
         let rom = parse_rom(&data).unwrap();
-        assert_eq!(rom.mirror, MirrorType::Vertical);
+        assert_eq!(rom.mirror, Mirroring::Vertical);
         assert_eq!(rom.mapper, Mapper::CNROMSwitch);
         assert_eq!(rom.four_screen_mirroring, false);
     }
