@@ -16,7 +16,7 @@ const MAPPER_CNROM_SWITCH: u8 = 3;
 const MAPPER_INES_211: u8 = 211;
 
 #[derive(PartialEq, Debug)]
-enum MirrorType {
+pub enum MirrorType {
     Horizontal,
     Vertical,
 }
@@ -30,9 +30,9 @@ pub enum Mapper {
 }
 
 pub struct Rom {
-    mirror: MirrorType,
-    mapper: Mapper,
-    four_screen_mirroring: bool,
+    pub mirror: MirrorType,
+    pub mapper: Mapper,
+    pub four_screen_mirroring: bool,
 }
 
 #[derive(PartialEq, Debug)]
