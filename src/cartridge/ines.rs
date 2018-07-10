@@ -1,3 +1,5 @@
+use cartridge::mapper::Mapper;
+
 const INES_HEADER: [u8; 4] = [0x4e, 0x45, 0x53, 0x1a];
 const LEN_NES: usize = 4;
 const IDX_NUM_PRG_ROM: usize = 4;
@@ -19,14 +21,6 @@ const MAPPER_INES_211: u8 = 211;
 pub enum MirrorType {
     Horizontal,
     Vertical,
-}
-
-#[derive(PartialEq, Debug)]
-pub enum Mapper {
-    NROM, // No mapper
-    NintendoMMC1,
-    CNROMSwitch,
-    INESMapper211, // https://wiki.nesdev.com/w/index.php/INES_Mapper_211
 }
 
 pub struct Rom {

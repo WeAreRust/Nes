@@ -15,7 +15,7 @@ fn main() {
     f.read_to_end(&mut data).unwrap();
 
     // TODO(toby): parse the file content
-    // let cartridge = file::parse_rom_file(data[..]);
+    // let cartridge = cartridge::parse_rom_file(data[..]);
 
     println!("NES Emulator");
 }

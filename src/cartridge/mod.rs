@@ -1,13 +1,18 @@
 mod ines;
+mod mapper;
+
+use cartridge::mapper::Mapper;
 
 pub struct Cartridge {
   pub mirroring: Mirroring,
+  pub memory_mapper: Mapper,
 }
 
 impl Cartridge {
   fn try_from_ines(rom: ines::Rom) -> Result<Self, ParseError> {
     Ok(Cartridge{
       mirroring: Mirroring::from(rom.mirror),
+      memory_mapper: rom.mapper,
     })
   }
 }
