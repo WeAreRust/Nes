@@ -30,7 +30,7 @@ mod tests {
     use asm6502::assemble;
     use bytes::BytesMut;
     use cpu::register::Registers;
-    use memory::Memory;
+    use memory::{Memory, ReadAddr};
 
     #[test]
     fn jump_absolute() {
@@ -39,7 +39,7 @@ mod tests {
         let mut memory = Memory::with_bytes(bytes);
         let mut cpu = Core::new(Registers::empty());
 
-        let opcode = memory.fetch(0);
+        let opcode = memory.read_addr(0);
         assert_eq!(opcode, 0x4c);
 
         let cycles = cpu.execute(opcode, &mut memory);
@@ -55,7 +55,7 @@ mod tests {
         let mut memory = Memory::with_bytes(bytes);
         let mut cpu = Core::new(Registers::empty());
 
-        let opcode = memory.fetch(0);
+        let opcode = memory.read_addr(0);
         assert_eq!(opcode, 0x6c);
 
         let cycles = cpu.execute(opcode, &mut memory);

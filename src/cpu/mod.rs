@@ -1,7 +1,7 @@
 use self::register::Registers;
 
 use clock::Processor;
-use memory::Memory;
+use memory::{Memory, ReadAddr};
 
 mod instruction;
 mod register;
@@ -12,7 +12,7 @@ pub struct Core {
 
 impl Processor for Core {
     fn cycle(&mut self, memory: &mut Memory) {
-        let opcode = memory.fetch(self.reg.pc);
+        let opcode = memory.read_addr(self.reg.pc);
         let _cycles = self.execute(opcode, memory);
 
         // TODO(joshleeb): Timing (use returned cycles).
@@ -26,8 +26,8 @@ impl Core {
 
     /// Absolute address.
     pub fn abs_addr(&mut self, memory: &mut Memory) -> u16 {
-        let lo = memory.fetch(self.reg.pc) as u16;
-        let hi = memory.fetch(self.reg.pc + 1) as u16;
+        let lo = memory.read_addr(self.reg.pc) as u16;
+        let hi = memory.read_addr(self.reg.pc + 1) as u16;
         self.reg.pc += 2;
 
         lo | hi << 8
@@ -39,15 +39,15 @@ impl Core {
     /// whole 16-bit address when computing the indirect address. See
     /// http://www.6502.org/tutorials/6502opcodes.html#JMP for details.
     pub fn indr_addr(&mut self, memory: &mut Memory) -> u16 {
-        let lo_addr = memory.fetch(self.reg.pc) as u16;
-        let hi_addr = memory.fetch(self.reg.pc + 1) as u16;
+        let lo_addr = memory.read_addr(self.reg.pc) as u16;
+        let hi_addr = memory.read_addr(self.reg.pc + 1) as u16;
         self.reg.pc += 2;
 
         let lo_adjusted = lo_addr + 1 | hi_addr << 8;
         let hi_adjusted = lo_addr | hi_addr << 8;
 
-        let lo = memory.fetch(lo_adjusted) as u16;
-        let hi = memory.fetch(hi_adjusted) as u16;
+        let lo = memory.read_addr(lo_adjusted) as u16;
+        let hi = memory.read_addr(hi_adjusted) as u16;
         lo | hi << 8
     }
 
