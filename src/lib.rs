@@ -13,6 +13,7 @@ extern crate sdl2;
 
 pub mod apu;
 pub mod cartridge;
+pub mod clock;
 pub mod cpu;
 pub mod io;
 pub mod memory;
