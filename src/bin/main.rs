@@ -17,7 +17,15 @@ fn main() {
     f.read_to_end(&mut data).unwrap();
 
     // TODO(toby): parse the file content
-    let _cartridge = nes::cartridge::parse_rom_file(&data).unwrap();
+    let cartridge = nes::cartridge::parse_rom_file(&data).unwrap();
+    print!("PRG ROM DUMP");
+    for i in 0x0000..0x07ff {
+        if i % 20 == 0 {
+            println!();
+        }
+        print!("{:02x} ", cartridge.rom.read(i));
+    }
+    println!();
 
     println!("Cartridge loaded.");
 }

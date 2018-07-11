@@ -1,9 +1,14 @@
+use std::fmt;
+
 use cartridge::mapper::Mapper;
 use cartridge::mirroring::Mirroring;
 
 const INES_HEADER: [u8; 4] = [0x4e, 0x45, 0x53, 0x1a];
 
 const LEN_NES: usize = 4;
+const LEN_HEADER: usize = 16;
+const LEN_TRAINER: usize = 512;
+
 const IDX_NUM_PRG_ROM: usize = 4;
 const IDX_NUM_CHR_ROM: usize = 5;
 const IDX_CB1: usize = 6;
@@ -21,10 +26,20 @@ const MAPPER_NINTENDO_MMC1: u8 = 1;
 const MAPPER_CNROM_SWITCH: u8 = 3;
 const MAPPER_INES_211: u8 = 211;
 
-pub struct Rom {
+const SIZE_PRG_ROM_BANK: usize = 16 * 1024;
+
+pub struct Image {
     pub mirror: Mirroring,
     pub mapper: Mapper,
     pub four_screen_mirroring: bool,
+    pub rom_data: Vec<u8>,
+    has_trainer: bool,
+}
+
+impl fmt::Debug for Image {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Image{{ has_trainer: {} }}", self.has_trainer)
+    }
 }
 
 #[derive(PartialEq, Debug)]
@@ -47,11 +62,13 @@ pub fn check_format(data: &[u8]) -> bool {
     data[..LEN_NES] == INES_HEADER
 }
 
-pub fn parse_rom(data: &[u8]) -> Result<Rom, ParseError> {
-    Ok(Rom {
+pub fn parse_rom(data: &[u8]) -> Result<Image, ParseError> {
+    Ok(Image {
         mirror: detect_mirror_type(data),
         mapper: detect_mapper(data)?,
         four_screen_mirroring: has_four_screen_mirroring(data),
+        rom_data: extract_rom_data(data),
+        has_trainer: has_trainer(data),
     })
 }
 
@@ -92,6 +109,18 @@ fn detect_mapper(data: &[u8]) -> Result<Mapper, ParseErrorReason> {
         MAPPER_INES_211 => Ok(Mapper::INESMapper211),
         _ => Err(ParseErrorReason::UnknownMapper),
     }
+}
+
+fn extract_rom_data(data: &[u8]) -> Vec<u8> {
+    let rom_start = if has_trainer(data) {
+        LEN_HEADER + LEN_TRAINER
+    } else {
+        LEN_HEADER
+    };
+
+    let len_rom: usize = count_prg_rom_banks(data) as usize * SIZE_PRG_ROM_BANK;
+
+    data[rom_start..len_rom].to_vec()
 }
 
 #[cfg(test)]
