@@ -5,6 +5,8 @@ authors = ["Josh Leeb-du Toit <josh.leebdutoit@gmail.com>"]
 
 [dependencies]
 bitflags = "1.0.3"
+sdl2 = "0.31.0"
+rand = "0.5.3"
 
 [dev-dependencies]
 asm6502 = "0.1.2"
@@ -12,3 +14,7 @@ asm6502 = "0.1.2"
 [[bin]]
 name = "nes"
 path = "src/bin/main.rs"
+
+[[bin]]
+name = "apu-demo"
+path = "src/bin/apu_demo.rs"
