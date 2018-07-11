@@ -1,20 +1,23 @@
 mod ines;
 mod mapper;
 mod mirroring;
+mod rom;
 
-use cartridge::mapper::Mapper;
+use cartridge::rom::Rom;
 use cartridge::mirroring::Mirroring;
 
 pub struct Cartridge {
     pub mirroring: Mirroring,
-    pub memory_mapper: Mapper,
+    pub rom: Rom,
 }
 
 impl Cartridge {
-    fn try_from_ines(rom: ines::Rom) -> Result<Self, ParseError> {
+    fn try_from_ines(image: ines::Image) -> Result<Self, ParseError> {
+        println!("iNES Image: {:?}", image);
+
         Ok(Cartridge {
-            mirroring: rom.mirror,
-            memory_mapper: rom.mapper,
+            mirroring: image.mirror,
+            rom: rom::Rom::new(image.rom_data, image.mapper),
         })
     }
 }
@@ -60,7 +63,7 @@ fn detect_format(data: &[u8]) -> Result<Format, UnknownFormat> {
 }
 
 fn parse_ines(data: &[u8]) -> Result<Cartridge, ParseError> {
-    let rom: ines::Rom = ines::parse_rom(data)?;
+    let rom: ines::Image = ines::parse_rom(data)?;
 
     Cartridge::try_from_ines(rom)
 }
