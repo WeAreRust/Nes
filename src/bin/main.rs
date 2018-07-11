@@ -1,3 +1,5 @@
+extern crate nes;
+
 use std::env;
 use std::fs::File;
 use std::io::Read;
@@ -15,7 +17,7 @@ fn main() {
     f.read_to_end(&mut data).unwrap();
 
     // TODO(toby): parse the file content
-    // let cartridge = cartridge::parse_rom_file(data[..]);
+    let _cartridge = nes::cartridge::parse_rom_file(&data).unwrap();
 
-    println!("NES Emulator");
+    println!("Cartridge loaded.");
 }
