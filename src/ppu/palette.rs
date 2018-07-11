@@ -1,7 +1,7 @@
 //! # Colour Palette
 //!
 //! From: Loopy, “NES Palette”, NesDev, http://nesdev.parodius.com/pal.txt
-//! 
+//!
 //! http://nesdev.com/NESDoc.pdf (page 45)
 //!
 //! Maps a colour palette entry to an RGB value.
@@ -38,7 +38,6 @@ static PALETTE: &'static [(u8, u8, u8)] = &[
     (0x00, 0x97, 0x00),
     // 1A
     (0x00, 0xAB, 0x00),
-
     // TODO: 1B - 3F
 ];
 
