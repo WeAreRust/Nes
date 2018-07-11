@@ -5,8 +5,10 @@ pub struct Memory {
 }
 
 impl Memory {
-    pub fn with_bytes(bytes: BytesMut) -> Self {
-        Memory { bytes }
+    pub fn with_bytes<B: Into<BytesMut>>(bytes: B) -> Self {
+        Memory {
+            bytes: bytes.into(),
+        }
     }
 
     pub fn fetch(&self, addr: u16) -> u8 {
