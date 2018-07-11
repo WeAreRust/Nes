@@ -1,4 +1,3 @@
-#![feature(fixed_size_array)]
 #![allow(dead_code)]
 
 #[cfg(test)]
