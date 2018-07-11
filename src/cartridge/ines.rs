@@ -34,11 +34,17 @@ pub struct Image {
     pub four_screen_mirroring: bool,
     pub rom_data: Vec<u8>,
     has_trainer: bool,
+    num_prg_rom_banks: u8,
+    num_chr_rom_banks: u8,
 }
 
 impl fmt::Debug for Image {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Image{{ has_trainer: {} }}", self.has_trainer)
+        write!(f, "Image{{ has_trainer: {:?}, num_prg_rom_banks: {:?}, num_chr_rom_banks: {:?}, mapper: {:?} }}", 
+            self.has_trainer, 
+            self.num_prg_rom_banks, 
+            self.num_chr_rom_banks, 
+            self.mapper)
     }
 }
 
@@ -69,6 +75,8 @@ pub fn parse_rom(data: &[u8]) -> Result<Image, ParseError> {
         four_screen_mirroring: has_four_screen_mirroring(data),
         rom_data: extract_rom_data(data),
         has_trainer: has_trainer(data),
+        num_prg_rom_banks: count_prg_rom_banks(data),
+        num_chr_rom_banks: count_chr_rom_banks(data),
     })
 }
 
