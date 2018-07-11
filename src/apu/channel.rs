@@ -73,7 +73,7 @@ use std::clone::Clone;
 
 const MAX_PEROID: u16 = (1 << 12) - 1;
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, PartialOrd, Eq, Ord)]
 pub enum Envelope {
     Constant(u64),
 }
@@ -119,7 +119,7 @@ pub trait ChannelAmplitude {
 
 ////////////////////////////////////////////////////////////////////////////
 
-#[derive(Debug)]
+#[derive(Clone, Debug, PartialEq, PartialOrd, Eq, Ord)]
 pub enum ApuChannelDelta {
     Pulse1(PulseDelta),
     Pulse2(PulseDelta),
@@ -128,7 +128,7 @@ pub enum ApuChannelDelta {
     Many(Vec<ApuChannelDelta>),
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Clone, Debug)]
 pub struct ApuChannelState {
     pub pulse_1: PulseState,
     pub pulse_2: PulseState,
@@ -190,7 +190,7 @@ const FREQ_CHUNK: f32 = 0.125;
 /// Read more about the wave pulse [here].
 ///
 /// [here]: https://wiki.nesdev.com/w/index.php/APU_Pulse
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq, PartialOrd, Eq, Ord)]
 pub enum PulseWidth {
     /// Has a waveform like `0 1 0 0 0 0 0 0` where 12.5%
     /// of the waveform positive.
@@ -207,6 +207,14 @@ pub enum PulseWidth {
 }
 
 impl PulseWidth {
+    pub fn calculate(byte: u8) -> PulseWidth {
+        let masked = (byte & 0b11000000) >> 6;
+        if masked == 0 { PulseWidth::Duty0 }
+        else if masked == 1 { PulseWidth::Duty1 }
+        else if masked == 2 { PulseWidth::Duty2 }
+        else { PulseWidth::Duty3 }
+    }
+
     fn pulse_sign(self: &Self, frequency_progress: f32) -> f32 {
         if frequency_progress > 1.0 {
             panic!("expected frequency >= 1");
@@ -240,7 +248,7 @@ impl PulseWidth {
     }
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Clone, Debug)]
 pub struct PulseState {
     frame_count: u64,
     pulse_width: PulseWidth,
@@ -249,7 +257,7 @@ pub struct PulseState {
     volume: u8,
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, PartialOrd, Eq, Ord)]
 pub enum PulseDelta {
     SetFrameCount(u64),
     SetPulseWidth(PulseWidth),
@@ -338,7 +346,7 @@ pub struct TriangleState {
     control_flag: bool,
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, PartialOrd, Eq, Ord)]
 pub enum TriangleDelta {
     SetPeriod(u16),
     SetControlFlag(bool),
@@ -402,7 +410,7 @@ pub struct NoiseState {
     volume: u8,
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, PartialOrd, Eq, Ord)]
 pub enum NoiseDelta {
     SetVolume(u8),
 }
