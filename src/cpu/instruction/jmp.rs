@@ -27,16 +27,12 @@ impl Core {
 mod tests {
     use super::*;
 
-    use asm6502::assemble;
-    use bytes::BytesMut;
     use cpu::register::Registers;
-    use memory::{Memory, ReadAddr};
+    use memory::ReadAddr;
 
     #[test]
     fn jump_absolute() {
-        let mut bytes = nes_asm!("JMP $5597");
-
-        let mut memory = Memory::with_bytes(bytes);
+        let mut memory = Memory::with_bytes(nes_asm!("JMP $5597"));
         let mut cpu = Core::new(Registers::empty());
 
         let opcode = memory.read_addr(0);
@@ -61,12 +57,5 @@ mod tests {
         let cycles = cpu.execute(opcode, &mut memory);
         assert_eq!(cycles, 5);
         assert_eq!(cpu.reg.pc, 0x5597);
-    }
-
-    fn memory_from_asm(asm: &str) -> Memory {
-        let mut buf = vec![];
-        assemble(asm.as_bytes(), &mut buf).unwrap();
-        println!("{:x?}", buf);
-        Memory::with_bytes(BytesMut::from(buf))
     }
 }

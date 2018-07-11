@@ -213,25 +213,25 @@ impl PulseWidth {
         }
         return match self {
             // wave: 0 1 0 0 0 0 0 0
-            Duty0 => match frequency_progress {
+            PulseWidth::Duty0 => match frequency_progress {
                 f if f < FREQ_CHUNK => -1.0,
                 f if f > FREQ_CHUNK * 2.0 => -1.0,
                 _ => 1.0,
             },
             // wave: 0 1 1 0 0 0 0 0
-            Duty1 => match frequency_progress {
+            PulseWidth::Duty1 => match frequency_progress {
                 f if f < FREQ_CHUNK => -1.0,
                 f if f > FREQ_CHUNK * 3.0 => -1.0,
                 _ => 1.0,
             },
             // wave: 0 1 1 1 1 0 0 0
-            Duty2 => match frequency_progress {
+            PulseWidth::Duty2 => match frequency_progress {
                 f if f < FREQ_CHUNK => -1.0,
                 f if f > FREQ_CHUNK * 5.0 => -1.0,
                 _ => 1.0,
             },
             // wave: 0 1 1 1 1 1 1 0
-            Duty3 => match frequency_progress {
+            PulseWidth::Duty3 => match frequency_progress {
                 f if f < FREQ_CHUNK => -1.0,
                 f if f > FREQ_CHUNK * 7.0 => -1.0,
                 _ => 1.0,
