@@ -1,5 +1,6 @@
 use self::register::Registers;
-use memory::{NesMemory, NesMemorySpace};
+
+use memory::Memory;
 
 mod instruction;
 mod register;
@@ -9,31 +10,17 @@ pub const FREQUENCY: usize = 1_789_773;
 
 pub struct Core {
     pub reg: Registers,
-    pub memory: NesMemory,
-}
-
-impl Default for Core {
-    fn default() -> Self {
-        Core {
-            reg: Registers::default(),
-            memory: NesMemory::default(),
-        }
-    }
+    pub memory: Memory,
 }
 
 impl Core {
-    pub fn with_data(data: NesMemorySpace) -> Self {
-        Core {
-            reg: Registers::default(),
-            memory: NesMemory::with_data(data),
-        }
+    pub fn new(reg: Registers, memory: Memory) -> Self {
+        Core { reg, memory }
     }
 
-    pub fn execute(&mut self) {
+    pub fn fetch_execute(&mut self) {
         let opcode = self.memory.fetch(self.reg.pc);
-        self.reg.pc += 1;
-
-        let _cycles = instruction::execute(self, opcode);
+        let _cycles = self.execute(opcode);
         // TODO(joshleeb): Timing (use cycles).
     }
 

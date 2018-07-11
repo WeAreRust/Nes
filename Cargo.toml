@@ -5,8 +5,9 @@ authors = ["Josh Leeb-du Toit <josh.leebdutoit@gmail.com>"]
 
 [dependencies]
 bitflags = "1.0.3"
-sdl2 = "0.31.0"
+bytes = "0.4.8"
 rand = "0.5.3"
+sdl2 = "0.31.0"
 
 [dev-dependencies]
 asm6502 = "0.1.2"

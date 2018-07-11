@@ -29,6 +29,19 @@ pub struct Registers {
     pub status: StatusFlags,
 }
 
+impl Registers {
+    pub fn empty() -> Self {
+        Registers {
+            acc: 0,
+            x_idx: 0,
+            y_idx: 0,
+            pc: 0,
+            stack: 0,
+            status: StatusFlags::default(),
+        }
+    }
+}
+
 impl Default for Registers {
     fn default() -> Self {
         Registers {
