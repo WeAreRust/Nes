@@ -29,13 +29,15 @@ mod tests {
 
     use asm6502::assemble;
     use bytes::BytesMut;
-    use memory::Memory;
     use cpu::register::Registers;
+    use memory::Memory;
 
     #[test]
     fn jump_absolute() {
+        let mut bytes = nes_asm!("JMP $5597");
+
+        let mut memory = Memory::with_bytes(bytes);
         let mut cpu = Core::new(Registers::empty());
-        let mut memory = memory_from_asm("JMP $5597");
 
         let opcode = memory.fetch(0);
         assert_eq!(opcode, 0x4c);
@@ -45,9 +47,26 @@ mod tests {
         assert_eq!(cpu.reg.pc, 0x5597);
     }
 
+    #[test]
+    fn jump_indirect() {
+        let mut bytes = nes_asm!("JMP ($0004)");
+        bytes.extend(vec![0xff, 0x55, 0x97]);
+
+        let mut memory = Memory::with_bytes(bytes);
+        let mut cpu = Core::new(Registers::empty());
+
+        let opcode = memory.fetch(0);
+        assert_eq!(opcode, 0x6c);
+
+        let cycles = cpu.execute(opcode, &mut memory);
+        assert_eq!(cycles, 5);
+        assert_eq!(cpu.reg.pc, 0x5597);
+    }
+
     fn memory_from_asm(asm: &str) -> Memory {
         let mut buf = vec![];
         assemble(asm.as_bytes(), &mut buf).unwrap();
+        println!("{:x?}", buf);
         Memory::with_bytes(BytesMut::from(buf))
     }
 }
