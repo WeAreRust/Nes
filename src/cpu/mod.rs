@@ -4,7 +4,7 @@ use memory::Memory;
 
 mod register;
 
-/// Frequency of the 6502 processor is ~1.79 MHz.
+/// Frequency of the 6502 processor (NTSC) is ~1.79 MHz.
 pub const FREQUENCY: usize = 1_789_773;
 
 pub struct Core {
