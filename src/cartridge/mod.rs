@@ -3,13 +3,12 @@ mod mapper;
 mod mirroring;
 mod rom;
 
-use cartridge::mapper::Mapper;
+use cartridge::rom::Rom;
 use cartridge::mirroring::Mirroring;
 
 pub struct Cartridge {
     pub mirroring: Mirroring,
-    pub memory_mapper: Mapper,
-    pub rom: rom::Rom,
+    pub rom: Rom,
 }
 
 impl Cartridge {
@@ -18,8 +17,7 @@ impl Cartridge {
 
         Ok(Cartridge {
             mirroring: image.mirror,
-            memory_mapper: image.mapper,
-            rom: rom::Rom::new(image.rom_data),
+            rom: rom::Rom::new(image.rom_data, image.mapper),
         })
     }
 }

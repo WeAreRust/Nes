@@ -1,6 +1,6 @@
 use std::fmt;
 
-use cartridge::mapper::Mapper;
+use cartridge::mapper::MapperType;
 use cartridge::mirroring::Mirroring;
 
 const INES_HEADER: [u8; 4] = [0x4e, 0x45, 0x53, 0x1a];
@@ -30,7 +30,7 @@ const SIZE_PRG_ROM_BANK: usize = 16 * 1024;
 
 pub struct Image {
     pub mirror: Mirroring,
-    pub mapper: Mapper,
+    pub mapper: MapperType,
     pub four_screen_mirroring: bool,
     pub rom_data: Vec<u8>,
     has_trainer: bool,
@@ -99,14 +99,14 @@ fn has_four_screen_mirroring(data: &[u8]) -> bool {
     data[IDX_CB1] & CB1_BIT_FOUR_SCREEN_MIRRORING != 0
 }
 
-fn detect_mapper(data: &[u8]) -> Result<Mapper, ParseErrorReason> {
+fn detect_mapper(data: &[u8]) -> Result<MapperType, ParseErrorReason> {
     let mapper_num = (data[IDX_CB1] & CB1_MASK_MAPPER) >> 4 | (data[IDX_CB2] & CB2_MASK_MAPPER);
     // Find all known mapper numbers at https://wiki.nesdev.com/w/index.php/Mapper
     match mapper_num {
-        MAPPER_NROM => Ok(Mapper::NROM),
-        MAPPER_NINTENDO_MMC1 => Ok(Mapper::NintendoMMC1),
-        MAPPER_CNROM_SWITCH => Ok(Mapper::CNROMSwitch),
-        MAPPER_INES_211 => Ok(Mapper::INESMapper211),
+        MAPPER_NROM => Ok(MapperType::NROM),
+        MAPPER_NINTENDO_MMC1 => Ok(MapperType::NintendoMMC1),
+        MAPPER_CNROM_SWITCH => Ok(MapperType::CNROMSwitch),
+        MAPPER_INES_211 => Ok(MapperType::INESMapper211),
         _ => Err(ParseErrorReason::UnknownMapper),
     }
 }
@@ -196,25 +196,25 @@ mod tests {
     #[test]
     pub fn test_detect_mapper_none() {
         let data = [0x4e, 0x45, 0x53, 0x1a, 0x10, 0x20, 0x00, 0x00];
-        assert_eq!(detect_mapper(&data), Ok(Mapper::NROM));
+        assert_eq!(detect_mapper(&data), Ok(MapperType::NROM));
     }
 
     #[test]
     pub fn test_detect_mapper_mmc1() {
         let data = [0x4e, 0x45, 0x53, 0x1a, 0x10, 0x20, 0x10, 0x00];
-        assert_eq!(detect_mapper(&data), Ok(Mapper::NintendoMMC1));
+        assert_eq!(detect_mapper(&data), Ok(MapperType::NintendoMMC1));
     }
 
     #[test]
     pub fn test_detect_mapper_cnrom_switch() {
         let data = [0x4e, 0x45, 0x53, 0x1a, 0x02, 0x02, 0x31, 0x00];
-        assert_eq!(detect_mapper(&data), Ok(Mapper::CNROMSwitch));
+        assert_eq!(detect_mapper(&data), Ok(MapperType::CNROMSwitch));
     }
 
     #[test]
     pub fn test_detect_mapper_ines211() {
         let data = [0x4e, 0x45, 0x53, 0x1a, 0x10, 0x20, 0x30, 0xd0];
-        assert_eq!(detect_mapper(&data), Ok(Mapper::INESMapper211));
+        assert_eq!(detect_mapper(&data), Ok(MapperType::INESMapper211));
     }
 
     #[test]
@@ -230,7 +230,7 @@ mod tests {
 
         let rom = parse_rom(&data).unwrap();
         assert_eq!(rom.mirror, Mirroring::Vertical);
-        assert_eq!(rom.mapper, Mapper::CNROMSwitch);
+        assert_eq!(rom.mapper, MapperType::CNROMSwitch);
         assert_eq!(rom.four_screen_mirroring, false);
     }
 }
