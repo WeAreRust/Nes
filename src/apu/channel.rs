@@ -67,7 +67,7 @@
 //! [Env]: https://wiki.nesdev.com/w/index.php/APU_Envelope
 //! [Sweep]: https://wiki.nesdev.com/w/index.php/APU_Sweep
 
-use cpu::FREQUENCY as cpu_freq;
+use clock::{CPU_PERIOD, MASTER_FREQUENCY};
 use rand::{thread_rng, Rng};
 use std::clone::Clone;
 
@@ -101,7 +101,7 @@ pub trait ChannelFrequency {
         }
 
         let f_divider = 16.0 / (period as f32 + 1.0);
-        return Some((cpu_freq as f32) / f_divider);
+        return Some(((MASTER_FREQUENCY / CPU_PERIOD) as f32) / f_divider);
     }
 }
 
