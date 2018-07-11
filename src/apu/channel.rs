@@ -67,9 +67,9 @@
 //! [Env]: https://wiki.nesdev.com/w/index.php/APU_Envelope
 //! [Sweep]: https://wiki.nesdev.com/w/index.php/APU_Sweep
 
-use std::clone::Clone;
-use rand::{Rng, thread_rng};
 use cpu::FREQUENCY as cpu_freq;
+use rand::{thread_rng, Rng};
+use std::clone::Clone;
 
 const MAX_PEROID: u16 = (1 << 12) - 1;
 
@@ -84,9 +84,9 @@ pub struct ChannelTuning {
 }
 
 pub trait ChannelState: Clone + Default {
-  type Delta;
-  fn transform(self: Self, delta: Self::Delta) -> Self;
-  fn signal_at(self: &Self, config: &ChannelTuning) -> f32;
+    type Delta;
+    fn transform(self: Self, delta: Self::Delta) -> Self;
+    fn signal_at(self: &Self, config: &ChannelTuning) -> f32;
 }
 
 pub trait ChannelFrequency {
@@ -96,7 +96,9 @@ pub trait ChannelFrequency {
     fn get_frequency(self: &Self) -> Option<f32> {
         let period = self.get_period();
         let min = self.get_period_min();
-        if period < min || period > MAX_PEROID { return None; }
+        if period < min || period > MAX_PEROID {
+            return None;
+        }
 
         let f_divider = 16.0 / (period as f32 + 1.0);
         return Some((cpu_freq as f32) / f_divider);
@@ -108,7 +110,9 @@ pub trait ChannelAmplitude {
 
     fn get_amplitude(self: &Self) -> Option<f32> {
         let volume = self.get_volume();
-        if volume == 0 { return None; }
+        if volume == 0 {
+            return None;
+        }
         return Some((volume as f32) / (u8::max_value() as f32));
     }
 }
@@ -148,28 +152,34 @@ impl ChannelState for ApuChannelState {
 
     fn transform(self: Self, delta: ApuChannelDelta) -> Self {
         match delta {
-            ApuChannelDelta::Pulse1(d) =>
-                Self { pulse_1: self.pulse_1.transform(d), ..self },
-            ApuChannelDelta::Pulse2(d) =>
-                Self { pulse_2: self.pulse_2.transform(d), ..self },
-            ApuChannelDelta::Triangle(d) =>
-                Self { triangle: self.triangle.transform(d), ..self },
-            ApuChannelDelta::Noise(d) =>
-                Self { noise: self.noise.transform(d), ..self },
-            ApuChannelDelta::Many(deltas) =>
-                deltas.into_iter().fold(
-                    self,
-                    |state, sub_delta| state.transform(sub_delta),
-                )
+            ApuChannelDelta::Pulse1(d) => Self {
+                pulse_1: self.pulse_1.transform(d),
+                ..self
+            },
+            ApuChannelDelta::Pulse2(d) => Self {
+                pulse_2: self.pulse_2.transform(d),
+                ..self
+            },
+            ApuChannelDelta::Triangle(d) => Self {
+                triangle: self.triangle.transform(d),
+                ..self
+            },
+            ApuChannelDelta::Noise(d) => Self {
+                noise: self.noise.transform(d),
+                ..self
+            },
+            ApuChannelDelta::Many(deltas) => deltas
+                .into_iter()
+                .fold(self, |state, sub_delta| state.transform(sub_delta)),
         }
     }
 
     fn signal_at(self: &Self, config: &ChannelTuning) -> f32 {
         0.0
-        + self.pulse_1.signal_at(&config)
-        + self.pulse_2.signal_at(&config)
-        + self.triangle.signal_at(&config)
-        + self.noise.signal_at(&config)
+            + self.pulse_1.signal_at(&config)
+            + self.pulse_2.signal_at(&config)
+            + self.triangle.signal_at(&config)
+            + self.noise.signal_at(&config)
     }
 }
 
@@ -260,18 +270,23 @@ impl Default for PulseState {
     }
 }
 
-
 /// When the peroid is below `8` the pulse wave is silient.
 /// [Read more here][Pitch].
 ///
 /// [Pitch]: https://wiki.nesdev.com/w/index.php/APU#Pulse_.28.244000-4007.29
 impl ChannelFrequency for PulseState {
-    fn get_period(self: &Self) -> u16 { self.period }
-    fn get_period_min(self: &Self) -> u16 { 8 }
+    fn get_period(self: &Self) -> u16 {
+        self.period
+    }
+    fn get_period_min(self: &Self) -> u16 {
+        8
+    }
 }
 
 impl ChannelAmplitude for PulseState {
-    fn get_volume(self: &Self) -> u8 { self.volume }
+    fn get_volume(self: &Self) -> u8 {
+        self.volume
+    }
 }
 
 impl ChannelState for PulseState {
@@ -281,9 +296,18 @@ impl ChannelState for PulseState {
         match delta {
             PulseDelta::SetPeriod(p) => Self { period: p, ..self },
             PulseDelta::SetVolume(v) => Self { volume: v, ..self },
-            PulseDelta::SetFrameCount(f) => Self { frame_count: f, ..self },
-            PulseDelta::SetPulseWidth(w) => Self { pulse_width: w, ..self },
-            PulseDelta::SetEnvelope(e) => Self { envelope: e, ..self },
+            PulseDelta::SetFrameCount(f) => Self {
+                frame_count: f,
+                ..self
+            },
+            PulseDelta::SetPulseWidth(w) => Self {
+                pulse_width: w,
+                ..self
+            },
+            PulseDelta::SetEnvelope(e) => Self {
+                envelope: e,
+                ..self
+            },
         }
     }
 
@@ -330,8 +354,12 @@ impl Default for TriangleState {
 }
 
 impl ChannelFrequency for TriangleState {
-    fn get_period(self: &Self) -> u16 { self.period }
-    fn get_period_min(self: &Self) -> u16 { 1 }
+    fn get_period(self: &Self) -> u16 {
+        self.period
+    }
+    fn get_period_min(self: &Self) -> u16 {
+        1
+    }
 }
 
 impl ChannelState for TriangleState {
@@ -340,14 +368,19 @@ impl ChannelState for TriangleState {
     fn transform(self: Self, delta: TriangleDelta) -> Self {
         match delta {
             TriangleDelta::SetPeriod(p) => Self { period: p, ..self },
-            TriangleDelta::SetControlFlag(c) => Self { control_flag: c, ..self },
+            TriangleDelta::SetControlFlag(c) => Self {
+                control_flag: c,
+                ..self
+            },
         }
     }
 
     fn signal_at(self: &Self, config: &ChannelTuning) -> f32 {
         use std::f32::consts::PI;
 
-        if !self.control_flag { return 0.0; }
+        if !self.control_flag {
+            return 0.0;
+        }
 
         let amplitude = 1.0;
         let frequency = match self.get_frequency() {

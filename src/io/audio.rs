@@ -1,8 +1,8 @@
-use sdl2::audio::{AudioCallback};
-use std::sync::mpsc::{Receiver};
+use sdl2::audio::AudioCallback;
+use std::sync::mpsc::Receiver;
 
 use apu::channel;
-use apu::channel::{ChannelState};
+use apu::channel::ChannelState;
 
 pub struct NesAudioProcess {
     sample: u64,
@@ -40,7 +40,8 @@ impl NesAudioProcess {
 
     fn apply_transforms(self: &mut Self) {
         let channels = self.channels.clone();
-        self.channels = self.delta_stream
+        self.channels = self
+            .delta_stream
             .try_iter()
             .fold(channels, |acc, delta| acc.transform(delta));
     }

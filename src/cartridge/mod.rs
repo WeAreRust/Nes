@@ -6,17 +6,17 @@ use cartridge::mapper::Mapper;
 use cartridge::mirroring::Mirroring;
 
 pub struct Cartridge {
-  pub mirroring: Mirroring,
-  pub memory_mapper: Mapper,
+    pub mirroring: Mirroring,
+    pub memory_mapper: Mapper,
 }
 
 impl Cartridge {
-  fn try_from_ines(rom: ines::Rom) -> Result<Self, ParseError> {
-    Ok(Cartridge{
-      mirroring: rom.mirror,
-      memory_mapper: rom.mapper,
-    })
-  }
+    fn try_from_ines(rom: ines::Rom) -> Result<Self, ParseError> {
+        Ok(Cartridge {
+            mirroring: rom.mirror,
+            memory_mapper: rom.mapper,
+        })
+    }
 }
 
 #[derive(PartialEq, Debug)]
@@ -24,45 +24,45 @@ struct UnknownFormat {}
 
 #[derive(PartialEq, Debug)]
 pub enum ParseError {
-  UnknownFormat,
-  InvalidFile,
+    UnknownFormat,
+    InvalidFile,
 }
 
 impl From<UnknownFormat> for ParseError {
-  fn from(_e: UnknownFormat) -> Self {
-    ParseError::UnknownFormat
-  }
+    fn from(_e: UnknownFormat) -> Self {
+        ParseError::UnknownFormat
+    }
 }
 
 impl From<ines::ParseError> for ParseError {
-  fn from(_e: ines::ParseError) -> Self {
-    ParseError::InvalidFile
-  }
+    fn from(_e: ines::ParseError) -> Self {
+        ParseError::InvalidFile
+    }
 }
 
 #[derive(PartialEq, Debug)]
 enum Format {
-  INES,
+    INES,
 }
 
 pub fn parse_rom_file(data: &[u8]) -> Result<Cartridge, ParseError> {
-  match detect_format(data)? {
-    Format::INES => parse_ines(data),
-  }
+    match detect_format(data)? {
+        Format::INES => parse_ines(data),
+    }
 }
 
 fn detect_format(data: &[u8]) -> Result<Format, UnknownFormat> {
-  if ines::check_format(data) {
-    Ok(Format::INES)
-  } else {
-    Err(UnknownFormat{})
-  }
+    if ines::check_format(data) {
+        Ok(Format::INES)
+    } else {
+        Err(UnknownFormat {})
+    }
 }
 
 fn parse_ines(data: &[u8]) -> Result<Cartridge, ParseError> {
-  let rom: ines::Rom = ines::parse_rom(data)?;
+    let rom: ines::Rom = ines::parse_rom(data)?;
 
-  Cartridge::try_from_ines(rom)
+    Cartridge::try_from_ines(rom)
 }
 
 #[cfg(test)]

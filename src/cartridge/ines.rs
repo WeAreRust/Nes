@@ -39,9 +39,7 @@ pub struct ParseError {
 
 impl From<ParseErrorReason> for ParseError {
     fn from(e: ParseErrorReason) -> Self {
-        ParseError{
-            reason: e,
-        }
+        ParseError { reason: e }
     }
 }
 
