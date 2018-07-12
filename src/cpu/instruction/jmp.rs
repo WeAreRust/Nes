@@ -5,8 +5,8 @@ impl Core {
     /// Jump to absolute address (JMP)
     ///
     /// Flags affected: None
-    pub fn jump_abs(&mut self, memory: &mut Memory) -> usize {
-        self.reg.pc = self.abs_addr(memory);
+    pub fn jmp_absolute(&mut self, memory: &mut Memory) -> usize {
+        self.reg.pc = self.absolute_addr(memory);
         3
     }
 
@@ -17,8 +17,8 @@ impl Core {
     /// An indirect jump must never use a vector beginning on the last byte of a page. If this
     /// occurs then the low byte should be as expected, and the high byte should wrap to the start
     /// of the page. See http://www.6502.org/tutorials/6502opcodes.html#JMP for details.
-    pub fn jump_indr(&mut self, memory: &mut Memory) -> usize {
-        self.reg.pc = self.indr_addr(memory);
+    pub fn jmp_indirect(&mut self, memory: &mut Memory) -> usize {
+        self.reg.pc = self.indirect_addr(memory);
         5
     }
 }

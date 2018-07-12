@@ -5,8 +5,8 @@ impl Core {
     /// Load the immediate value into the accumulator register (LDA)
     ///
     /// Flags affected: N, Z
-    pub fn lda_imd(&mut self, memory: &mut Memory) -> usize {
-        let value = self.imd_value(memory);
+    pub fn lda_immediate(&mut self, memory: &mut Memory) -> usize {
+        let value = self.immediate_value(memory);
         self.reg.acc = value;
 
         // Update status flags.
@@ -19,8 +19,8 @@ impl Core {
     /// Load the value at the provided address into the accumulator register (LDA)
     ///
     /// Flags affected: N, Z
-    pub fn lda_abs(&mut self, memory: &mut Memory) -> usize {
-        let addr = self.abs_addr(memory);
+    pub fn lda_absolute(&mut self, memory: &mut Memory) -> usize {
+        let addr = self.absolute_addr(memory);
         self.reg.pc += 1;
         self.reg.acc = memory.read_addr(addr);
 
