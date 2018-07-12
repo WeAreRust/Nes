@@ -37,7 +37,7 @@ impl Registers {
             y_idx: 0,
             pc: 0,
             stack: 0,
-            status: StatusFlags::default(),
+            status: StatusFlags::empty(),
         }
     }
 }
@@ -58,15 +58,15 @@ impl Default for Registers {
 bitflags! {
     /// Status register
     ///
-    ///  7 6 5 4 3 2 1 0
-    ///  N V _ B D I Z C
-    ///  | |   | | | | +--- Carry Flag
-    ///  | |   | | | +----- Zero Flag
-    ///  | |   | | +------- Interrupt Disable
-    ///  | |   | +--------- Decimal Mode (unused)
-    ///  | |   +----------- Break Command
-    ///  | +--------------- Overflow Flag
-    ///  +----------------- Negative Flag
+    /// 7 6 5 4 3 2 1 0
+    /// N V _ B D I Z C
+    /// | |   | | | | +--- Carry Flag
+    /// | |   | | | +----- Zero Flag
+    /// | |   | | +------- Interrupt Disable
+    /// | |   | +--------- Decimal Mode (unused)
+    /// | |   +----------- Break Command
+    /// | +--------------- Overflow Flag
+    /// +----------------- Negative Flag
     pub struct StatusFlags: u8 {
        const C_FLAG = 0b00000001;
        const Z_FLAG = 0b00000010;
@@ -85,8 +85,63 @@ bitflags! {
     }
 }
 
+impl StatusFlags {
+    /// Set Zero Flag if the byte is 0
+    pub fn set_zero(&mut self, byte: u8) {
+        self.set(Self::Z_FLAG, byte == 0)
+    }
+
+    /// Set Negative Flag if the 7th byte is set
+    pub fn set_negative(&mut self, byte: u8) {
+        self.set(Self::N_FLAG, (byte >> 7) == 1);
+    }
+}
+
 impl Default for StatusFlags {
     fn default() -> Self {
         Self::DX_FLAG
     }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn default_status_flags() {
+        assert_eq!(StatusFlags::default().bits, 0b00101000);
+    }
+
+    #[test]
+    fn zero_flag_hi() {
+        let mut flags = StatusFlags::empty();
+        flags.set_zero(0);
+
+        assert!(flags.contains(StatusFlags::Z_FLAG));
+    }
+
+    #[test]
+    fn zero_flag_lo() {
+        let mut flags = StatusFlags::empty();
+        flags.set_zero(1);
+
+        assert!(!flags.contains(StatusFlags::Z_FLAG));
+    }
+
+    #[test]
+    fn negative_flag_hi() {
+        let mut flags = StatusFlags::empty();
+        flags.set_negative(0b10011000);
+
+        assert!(flags.contains(StatusFlags::N_FLAG));
+    }
+
+    #[test]
+    fn negative_flag_lo() {
+        let mut flags = StatusFlags::empty();
+        flags.set_negative(0);
+
+        assert!(!flags.contains(StatusFlags::N_FLAG));
+    }
+
 }
