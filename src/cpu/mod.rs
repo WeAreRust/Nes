@@ -25,7 +25,7 @@ impl Core {
     }
 
     /// Absolute address.
-    pub fn abs_addr(&mut self, memory: &mut Memory) -> u16 {
+    fn abs_addr(&mut self, memory: &mut Memory) -> u16 {
         let lo = memory.read_addr(self.reg.pc) as u16;
         let hi = memory.read_addr(self.reg.pc + 1) as u16;
         self.reg.pc += 2;
@@ -38,7 +38,7 @@ impl Core {
     /// The 6502 processor has a bug in which only the high byte is incremented instead of the
     /// whole 16-bit address when computing the indirect address. See
     /// http://www.6502.org/tutorials/6502opcodes.html#JMP for details.
-    pub fn indr_addr(&mut self, memory: &mut Memory) -> u16 {
+    fn indr_addr(&mut self, memory: &mut Memory) -> u16 {
         let lo_addr = memory.read_addr(self.reg.pc) as u16;
         let hi_addr = memory.read_addr(self.reg.pc + 1) as u16;
         self.reg.pc += 2;
@@ -58,6 +58,7 @@ impl Core {
         match opcode {
             0x4c => self.jump_abs(memory),
             0x6c => self.jump_indr(memory),
+            0xad => self.lda_abs(memory),
             _ => unimplemented!(),
         }
     }

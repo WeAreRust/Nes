@@ -8,3 +8,4 @@ macro_rules! nes_asm {
 }
 
 mod jmp;
+mod lda;
