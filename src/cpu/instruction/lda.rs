@@ -6,7 +6,7 @@ impl Core {
     ///
     /// Flags affected: N, Z
     pub fn lda_immediate(&mut self, memory: &mut Memory) -> usize {
-        let value = self.immediate_value(memory);
+        let value = self.immediate_addr(memory);
         self.reg.acc = value;
 
         // Update status flags.
@@ -21,7 +21,6 @@ impl Core {
     /// Flags affected: N, Z
     pub fn lda_absolute(&mut self, memory: &mut Memory) -> usize {
         let addr = self.absolute_addr(memory);
-        self.reg.pc += 1;
         self.reg.acc = memory.read_addr(addr);
 
         // Update status flags.

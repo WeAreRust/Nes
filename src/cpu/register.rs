@@ -59,7 +59,7 @@ bitflags! {
     /// Status register
     ///
     /// 7 6 5 4 3 2 1 0
-    /// N V _ B D I Z C
+    /// N V X B D I Z C
     /// | |   | | | | +--- Carry Flag
     /// | |   | | | +----- Zero Flag
     /// | |   | | +------- Interrupt Disable
@@ -86,14 +86,16 @@ bitflags! {
 }
 
 impl StatusFlags {
-    /// Set Zero Flag if the byte is 0
-    pub fn set_zero(&mut self, byte: u8) {
-        self.set(Self::Z_FLAG, byte == 0)
+    /// Zero flag is set if the result of the last operation as was zero
+    pub fn set_zero(&mut self, result: u8) {
+        self.set(Self::Z_FLAG, result == 0)
     }
 
-    /// Set Negative Flag if the 7th byte is set
-    pub fn set_negative(&mut self, byte: u8) {
-        self.set(Self::N_FLAG, (byte >> 7) == 1);
+    /// Negative flag is set if the result of the last operation had bit 7 set to 1
+    ///
+    /// TODO: Explain why it's the 7th flag (2's compliment).
+    pub fn set_negative(&mut self, result: u8) {
+        self.set(Self::N_FLAG, (result >> 7) == 1);
     }
 }
 

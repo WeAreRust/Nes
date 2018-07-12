@@ -1,5 +1,5 @@
 use cpu::Core;
-use memory::Memory;
+use memory::{Memory, ReadAddr};
 
 impl Core {
     /// Jump to absolute address (JMP)
@@ -20,6 +20,26 @@ impl Core {
     pub fn jmp_indirect(&mut self, memory: &mut Memory) -> usize {
         self.reg.pc = self.indirect_addr(memory);
         5
+    }
+
+    /// JMP is the only 6502 instruction to support indirection. The instruction contains a 16 bit
+    /// address which identifies the location of the least significant byte of another 16 bit
+    /// memory address which is the real target of the instruction.
+    ///
+    /// For example if location $0120 contains $FC and location $0121 contains $BA then the
+    /// instruction JMP ($0120) will cause the next instruction execution to occur at $BAFC (e.g.
+    /// the contents of $0120 and $0121).
+    fn indirect_addr(&mut self, memory: &mut Memory) -> u16 {
+        let lo_addr = memory.read_addr(self.reg.pc) as u16;
+        let hi_addr = memory.read_addr(self.reg.pc + 1) as u16;
+        self.reg.pc += 2;
+
+        let lo_adjusted = lo_addr + 1 | hi_addr << 8;
+        let hi_adjusted = lo_addr | hi_addr << 8;
+
+        let lo = memory.read_addr(lo_adjusted) as u16;
+        let hi = memory.read_addr(hi_adjusted) as u16;
+        lo | hi << 8
     }
 }
 

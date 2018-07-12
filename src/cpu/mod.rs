@@ -24,38 +24,20 @@ impl Core {
         Core { reg }
     }
 
-    /// Value in memory.
-    fn immediate_value(&mut self, memory: &mut Memory) -> u8 {
+    /// Immediate addressing allows the use of an 8 bit constant as the arguments to an address.
+    fn immediate_addr(&mut self, memory: &mut Memory) -> u8 {
         let value = memory.read_addr(self.reg.pc);
         self.reg.pc += 1;
 
         value
     }
 
-    /// Absolute address.
+    /// Absolute addressing allows the use of an 16 bit address to identify the target location.
     fn absolute_addr(&mut self, memory: &mut Memory) -> u16 {
         let lo = memory.read_addr(self.reg.pc) as u16;
         let hi = memory.read_addr(self.reg.pc + 1) as u16;
         self.reg.pc += 2;
 
-        lo | hi << 8
-    }
-
-    /// Indirect address.
-    ///
-    /// The 6502 processor has a bug in which only the high byte is incremented instead of the
-    /// whole 16-bit address when computing the indirect address. See
-    /// http://www.6502.org/tutorials/6502opcodes.html#JMP for details.
-    fn indirect_addr(&mut self, memory: &mut Memory) -> u16 {
-        let lo_addr = memory.read_addr(self.reg.pc) as u16;
-        let hi_addr = memory.read_addr(self.reg.pc + 1) as u16;
-        self.reg.pc += 2;
-
-        let lo_adjusted = lo_addr + 1 | hi_addr << 8;
-        let hi_adjusted = lo_addr | hi_addr << 8;
-
-        let lo = memory.read_addr(lo_adjusted) as u16;
-        let hi = memory.read_addr(hi_adjusted) as u16;
         lo | hi << 8
     }
 
