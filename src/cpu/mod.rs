@@ -24,6 +24,14 @@ impl Core {
         Core { reg }
     }
 
+    /// Value in memory.
+    fn imd_value(&mut self, memory: &mut Memory) -> u8 {
+        let value = memory.read_addr(self.reg.pc);
+        self.reg.pc += 1;
+
+        value
+    }
+
     /// Absolute address.
     fn abs_addr(&mut self, memory: &mut Memory) -> u16 {
         let lo = memory.read_addr(self.reg.pc) as u16;
@@ -59,6 +67,7 @@ impl Core {
             0x4c => self.jump_abs(memory),
             0x6c => self.jump_indr(memory),
             0xad => self.lda_abs(memory),
+            0xa9 => self.lda_imd(memory),
             _ => unimplemented!(),
         }
     }
