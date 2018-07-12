@@ -127,15 +127,37 @@ impl Core {
         (lo | hi << 8).wrapping_add(self.reg.y_idx as u16)
     }
 
-    // /// AKA: Indirect,X
-    // /// TODO
-    // fn idx_indirect(&mut self, memory: &mut Memory) -> u16 {
-    // }
+    /// Indexed indirect addressing is normally used in conjunction with a table of address held on
+    /// zero page. The address of the table is taken from the instruction and the X register added
+    /// to it (with zero page wrap around) to give the location of the least significant byte of
+    /// the target address
+    ///
+    /// Also seen in spec sheets as `Indirect,X`.
+    fn idx_indirect(&mut self, memory: &mut Memory) -> u16 {
+        let addr = memory.read_addr(self.reg.pc).wrapping_add(self.reg.x_idx) as u16;
+        self.reg.pc += 1;
 
-    // /// AKA: Indirect,Y
-    // /// TODO
-    // fn indirect_idx(&mut self, memory: &mut Memory) -> u16 {
-    // }
+        let lo = memory.read_addr(addr) as u16;
+        let hi = memory.read_addr(addr + 1) as u16;
+
+        lo | hi << 8
+    }
+
+    /// Indirect indirect addressing is the most common indirection mode used on the 6502. In
+    /// instruction contains the zero page location of the least significant byte of 16 bit
+    /// address. The Y register is dynamically added to this value to generated the actual target
+    /// address for operation
+    ///
+    /// Also seen in spec sheets as `Indirect,Y`.
+    fn indirect_idx(&mut self, memory: &mut Memory) -> u16 {
+        let addr = memory.read_addr(self.reg.pc) as u16;
+        self.reg.pc += 1;
+
+        let lo = memory.read_addr(addr) as u16;
+        let hi = memory.read_addr(addr + 1) as u16;
+
+        (lo | hi << 8).wrapping_add(self.reg.y_idx as u16)
+    }
 
     /// Execute the opcode and return the number of cycles.
     pub fn execute(&mut self, opcode: u8, memory: &mut Memory) -> usize {
@@ -297,5 +319,49 @@ mod tests {
         let addr = cpu.absolute_addr_y(&mut memory);
         assert_eq!(addr, 0x0001);
         assert_eq!(cpu.reg.pc, 2);
+    }
+
+    #[test]
+    fn index_indirect() {
+        let mut memory = Memory::with_bytes(vec![0x01, 0xff, 0xff, 0x97, 0x55]);
+        let mut cpu = Core::new(Registers::empty());
+        cpu.reg.x_idx = 2;
+
+        let addr = cpu.idx_indirect(&mut memory);
+        assert_eq!(addr, 0x5597);
+        assert_eq!(cpu.reg.pc, 1);
+    }
+
+    #[test]
+    fn index_indirect_overflow() {
+        let mut memory = Memory::with_bytes(vec![0xff, 0x97, 0x55]);
+        let mut cpu = Core::new(Registers::empty());
+        cpu.reg.x_idx = 2;
+
+        let addr = cpu.idx_indirect(&mut memory);
+        assert_eq!(addr, 0x5597);
+        assert_eq!(cpu.reg.pc, 1);
+    }
+
+    #[test]
+    fn indirect_index() {
+        let mut memory = Memory::with_bytes(vec![0x03, 0xff, 0xff, 0x97, 0x55]);
+        let mut cpu = Core::new(Registers::empty());
+        cpu.reg.y_idx = 2;
+
+        let addr = cpu.indirect_idx(&mut memory);
+        assert_eq!(addr, 0x5599);
+        assert_eq!(cpu.reg.pc, 1);
+    }
+
+    #[test]
+    fn indirect_index_overflow() {
+        let mut memory = Memory::with_bytes(vec![0x01, 0xff, 0xff]);
+        let mut cpu = Core::new(Registers::empty());
+        cpu.reg.y_idx = 2;
+
+        let addr = cpu.indirect_idx(&mut memory);
+        assert_eq!(addr, 0x0001);
+        assert_eq!(cpu.reg.pc, 1);
     }
 }
