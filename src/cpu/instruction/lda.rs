@@ -5,57 +5,42 @@ impl Core {
     /// Load the immediate value into the accumulator register (LDA)
     ///
     /// Flags affected: N, Z
-    pub fn lda_immediate(&mut self, memory: &mut Memory) -> usize {
+    pub fn lda_immediate(&mut self, memory: &mut Memory) {
         let value = self.immediate_addr(memory);
         self.reg.acc = value;
-
-        // Update status flags.
-        self.reg.status.set_negative(self.reg.acc);
-        self.reg.status.set_zero(self.reg.acc);
-
-        2
+        self.lda_update_status_flags();
     }
 
     /// Load the value at the provided zero page address into the accumulator register (LDA)
     ///
     /// Flags affected: N, Z
-    pub fn lda_zero_page(&mut self, memory: &mut Memory) -> usize {
+    pub fn lda_zero_page(&mut self, memory: &mut Memory) {
         let addr = self.zero_page_addr(memory);
         self.reg.acc = memory.read_addr(addr);
-
-        // Update status flags.
-        self.reg.status.set_negative(self.reg.acc);
-        self.reg.status.set_zero(self.reg.acc);
-
-        3
+        self.lda_update_status_flags();
     }
 
     /// Load the value at the provided zero page x address into the accunulator register (LDA)
     ///
     /// Flags affected: N, Z
-    pub fn lda_zero_page_x(&mut self, memory: &mut Memory) -> usize {
+    pub fn lda_zero_page_x(&mut self, memory: &mut Memory) {
         let addr = self.zero_page_addr_x(memory);
         self.reg.acc = memory.read_addr(addr);
-
-        // Update status flags.
-        self.reg.status.set_negative(self.reg.acc);
-        self.reg.status.set_zero(self.reg.acc);
-
-        3
+        self.lda_update_status_flags();
     }
 
     /// Load the value at the provided address into the accumulator register (LDA)
     ///
     /// Flags affected: N, Z
-    pub fn lda_absolute(&mut self, memory: &mut Memory) -> usize {
+    pub fn lda_absolute(&mut self, memory: &mut Memory) {
         let addr = self.absolute_addr(memory);
         self.reg.acc = memory.read_addr(addr);
+        self.lda_update_status_flags();
+    }
 
-        // Update status flags.
+    fn lda_update_status_flags(&mut self) {
         self.reg.status.set_negative(self.reg.acc);
         self.reg.status.set_zero(self.reg.acc);
-
-        4
     }
 }
 
@@ -63,7 +48,10 @@ impl Core {
 mod tests {
     use super::*;
 
-    use cpu::register::{Registers, StatusFlags};
+    use cpu::{
+        instruction,
+        register::{Registers, StatusFlags},
+    };
     use memory::ReadAddr;
 
     #[test]
@@ -73,9 +61,9 @@ mod tests {
 
         let opcode = memory.read_addr(0);
         assert_eq!(opcode, 0xa9);
+        assert_eq!(instruction::CYCLES[opcode as usize], 2);
 
-        let cycles = cpu.execute(opcode, &mut memory);
-        assert_eq!(cycles, 2);
+        cpu.execute(opcode, &mut memory);
         assert_eq!(cpu.reg.acc, 0x5f);
         assert_eq!(cpu.reg.status, StatusFlags::empty());
     }
@@ -90,9 +78,9 @@ mod tests {
 
         let opcode = memory.read_addr(0);
         assert_eq!(opcode, 0xa5);
+        assert_eq!(instruction::CYCLES[opcode as usize], 3);
 
-        let cycles = cpu.execute(opcode, &mut memory);
-        assert_eq!(cycles, 3);
+        cpu.execute(opcode, &mut memory);
         assert_eq!(cpu.reg.acc, 0x44);
         assert_eq!(cpu.reg.status, StatusFlags::empty());
     }
@@ -107,9 +95,9 @@ mod tests {
 
         let opcode = memory.read_addr(0);
         assert_eq!(opcode, 0xad);
+        assert_eq!(instruction::CYCLES[opcode as usize], 4);
 
-        let cycles = cpu.execute(opcode, &mut memory);
-        assert_eq!(cycles, 4);
+        cpu.execute(opcode, &mut memory);
         assert_eq!(cpu.reg.acc, 0x44);
         assert_eq!(cpu.reg.status, StatusFlags::empty());
     }
@@ -121,9 +109,9 @@ mod tests {
 
         let opcode = memory.read_addr(0);
         assert_eq!(opcode, 0xa9);
+        assert_eq!(instruction::CYCLES[opcode as usize], 2);
 
-        let cycles = cpu.execute(opcode, &mut memory);
-        assert_eq!(cycles, 2);
+        cpu.execute(opcode, &mut memory);
         assert_eq!(cpu.reg.acc, 0x00);
         assert_eq!(cpu.reg.status, StatusFlags::Z_FLAG);
     }
@@ -135,9 +123,9 @@ mod tests {
 
         let opcode = memory.read_addr(0);
         assert_eq!(opcode, 0xa9);
+        assert_eq!(instruction::CYCLES[opcode as usize], 2);
 
-        let cycles = cpu.execute(opcode, &mut memory);
-        assert_eq!(cycles, 2);
+        cpu.execute(opcode, &mut memory);
         assert_eq!(cpu.reg.acc, 0b10011000);
         assert_eq!(cpu.reg.status, StatusFlags::N_FLAG);
     }

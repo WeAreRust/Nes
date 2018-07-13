@@ -14,9 +14,11 @@ pub struct Core {
 impl Processor for Core {
     fn cycle(&mut self, memory: &mut Memory) {
         let opcode = memory.read_addr(self.reg.pc);
-        let _cycles = self.execute(opcode, memory);
 
-        // TODO(joshleeb): Timing (use returned cycles).
+        // TODO(joshleeb): Timing using cycles. Execute after cycles are completed?
+        // let cycles = instruction::CYCLES[opcode as usize];
+
+        self.execute(opcode, memory);
     }
 }
 
@@ -160,7 +162,7 @@ impl Core {
     }
 
     /// Execute the opcode and return the number of cycles.
-    pub fn execute(&mut self, opcode: u8, memory: &mut Memory) -> usize {
+    pub fn execute(&mut self, opcode: u8, memory: &mut Memory) {
         self.reg.pc += 1;
 
         match opcode {
@@ -170,7 +172,7 @@ impl Core {
             0xa9 => self.lda_immediate(memory),
             0xad => self.lda_absolute(memory),
             _ => unimplemented!(),
-        }
+        };
     }
 }
 

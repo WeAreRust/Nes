@@ -5,9 +5,8 @@ impl Core {
     /// Jump to absolute address (JMP)
     ///
     /// Flags affected: None
-    pub fn jmp_absolute(&mut self, memory: &mut Memory) -> usize {
+    pub fn jmp_absolute(&mut self, memory: &mut Memory) {
         self.reg.pc = self.absolute_addr(memory);
-        3
     }
 
     /// Jump to indirect address (JMP)
@@ -17,9 +16,10 @@ impl Core {
     /// An indirect jump must never use a vector beginning on the last byte of a page. If this
     /// occurs then the low byte should be as expected, and the high byte should wrap to the start
     /// of the page. See http://www.6502.org/tutorials/6502opcodes.html#JMP for details.
-    pub fn jmp_indirect(&mut self, memory: &mut Memory) -> usize {
+    ///
+    /// TODO: Not sure if this wrap is being done?
+    pub fn jmp_indirect(&mut self, memory: &mut Memory) {
         self.reg.pc = self.indirect_addr(memory);
-        5
     }
 
     /// JMP is the only 6502 instruction to support indirection. The instruction contains a 16 bit
@@ -32,7 +32,6 @@ impl Core {
     fn indirect_addr(&mut self, memory: &mut Memory) -> u16 {
         let lo_addr = memory.read_addr(self.reg.pc) as u16;
         let hi_addr = memory.read_addr(self.reg.pc + 1) as u16;
-        self.reg.pc += 2;
 
         let lo_adjusted = lo_addr + 1 | hi_addr << 8;
         let hi_adjusted = lo_addr | hi_addr << 8;
@@ -47,7 +46,7 @@ impl Core {
 mod tests {
     use super::*;
 
-    use cpu::register::Registers;
+    use cpu::{instruction, register::Registers};
     use memory::ReadAddr;
 
     #[test]
@@ -57,9 +56,9 @@ mod tests {
 
         let opcode = memory.read_addr(0);
         assert_eq!(opcode, 0x4c);
+        assert_eq!(instruction::CYCLES[opcode as usize], 3);
 
-        let cycles = cpu.execute(opcode, &mut memory);
-        assert_eq!(cycles, 3);
+        cpu.execute(opcode, &mut memory);
         assert_eq!(cpu.reg.pc, 0x5597);
     }
 
@@ -73,9 +72,9 @@ mod tests {
 
         let opcode = memory.read_addr(0);
         assert_eq!(opcode, 0x6c);
+        assert_eq!(instruction::CYCLES[opcode as usize], 5);
 
-        let cycles = cpu.execute(opcode, &mut memory);
-        assert_eq!(cycles, 5);
+        cpu.execute(opcode, &mut memory);
         assert_eq!(cpu.reg.pc, 0x5597);
     }
 }
