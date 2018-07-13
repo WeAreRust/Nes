@@ -168,9 +168,16 @@ impl Core {
         match opcode {
             0x4c => self.jmp_absolute(memory),
             0x6c => self.jmp_indirect(memory),
-            0xa5 => self.lda_zero_page(memory),
+
             0xa9 => self.lda_immediate(memory),
+            0xa5 => self.lda_zero_page(memory),
+            0xb5 => self.lda_zero_page_x(memory),
             0xad => self.lda_absolute(memory),
+            0xbd => self.lda_absolute_x(memory),
+            0xb9 => self.lda_absolute_y(memory),
+            0xa1 => self.lda_indirect_x(memory),
+            0xb1 => self.lda_indirect_y(memory),
+
             _ => unimplemented!(),
         };
     }

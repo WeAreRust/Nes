@@ -2,7 +2,7 @@ use cpu::Core;
 use memory::{Memory, ReadAddr};
 
 impl Core {
-    /// Load the immediate value into the accumulator register (LDA)
+    /// Load accumulator immediate
     ///
     /// Flags affected: N, Z
     pub fn lda_immediate(&mut self, memory: &mut Memory) {
@@ -11,7 +11,7 @@ impl Core {
         self.lda_update_status_flags();
     }
 
-    /// Load the value at the provided zero page address into the accumulator register (LDA)
+    /// Load accumulator zero page
     ///
     /// Flags affected: N, Z
     pub fn lda_zero_page(&mut self, memory: &mut Memory) {
@@ -20,7 +20,7 @@ impl Core {
         self.lda_update_status_flags();
     }
 
-    /// Load the value at the provided zero page x address into the accunulator register (LDA)
+    /// Load accumulator zero page X
     ///
     /// Flags affected: N, Z
     pub fn lda_zero_page_x(&mut self, memory: &mut Memory) {
@@ -29,11 +29,51 @@ impl Core {
         self.lda_update_status_flags();
     }
 
-    /// Load the value at the provided address into the accumulator register (LDA)
+    /// Load accumulator absolute 
     ///
     /// Flags affected: N, Z
     pub fn lda_absolute(&mut self, memory: &mut Memory) {
         let addr = self.absolute_addr(memory);
+        self.reg.acc = memory.read_addr(addr);
+        self.lda_update_status_flags();
+    }
+
+    /// Load accumulator absolute X
+    ///
+    /// Flags affected: N, Z
+    /// TODO: test
+    pub fn lda_absolute_x(&mut self, memory: &mut Memory) {
+        let addr = self.absolute_addr_x(memory);
+        self.reg.acc = memory.read_addr(addr);
+        self.lda_update_status_flags();
+    }
+
+    /// Load accumulator absolute Y
+    ///
+    /// Flags affected: N, Z
+    /// TODO: test
+    pub fn lda_absolute_y(&mut self, memory: &mut Memory) {
+        let addr = self.absolute_addr_y(memory);
+        self.reg.acc = memory.read_addr(addr);
+        self.lda_update_status_flags();
+    }
+
+    /// Load accumulator indirect X
+    ///
+    /// Flags affected: N, Z
+    /// TODO: test
+    pub fn lda_indirect_x(&mut self, memory: &mut Memory) {
+        let addr = self.idx_indirect(memory);
+        self.reg.acc = memory.read_addr(addr);
+        self.lda_update_status_flags();
+    }
+
+    /// Load accumulator indirect Y
+    ///
+    /// Flags affected: N, Z
+    /// TODO: test
+    pub fn lda_indirect_y(&mut self, memory: &mut Memory) {
+        let addr = self.indirect_idx(memory);
         self.reg.acc = memory.read_addr(addr);
         self.lda_update_status_flags();
     }

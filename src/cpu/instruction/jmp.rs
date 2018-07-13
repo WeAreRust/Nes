@@ -2,14 +2,14 @@ use cpu::Core;
 use memory::{Memory, ReadAddr};
 
 impl Core {
-    /// Jump to absolute address (JMP)
+    /// Jump absolute
     ///
     /// Flags affected: None
     pub fn jmp_absolute(&mut self, memory: &mut Memory) {
         self.reg.pc = self.absolute_addr(memory);
     }
 
-    /// Jump to indirect address (JMP)
+    /// Jump indirect
     ///
     /// Flags affected: None
     ///
@@ -82,6 +82,20 @@ mod tests {
     fn indirect_address() {
         let mut memory = Memory::with_bytes(vec![0x03, 0x00, 0xff, 0x55, 0x97]);
         let mut cpu = Core::new(Registers::empty());
+
+        let addr = cpu.indirect_addr(&mut memory);
+        assert_eq!(addr, 0x5597);
+    }
+
+    #[test]
+    fn indirect_address_overflow() {
+        let mut bytes = vec![0; 256];
+        bytes[0] = 0x97;
+        bytes[255] = 0x55;
+
+        let mut memory = Memory::with_bytes(bytes);
+        let mut cpu = Core::new(Registers::empty());
+        cpu.reg.pc = 255;
 
         let addr = cpu.indirect_addr(&mut memory);
         assert_eq!(addr, 0x5597);
