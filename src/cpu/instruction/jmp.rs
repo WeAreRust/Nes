@@ -77,4 +77,13 @@ mod tests {
         cpu.execute(opcode, &mut memory);
         assert_eq!(cpu.reg.pc, 0x5597);
     }
+
+    #[test]
+    fn indirect_address() {
+        let mut memory = Memory::with_bytes(vec![0x03, 0x00, 0xff, 0x55, 0x97]);
+        let mut cpu = Core::new(Registers::empty());
+
+        let addr = cpu.indirect_addr(&mut memory);
+        assert_eq!(addr, 0x5597);
+    }
 }
