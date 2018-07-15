@@ -199,6 +199,8 @@ impl ChannelState for ApuChannelState {
 
 ////////////////////////////////////////////////////////////////////////////
 
+pub enum WhichPulse { P1, P2 }
+
 const FREQ_CHUNK: f32 = 0.125;
 
 /// Read more about the wave pulse [here].
@@ -334,21 +336,16 @@ impl ChannelState for PulseState {
     }
 
     fn signal_at(self: &Self, config: &ChannelTuning) -> f32 {
-        let amplitude = match self.get_amplitude() {
-            None => return 0.0,
-            Some(a) => a,
-        };
+        let amplitude = self.get_amplitude();
+        let frequency = self.get_frequency();
+        let with_both = amplitude.and_then(|a| frequency.map(|f| (a, f)));
 
-        let frequency = match self.get_frequency() {
-            None => return 0.0,
-            Some(f) => f,
-        };
-
-        let sample_offset = config.sample * (config.sample_rate as u64);
-        let sample_mod = (sample_offset % frequency as u64) as f32;
-        let frequent_percent = sample_mod / frequency;
-        let signal = amplitude * self.pulse_width.pulse_sign(frequent_percent);
-        return signal;
+        return with_both.map_or(0.0, |(amplitude, frequency)| {
+            let sample_offset = config.sample * (config.sample_rate as u64);
+            let sample_mod = (sample_offset % frequency as u64) as f32;
+            let frequent_percent = sample_mod / frequency;
+            return amplitude * self.pulse_width.pulse_sign(frequent_percent);
+        });
     }
 }
 
@@ -390,10 +387,7 @@ impl ChannelState for TriangleState {
     fn transform(self: Self, delta: TriangleDelta) -> Self {
         match delta {
             TriangleDelta::SetPeriod(p) => Self { period: p, ..self },
-            TriangleDelta::SetControlFlag(c) => Self {
-                control_flag: c,
-                ..self
-            },
+            TriangleDelta::SetControlFlag(c) => Self { control_flag: c, ..self },
         }
     }
 
@@ -402,15 +396,11 @@ impl ChannelState for TriangleState {
             return 0.0;
         }
 
-        let frequency = match self.get_frequency() {
-            None => return 0.0,
-            Some(f) => f,
-        };
-
-        let sample_offset = config.sample * (config.sample_rate as u64);
-        let period_offset = (sample_offset % frequency as u64) as f32 / frequency;
-        let signal = (0.25 - (period_offset - 0.5).abs()) * 4.0;
-        return signal;
+        return self.get_frequency().map_or(0.0, |frequency| {
+            let sample_offset = config.sample * (config.sample_rate as u64);
+            let period_offset = (sample_offset % frequency as u64) as f32 / frequency;
+            return (0.25 - (period_offset - 0.5).abs()) * 4.0;
+        });
     }
 }
 
@@ -448,12 +438,9 @@ impl ChannelState for NoiseState {
     }
 
     fn signal_at(self: &Self, _config: &ChannelTuning) -> f32 {
-        match self.get_amplitude() {
-            None => 0.0,
-            Some(max_amplitude) => {
-                let mut random = thread_rng();
-                random.gen_range(-max_amplitude, max_amplitude)
-            }
-        }
+        return self.get_amplitude().map_or(0.0, |max_amplitude| {
+            let mut random = thread_rng();
+            random.gen_range(-max_amplitude, max_amplitude)
+        });
     }
 }

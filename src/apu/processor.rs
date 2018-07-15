@@ -1,4 +1,5 @@
-use apu::channel::{ApuChannelDelta, PulseWidth, PulseDelta};
+use apu::channel::{ApuChannelDelta, PulseDelta, WhichPulse};
+use apu::channel_differ::{ChannelDiffer, ChannelSnapshot, APU_CHANNEL_SIZE};
 use memory::Memory;
 use clock::Executable;
 use std::sync::mpsc::{Sender};
@@ -7,18 +8,9 @@ const APU_REGISTER_START: usize = 0x4000;
 const APU_REGISTER_RANGE: usize = 22;
 
 const REG_PULSE1_ROOT: usize = 0;
-const REG_PULSE2_ROOT: usize = 4;
-const REG_TRIANGLE_ROOT: usize = 8;
-const REG_NOISE_ROOT: usize = 12;
-
-const REG_PULSE1_VOL_OFFSET: usize = 0;
-const REG_PULSE1_SWEEP_OFFSET: usize = 1;
-const REG_PULSE1_LO_OFFSET: usize = 2;
-const REG_PULSE1_HI_OFFSET: usize = 3;
-const REG_PULSE2_VOL_OFFSET: usize = 4;
-const REG_PULSE2_SWEEP_OFFSET: usize = 5;
-const REG_PULSE2_LO_OFFSET: usize = 6;
-const REG_PULSE2_HI_OFFSET: usize = 7;
+const REG_PULSE2_ROOT: usize = REG_PULSE1_ROOT + 4;
+const REG_TRIANGLE_ROOT: usize = REG_PULSE2_ROOT + 4;
+const REG_NOISE_ROOT: usize = REG_TRIANGLE_ROOT + 4;
 
 type SnapshotRepr = [u8; APU_REGISTER_RANGE];
 
@@ -31,13 +23,6 @@ pub struct APU {
 struct RegisterSnapshot {
     /// Includes registers $4000-$4015
     registers: SnapshotRepr,
-}
-
-struct Differ<'a> {
-    changes: Vec<ApuChannelDelta>,
-    memory: &'a Memory,
-    old: &'a RegisterSnapshot,
-    new: &'a RegisterSnapshot,
 }
 
 impl APU {
@@ -88,41 +73,36 @@ impl RegisterSnapshot {
     }
 
     fn diff(self: &Self, other: &Self, memory: &Memory) -> Vec<ApuChannelDelta> {
-        let mut differ = Differ::create(self, other, memory);
-        differ.diff();
-        return differ.get_changes();
-    }
-}
-
-impl<'a> Differ<'a> {
-    fn create(old: &'a RegisterSnapshot, new: &'a RegisterSnapshot, memory: &'a Memory) -> Self {
-        let changes = vec![];
-        Differ { changes, old, new, memory }
+        let mut changes = vec![];
+        self.make_pulse_differ(other, WhichPulse::P1).diff(memory, &mut changes);
+        self.make_pulse_differ(other, WhichPulse::P2).diff(memory, &mut changes);
+        return changes;
     }
 
-    pub fn diff(self: &mut Self) {
-        self.diff_pulse_width(REG_PULSE1_ROOT, ApuChannelDelta::Pulse1);
-        self.diff_pulse_width(REG_PULSE2_ROOT, ApuChannelDelta::Pulse2);
+    fn get_channel(self: &Self, root: usize) -> ChannelSnapshot {
+        let mut channel_registers = [0; APU_CHANNEL_SIZE];
+        channel_registers.clone_from_slice(&self.registers[root .. root + 4]);
+        return channel_registers;
     }
 
-    fn get_changes(self: Self) -> Vec<ApuChannelDelta> {
-        return self.changes;
-    }
+    fn make_pulse_differ(self: &Self, other: &Self, which: WhichPulse) -> ChannelDiffer<PulseDelta> {
+        let channel_offset = match which {
+            WhichPulse::P1 => REG_PULSE1_ROOT,
+            WhichPulse::P2 => REG_PULSE2_ROOT,
+        };
 
-    fn diff_pulse_width<T>(self: &mut Self, channel_offset: usize, make: T)
-            where T: Fn(PulseDelta) -> ApuChannelDelta {
-        let pulse_byte_offset = 0;
-        let register_offset = pulse_byte_offset + channel_offset;
+        let mut differ = ChannelDiffer::create(
+            self.get_channel(channel_offset),
+            other.get_channel(channel_offset),
+            match which {
+                WhichPulse::P1 => ApuChannelDelta::Pulse1,
+                WhichPulse::P2 => ApuChannelDelta::Pulse2,
+            },
+        );
 
-        if self.old.has_changed_at(self.new, register_offset) {
-            let a = self.old.registers[register_offset];
-            let b = self.new.registers[register_offset];
-            if a & 0b1100_0000 != b & 0b1100_0000 {
-                let pulse_width = PulseWidth::calculate(b);
-                self.changes.push(make(PulseDelta::SetPulseWidth(pulse_width)));
-            }
-        }
-
+        differ.set_pulse = Some(PulseDelta::SetPulseWidth);
+        differ.set_period = Some(PulseDelta::SetPeriod);
+        return differ;
     }
 }
 
@@ -151,47 +131,54 @@ mod tests {
     }
 
     #[test]
-    fn duty_changed_to_0() {
-        let memory = init_memory(0);
-        let initial = RegisterSnapshot::with(REG_PULSE1_VOL_OFFSET, 0b1000_0000);
-        let changed = RegisterSnapshot::with(REG_PULSE1_VOL_OFFSET, 0b0000_0000);
+    fn duty_changes() {
+        let channel_conf: [(usize, fn(PulseDelta) -> A); 2]
+            = [(0, A::Pulse1), (4, A::Pulse2)];
 
-        assert_eq!(
-            initial.diff(&changed, &memory),
-            vec![A::Pulse1(PulseDelta::SetPulseWidth(PulseWidth::Duty0))],
-        );
+        for (offset, make) in channel_conf.iter() {
+            let memory = init_memory(0);
+            let duty_0 = RegisterSnapshot::with(0 + offset, 0b0000_0000);
+            let duty_1 = RegisterSnapshot::with(0 + offset, 0b0100_0000);
+            let duty_2 = RegisterSnapshot::with(0 + offset, 0b1000_0000);
+            let duty_3 = RegisterSnapshot::with(0 + offset, 0b1100_0000);
+
+            assert_eq!(
+                duty_1.diff(&duty_0, &memory),
+                vec![make(PulseDelta::SetPulseWidth(PulseWidth::Duty0))],
+            );
+
+            assert_eq!(
+                duty_0.diff(&duty_1, &memory),
+                vec![make(PulseDelta::SetPulseWidth(PulseWidth::Duty1))],
+            );
+
+            assert_eq!(
+                duty_0.diff(&duty_2, &memory),
+                vec![make(PulseDelta::SetPulseWidth(PulseWidth::Duty2))],
+            );
+
+            assert_eq!(
+                duty_0.diff(&duty_3, &memory),
+                vec![make(PulseDelta::SetPulseWidth(PulseWidth::Duty3))],
+            );
+        }
     }
 
     #[test]
-    fn duty_changed_to_1() {
+    fn period_changes() {
         let (memory, initial) = init_states(0);
-        let changed = RegisterSnapshot::with(REG_PULSE1_VOL_OFFSET, 0b0100_0000);
+        let change_1 = RegisterSnapshot::with(3, 0b0000_0001);
+        let change_2 = RegisterSnapshot::with(2, 0b0010_0000);
 
-        assert_eq!(
-            initial.diff(&changed, &memory),
-            vec![A::Pulse1(PulseDelta::SetPulseWidth(PulseWidth::Duty1))],
-        );
-    }
+        let mut changes = vec![];
+        changes.extend(initial.diff(&change_1, &memory));
+        changes.extend(initial.diff(&change_2, &memory));
 
-    #[test]
-    fn duty_changed_to_2() {
-        let (memory, initial) = init_states(0);
-        let changed = RegisterSnapshot::with(REG_PULSE1_VOL_OFFSET, 0b1000_0000);
+        let expected = vec![
+            A::Pulse1(PulseDelta::SetPeriod(1)),
+            A::Pulse1(PulseDelta::SetPeriod(1 << 8)),
+        ];
 
-        assert_eq!(
-            initial.diff(&changed, &memory),
-            vec![A::Pulse1(PulseDelta::SetPulseWidth(PulseWidth::Duty2))],
-        );
-    }
-
-    #[test]
-    fn duty_changed_to_3() {
-        let (memory, initial) = init_states(0);
-        let changed = RegisterSnapshot::with(REG_PULSE1_VOL_OFFSET, 0b1100_0000);
-
-        assert_eq!(
-            initial.diff(&changed, &memory),
-            vec![A::Pulse1(PulseDelta::SetPulseWidth(PulseWidth::Duty3))],
-        );
+        assert_eq!(changes, expected);
     }
 }

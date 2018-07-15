@@ -48,21 +48,14 @@ fn _arp(send: &Sender<ApuChannelDelta>) {
 }
 
 fn _random_tune(send: &Sender<ApuChannelDelta>) {
-    pew_all(
-        send,
-        vec![
-           ApuChannelDelta::Triangle(TriangleDelta::SetControlFlag(false)),
-           ApuChannelDelta::Pulse1(PulseDelta::SetVolume(0)),
-        ],
-    );
 
     for note in 0..80 {
         pew_all(
             send,
             vec![
-                // ApuChannelDelta::Pulse1(PulseDelta::SetVolume(64)),
-                // ApuChannelDelta::Pulse1(PulseDelta::SetPeriod(from_note(note))),
-                // ApuChannelDelta::Pulse1(PulseDelta::SetPulseWidth(PulseWidth::Duty0)),
+                ApuChannelDelta::Pulse1(PulseDelta::SetVolume(64)),
+                ApuChannelDelta::Pulse1(PulseDelta::SetPeriod(from_note(note))),
+                ApuChannelDelta::Pulse1(PulseDelta::SetPulseWidth(PulseWidth::Duty0)),
                 ApuChannelDelta::Triangle(TriangleDelta::SetPeriod(from_note(note))),
                 ApuChannelDelta::Triangle(TriangleDelta::SetControlFlag(true)),
             ],
