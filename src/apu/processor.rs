@@ -1,4 +1,4 @@
-use apu::channel::{ApuChannelDelta, NoiseDelta, PulseDelta, TriangleDelta, WhichPulse};
+use apu::channel::{ApuChannelDelta, WhichPulse};
 use apu::channel_differ::{
     ChannelSnapshot, NoiseDiffer, PulseDiffer, TriangleDiffer, APU_CHANNEL_SIZE,
 };
@@ -45,6 +45,8 @@ impl Processor for APU {
         if let Result::Err(e) = result {
             panic!("The apu decided to burn the house down, CYA\n\n{:?}", e);
         }
+
+        self.previous_snapshot = new_snapshot;
     }
 }
 
@@ -131,8 +133,8 @@ impl RegisterSnapshot {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use apu::channel::ApuChannelDelta as A;
     use apu::channel::*;
+    use apu::channel::ApuChannelDelta as A;
     use memory::ReadAddr;
 
     impl ReadAddr<u16, u8> for Vec<u8> {

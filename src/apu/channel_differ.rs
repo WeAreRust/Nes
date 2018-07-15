@@ -191,7 +191,6 @@ fn read(snapshot: &ChannelSnapshot, byte: usize, mask: u8) -> u8 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use apu::channel::ApuChannelDelta as A;
     use apu::channel::*;
 
     fn make_pulse() -> PulseDiffer {
@@ -284,7 +283,7 @@ mod tests {
     }
 
     #[test]
-    fn period_change__when_hi_unchanged_but_lo_is() {
+    fn period_change_when_hi_unchanged_but_lo_is() {
         let change = make_pulse()
             .set_old(2, 0b0000_0000)
             .set_new(2, 0b0000_0001)
@@ -296,7 +295,7 @@ mod tests {
     }
 
     #[test]
-    fn period_change__when_lo_unchanged_but_hi_is() {
+    fn period_change_when_lo_unchanged_but_hi_is() {
         let change = make_pulse()
             .set_old(3, 0b0000_0000)
             .set_new(3, 0b0010_0000)
@@ -305,7 +304,7 @@ mod tests {
     }
 
     #[test]
-    fn period_changes__when_both_change() {
+    fn period_changes_when_both_change() {
         let change = make_pulse()
             .set_old(2, 0b0000_0000)
             .set_new(2, 0b0000_0001)
@@ -316,13 +315,13 @@ mod tests {
     }
 
     #[test]
-    fn period_change__when_nothing_changes() {
+    fn period_change_when_nothing_changes() {
         let change = make_pulse().diff_period();
         assert_eq!(change, None);
     }
 
     #[test]
-    fn volume_changes__with_update() {
+    fn volume_changes_with_update() {
         let change = make_pulse()
             .set_old(0, 0b0000_0000)
             .set_new(0, 0b0000_0001)
@@ -331,7 +330,7 @@ mod tests {
     }
 
     #[test]
-    fn volume_changes__with_no_update() {
+    fn volume_changes_with_no_update() {
         let change = make_pulse()
             .set_old(0, 0b0000_0000)
             .set_new(0, 0b0000_0000)
