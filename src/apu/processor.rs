@@ -41,7 +41,7 @@ impl Executable for APU {
         let result = self.delta_stream.send(ApuChannelDelta::Many(deltas));
 
         if let Result::Err(e) = result {
-            panic!("The apu decided to burn the house down, CYA\n{:?}", e);
+            panic!("The apu decided to burn the house down, CYA\n\n{:?}", e);
         }
     }
 }

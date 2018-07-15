@@ -61,9 +61,10 @@ impl<D> ChannelDiffer<D> {
             if lo.is_none() && hi.is_none() {
                 return None;
             }
+
             let lo = lo.unwrap_or(read(&self.old_registers, LO_REGISTER, LO_MASK)) as u16;
-            let hi = (hi.unwrap_or(read(&self.old_registers, HI_REGISTER, HI_MASK)) as u16) << HI_SHIFT;
-            return Some(set_period(hi + lo));
+            let hi = hi.unwrap_or(read(&self.old_registers, HI_REGISTER, HI_MASK)) as u16;
+            return Some(set_period((hi << HI_SHIFT) + lo));
         });
     }
 
