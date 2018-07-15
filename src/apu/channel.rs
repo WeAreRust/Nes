@@ -73,7 +73,7 @@ use std::clone::Clone;
 
 const MAX_PEROID: u16 = (1 << 12) - 1;
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, PartialOrd, Eq, Ord)]
 pub enum Envelope {
     Constant(u64),
 }
@@ -119,7 +119,7 @@ pub trait ChannelAmplitude {
 
 ////////////////////////////////////////////////////////////////////////////
 
-#[derive(Debug)]
+#[derive(Clone, Debug, PartialEq, PartialOrd, Eq, Ord)]
 pub enum ApuChannelDelta {
     Pulse1(PulseDelta),
     Pulse2(PulseDelta),
@@ -128,7 +128,7 @@ pub enum ApuChannelDelta {
     Many(Vec<ApuChannelDelta>),
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Clone, Debug)]
 pub struct ApuChannelState {
     pub pulse_1: PulseState,
     pub pulse_2: PulseState,
@@ -174,23 +174,42 @@ impl ChannelState for ApuChannelState {
         }
     }
 
+    /// This is the total signal of all channels from the APU, and emulates
+    /// the NES mixers by using lookup algorithm defined [here][mixer].
+    ///
+    /// [mixer]: https://wiki.nesdev.com/w/index.php/APU_Mixer
     fn signal_at(self: &Self, config: &ChannelTuning) -> f32 {
-        0.0
-            + self.pulse_1.signal_at(&config)
-            + self.pulse_2.signal_at(&config)
-            + self.triangle.signal_at(&config)
-            + self.noise.signal_at(&config)
+        // Mixer look up tables as described in the wiki.
+        let pulse_table = |n| 95.52 / (8128.0 / n + 100.0);
+        let tnd_table = |n| 163.67 / (24329.0 / n + 100.0);
+
+        // Signals as produced by the seperate channels.
+        let pulse_1 = self.pulse_1.signal_at(&config);
+        let pulse_2 = self.pulse_2.signal_at(&config);
+        let triangle = self.triangle.signal_at(&config);
+        let dmc = 0.0;
+        let noise = self.noise.signal_at(&config);
+
+        let pulse_mix = pulse_table(pulse_1 + pulse_2);
+        let tnd_mix = tnd_table(3.0 * triangle + 2.0 * noise + dmc);
+
+        return pulse_mix + tnd_mix;
     }
 }
 
 ////////////////////////////////////////////////////////////////////////////
+
+pub enum WhichPulse {
+    P1,
+    P2,
+}
 
 const FREQ_CHUNK: f32 = 0.125;
 
 /// Read more about the wave pulse [here].
 ///
 /// [here]: https://wiki.nesdev.com/w/index.php/APU_Pulse
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq, PartialOrd, Eq, Ord)]
 pub enum PulseWidth {
     /// Has a waveform like `0 1 0 0 0 0 0 0` where 12.5%
     /// of the waveform positive.
@@ -207,6 +226,19 @@ pub enum PulseWidth {
 }
 
 impl PulseWidth {
+    pub fn calculate(byte: u8) -> PulseWidth {
+        let masked = (byte & 0b11000000) >> 6;
+        if masked == 0 {
+            PulseWidth::Duty0
+        } else if masked == 1 {
+            PulseWidth::Duty1
+        } else if masked == 2 {
+            PulseWidth::Duty2
+        } else {
+            PulseWidth::Duty3
+        }
+    }
+
     fn pulse_sign(self: &Self, frequency_progress: f32) -> f32 {
         if frequency_progress > 1.0 {
             panic!("expected frequency >= 1");
@@ -240,7 +272,7 @@ impl PulseWidth {
     }
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Clone, Debug)]
 pub struct PulseState {
     frame_count: u64,
     pulse_width: PulseWidth,
@@ -249,7 +281,7 @@ pub struct PulseState {
     volume: u8,
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, PartialOrd, Eq, Ord)]
 pub enum PulseDelta {
     SetFrameCount(u64),
     SetPulseWidth(PulseWidth),
@@ -312,21 +344,16 @@ impl ChannelState for PulseState {
     }
 
     fn signal_at(self: &Self, config: &ChannelTuning) -> f32 {
-        let amplitude = match self.get_amplitude() {
-            None => return 0.0,
-            Some(a) => a,
-        };
+        let amplitude = self.get_amplitude();
+        let frequency = self.get_frequency();
+        let with_both = amplitude.and_then(|a| frequency.map(|f| (a, f)));
 
-        let frequency = match self.get_frequency() {
-            None => return 0.0,
-            Some(f) => f,
-        };
-
-        let sample_offset = config.sample * (config.sample_rate as u64);
-        let sample_mod = (sample_offset % frequency as u64) as f32;
-        let frequent_percent = sample_mod / frequency;
-        let signal = amplitude * self.pulse_width.pulse_sign(frequent_percent);
-        return signal;
+        return with_both.map_or(0.0, |(amplitude, frequency)| {
+            let sample_offset = config.sample * (config.sample_rate as u64);
+            let sample_mod = (sample_offset % frequency as u64) as f32;
+            let frequent_percent = sample_mod / frequency;
+            return amplitude * self.pulse_width.pulse_sign(frequent_percent);
+        });
     }
 }
 
@@ -338,7 +365,7 @@ pub struct TriangleState {
     control_flag: bool,
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, PartialOrd, Eq, Ord)]
 pub enum TriangleDelta {
     SetPeriod(u16),
     SetControlFlag(bool),
@@ -376,22 +403,15 @@ impl ChannelState for TriangleState {
     }
 
     fn signal_at(self: &Self, config: &ChannelTuning) -> f32 {
-        use std::f32::consts::PI;
-
         if !self.control_flag {
             return 0.0;
         }
 
-        let amplitude = 1.0;
-        let frequency = match self.get_frequency() {
-            None => return 0.0,
-            Some(f) => f,
-        };
-
-        let sample_offset = config.sample * (config.sample_rate as u64);
-        let sample_mod = (sample_offset % frequency as u64) as f32;
-        let frequent_percent = sample_mod / frequency;
-        return amplitude * (frequent_percent * 2.0 * PI).sin();
+        return self.get_frequency().map_or(0.0, |frequency| {
+            let sample_offset = config.sample * (config.sample_rate as u64);
+            let period_offset = (sample_offset % frequency as u64) as f32 / frequency;
+            return (0.25 - (period_offset - 0.5).abs()) * 4.0;
+        });
     }
 }
 
@@ -402,7 +422,7 @@ pub struct NoiseState {
     volume: u8,
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, PartialOrd, Eq, Ord)]
 pub enum NoiseDelta {
     SetVolume(u8),
 }
@@ -429,12 +449,9 @@ impl ChannelState for NoiseState {
     }
 
     fn signal_at(self: &Self, _config: &ChannelTuning) -> f32 {
-        match self.get_amplitude() {
-            None => 0.0,
-            Some(max_amplitude) => {
-                let mut random = thread_rng();
-                random.gen_range(-max_amplitude, max_amplitude)
-            }
-        }
+        return self.get_amplitude().map_or(0.0, |max_amplitude| {
+            let mut random = thread_rng();
+            random.gen_range(-max_amplitude, max_amplitude)
+        });
     }
 }
