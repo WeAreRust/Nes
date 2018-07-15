@@ -1,7 +1,7 @@
 use apu::channel::{ApuChannelDelta, PulseDelta, TriangleDelta, WhichPulse};
 use apu::channel_differ::{ChannelDiffer, ChannelSnapshot, APU_CHANNEL_SIZE};
-use clock::Executable;
-use memory::Memory;
+use clock::Processor;
+use memory::{ReadAddr, Memory};
 use std::sync::mpsc::Sender;
 
 const APU_REGISTER_START: usize = 0x4000;
@@ -34,8 +34,8 @@ impl APU {
     }
 }
 
-impl Executable for APU {
-    fn execute(self: &mut Self, memory: &mut Memory) {
+impl Processor for APU {
+    fn cycle(self: &mut Self, memory: &mut Memory) {
         let new_snapshot = RegisterSnapshot::create_from_memory(memory);
         let deltas = self.previous_snapshot.diff(&new_snapshot, memory);
         let result = self.delta_stream.send(ApuChannelDelta::Many(deltas));
@@ -54,11 +54,11 @@ impl Default for RegisterSnapshot {
 }
 
 impl RegisterSnapshot {
-    fn create_from_memory(memory: &Memory) -> Self {
+    fn create_from_memory<M>(memory: &M) -> Self where M: ReadAddr<u16, u8> {
         let mut registers: SnapshotRepr = [0; APU_REGISTER_RANGE];
         for offset in 0..APU_REGISTER_RANGE {
             let read_index = (APU_REGISTER_START + offset) as u16;
-            let read_value = memory.fetch(read_index);
+            let read_value = memory.read_addr(read_index);
             registers[offset] = read_value;
         }
         RegisterSnapshot { registers }
@@ -72,7 +72,7 @@ impl RegisterSnapshot {
         return self.registers[at] != other.registers[at];
     }
 
-    fn diff(self: &Self, other: &Self, memory: &Memory) -> Vec<ApuChannelDelta> {
+    fn diff<M>(self: &Self, other: &Self, memory: &M) -> Vec<ApuChannelDelta> where M: ReadAddr<u16, u8> {
         let mut changes = vec![];
         self.make_pulse_differ(other, WhichPulse::P1).diff(memory, &mut changes);
         self.make_pulse_differ(other, WhichPulse::P2).diff(memory, &mut changes);
@@ -127,14 +127,19 @@ mod tests {
     use super::*;
     use apu::channel::ApuChannelDelta as A;
     use apu::channel::*;
-    use bytes::BytesMut;
-    use memory::Memory;
+    use memory::ReadAddr;
 
-    fn init_memory(cap: usize) -> Memory {
-        Memory::with_bytes(BytesMut::with_capacity(cap))
+    impl ReadAddr<u16, u8> for Vec<u8> {
+        fn read_addr(self: &Self, addr: u16) -> u8 {
+            self[addr as usize]
+        }
     }
 
-    fn init_states(cap: usize) -> (Memory, RegisterSnapshot) {
+    fn init_memory(cap: usize) -> impl ReadAddr<u16, u8> {
+        Vec::with_capacity(cap)
+    }
+
+    fn init_states(cap: usize) -> (impl ReadAddr<u16, u8>, RegisterSnapshot) {
         (init_memory(cap), RegisterSnapshot::default())
     }
 

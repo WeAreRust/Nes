@@ -1,5 +1,5 @@
 use apu::channel::{ApuChannelDelta, PulseWidth};
-use memory::Memory;
+use memory::ReadAddr;
 
 pub const APU_CHANNEL_SIZE: usize = 4;
 pub type ChannelSnapshot = [u8; APU_CHANNEL_SIZE];
@@ -25,10 +25,9 @@ impl<D> ChannelDiffer<D> {
         }
     }
 
-    pub fn diff<'a>(self: &Self, _memory: &Memory, changes: &'a mut Deltas) -> &'a Deltas {
+    pub fn diff<M>(self: &Self, _memory: &M, changes: &mut Deltas) where M: ReadAddr<u16, u8> {
         self.add_delta(changes, self.diff_pulse_width());
         self.add_delta(changes, self.diff_period());
-        return changes;
     }
 
     /// Checks if a register has changed at a certain byte
