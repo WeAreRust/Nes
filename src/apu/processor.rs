@@ -1,4 +1,4 @@
-use apu::channel::{ApuChannelDelta, PulseDelta, TriangleDelta, WhichPulse};
+use apu::channel::{ApuChannelDelta, NoiseDelta, PulseDelta, TriangleDelta, WhichPulse};
 use apu::channel_differ::{ChannelDiffer, ChannelSnapshot, APU_CHANNEL_SIZE};
 use clock::Processor;
 use memory::{ReadAddr, Memory};
@@ -77,6 +77,7 @@ impl RegisterSnapshot {
         self.make_pulse_differ(other, WhichPulse::P1).diff(memory, &mut changes);
         self.make_pulse_differ(other, WhichPulse::P2).diff(memory, &mut changes);
         self.make_triangle_differ(other).diff(memory, &mut changes);
+        self.make_noise_differ(other).diff(memory, &mut changes);
         return changes;
     }
 
@@ -107,6 +108,7 @@ impl RegisterSnapshot {
 
         differ.set_pulse = Some(PulseDelta::SetPulseWidth);
         differ.set_period = Some(PulseDelta::SetPeriod);
+        differ.set_volume = Some(PulseDelta::SetVolume);
         return differ;
     }
 
@@ -118,6 +120,17 @@ impl RegisterSnapshot {
         );
 
         differ.set_period = Some(TriangleDelta::SetPeriod);
+        return differ;
+    }
+
+    fn make_noise_differ(self: &Self, other: &Self) -> ChannelDiffer<NoiseDelta> {
+        let mut differ = ChannelDiffer::create(
+            self.get_channel(REG_NOISE_ROOT),
+            other.get_channel(REG_NOISE_ROOT),
+            ApuChannelDelta::Noise,
+        );
+
+        differ.set_volume = Some(NoiseDelta::SetVolume);
         return differ;
     }
 }
@@ -200,6 +213,27 @@ mod tests {
             A::Pulse1(PulseDelta::SetPeriod(1)),
             A::Pulse2(PulseDelta::SetPeriod(1)),
             A::Triangle(TriangleDelta::SetPeriod(1)),
+        ];
+
+        assert_eq!(changes, expected);
+    }
+
+    #[test]
+    fn volume_changes() {
+        let (memory, initial) = init_states(0);
+        let change_1 = RegisterSnapshot::with(REG_PULSE1_ROOT, 0b0000_0001);
+        let change_2 = RegisterSnapshot::with(REG_PULSE2_ROOT, 0b0000_0001);
+        let change_3 = RegisterSnapshot::with(REG_NOISE_ROOT, 0b0000_0001);
+
+        let mut changes = vec![];
+        changes.extend(initial.diff(&change_1, &memory));
+        changes.extend(initial.diff(&change_2, &memory));
+        changes.extend(initial.diff(&change_3, &memory));
+
+        let expected = vec![
+            A::Pulse1(PulseDelta::SetVolume(1)),
+            A::Pulse2(PulseDelta::SetVolume(1)),
+            A::Noise(NoiseDelta::SetVolume(1)),
         ];
 
         assert_eq!(changes, expected);
