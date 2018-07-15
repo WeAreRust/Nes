@@ -174,12 +174,26 @@ impl ChannelState for ApuChannelState {
         }
     }
 
+    /// This is the total signal of all channels from the APU, and emulates
+    /// the NES mixers by using lookup algorithm defined [here][mixer].
+    ///
+    /// [mixer]: https://wiki.nesdev.com/w/index.php/APU_Mixer
     fn signal_at(self: &Self, config: &ChannelTuning) -> f32 {
-        0.0
-            + self.pulse_1.signal_at(&config)
-            + self.pulse_2.signal_at(&config)
-            + self.triangle.signal_at(&config)
-            + self.noise.signal_at(&config)
+        // Mixer look up tables as described in the wiki.
+        let pulse_table = |n| 95.52 / (8128.0 / n + 100.0);
+        let tnd_table = |n| 163.67 / (24329.0 / n + 100.0);
+
+        // Signals as produced by the seperate channels.
+        let pulse_1 = self.pulse_1.signal_at(&config);
+        let pulse_2 = self.pulse_2.signal_at(&config);
+        let triangle = self.triangle.signal_at(&config);
+        let dmc = 0.0;
+        let noise = self.noise.signal_at(&config);
+
+        let pulse_mix = pulse_table(pulse_1 + pulse_2);
+        let tnd_mix = tnd_table(3.0 * triangle + 2.0 * noise + dmc);
+
+        return pulse_mix + tnd_mix;
     }
 }
 
@@ -384,22 +398,19 @@ impl ChannelState for TriangleState {
     }
 
     fn signal_at(self: &Self, config: &ChannelTuning) -> f32 {
-        use std::f32::consts::PI;
-
         if !self.control_flag {
             return 0.0;
         }
 
-        let amplitude = 1.0;
         let frequency = match self.get_frequency() {
             None => return 0.0,
             Some(f) => f,
         };
 
         let sample_offset = config.sample * (config.sample_rate as u64);
-        let sample_mod = (sample_offset % frequency as u64) as f32;
-        let frequent_percent = sample_mod / frequency;
-        return amplitude * (frequent_percent * 2.0 * PI).sin();
+        let period_offset = (sample_offset % frequency as u64) as f32 / frequency;
+        let signal = (0.25 - (period_offset - 0.5).abs()) * 4.0;
+        return signal;
     }
 }
 
