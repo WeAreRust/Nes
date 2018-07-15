@@ -1,5 +1,4 @@
 use apu::channel::{ApuChannelDelta, NoiseDelta, PulseDelta, PulseWidth, TriangleDelta};
-use memory::ReadAddr;
 
 type Deltas = Vec<ApuChannelDelta>;
 
@@ -131,7 +130,11 @@ impl CommonPeriodDiffer for PulseDiffer {}
 impl CommonPeriodDiffer for TriangleDiffer {}
 
 impl PulseDiffer {
-    pub fn create(old: [u8; 4], new: [u8; 4], make_delta: fn(PulseDelta) -> ApuChannelDelta) -> Self {
+    pub fn create(
+        old: [u8; 4],
+        new: [u8; 4],
+        make_delta: fn(PulseDelta) -> ApuChannelDelta,
+    ) -> Self {
         PulseDiffer {
             make_pulse_delta: make_delta,
             old_registers: old,
@@ -157,7 +160,10 @@ impl PulseDiffer {
 
 impl TriangleDiffer {
     pub fn create(old_registers: [u8; 4], new_registers: [u8; 4]) -> Self {
-        TriangleDiffer { old_registers, new_registers }
+        TriangleDiffer {
+            old_registers,
+            new_registers,
+        }
     }
 
     pub fn diff(self: &Self, changes: &mut Deltas) {
@@ -167,7 +173,10 @@ impl TriangleDiffer {
 
 impl NoiseDiffer {
     pub fn create(old_registers: [u8; 4], new_registers: [u8; 4]) -> Self {
-        NoiseDiffer { old_registers, new_registers }
+        NoiseDiffer {
+            old_registers,
+            new_registers,
+        }
     }
 
     pub fn diff(self: &Self, changes: &mut Deltas) {
@@ -204,16 +213,34 @@ mod tests {
     }
 
     impl PulseDiffer {
-        fn set_old(self: &mut Self, at: usize, value: u8) -> &mut Self { self.old_registers[at] = value; return self; }
-        fn set_new(self: &mut Self, at: usize, value: u8) -> &mut Self { self.new_registers[at] = value; return self; }
+        fn set_old(self: &mut Self, at: usize, value: u8) -> &mut Self {
+            self.old_registers[at] = value;
+            return self;
+        }
+        fn set_new(self: &mut Self, at: usize, value: u8) -> &mut Self {
+            self.new_registers[at] = value;
+            return self;
+        }
     }
     impl TriangleDiffer {
-        fn set_old(self: &mut Self, at: usize, value: u8) -> &mut Self { self.old_registers[at] = value; return self; }
-        fn set_new(self: &mut Self, at: usize, value: u8) -> &mut Self { self.new_registers[at] = value; return self; }
+        fn set_old(self: &mut Self, at: usize, value: u8) -> &mut Self {
+            self.old_registers[at] = value;
+            return self;
+        }
+        fn set_new(self: &mut Self, at: usize, value: u8) -> &mut Self {
+            self.new_registers[at] = value;
+            return self;
+        }
     }
     impl NoiseDiffer {
-        fn set_old(self: &mut Self, at: usize, value: u8) -> &mut Self { self.old_registers[at] = value; return self; }
-        fn set_new(self: &mut Self, at: usize, value: u8) -> &mut Self { self.new_registers[at] = value; return self; }
+        fn set_old(self: &mut Self, at: usize, value: u8) -> &mut Self {
+            self.old_registers[at] = value;
+            return self;
+        }
+        fn set_new(self: &mut Self, at: usize, value: u8) -> &mut Self {
+            self.new_registers[at] = value;
+            return self;
+        }
     }
 
     #[test]

@@ -12,8 +12,8 @@ pub trait Mapper {
 
 pub fn create_mapper(t: MapperType) -> Box<Mapper> {
     match t {
-        MapperType::NROM => Box::new(NROM{}),
-        MapperType::CNROMSwitch => Box::new(CNROMSwitch{offset: 0u16}),
+        MapperType::NROM => Box::new(NROM {}),
+        MapperType::CNROMSwitch => Box::new(CNROMSwitch { offset: 0u16 }),
         _ => panic!("Not implemented."),
     }
 }

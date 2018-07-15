@@ -29,7 +29,7 @@ impl Core {
         self.lda_update_status_flags();
     }
 
-    /// Load accumulator absolute 
+    /// Load accumulator absolute
     ///
     /// Flags affected: N, Z
     pub fn lda_absolute(&mut self, memory: &mut Memory) {

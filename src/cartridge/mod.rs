@@ -3,8 +3,8 @@ mod mapper;
 mod mirroring;
 mod rom;
 
-use cartridge::rom::Rom;
 use cartridge::mirroring::Mirroring;
+use cartridge::rom::Rom;
 
 pub struct Cartridge {
     pub mirroring: Mirroring,

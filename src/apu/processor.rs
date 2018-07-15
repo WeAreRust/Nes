@@ -1,7 +1,9 @@
 use apu::channel::{ApuChannelDelta, NoiseDelta, PulseDelta, TriangleDelta, WhichPulse};
-use apu::channel_differ::{APU_CHANNEL_SIZE, ChannelSnapshot, PulseDiffer, NoiseDiffer, TriangleDiffer};
+use apu::channel_differ::{
+    ChannelSnapshot, NoiseDiffer, PulseDiffer, TriangleDiffer, APU_CHANNEL_SIZE,
+};
 use clock::Processor;
-use memory::{ReadAddr, Memory};
+use memory::{Memory, ReadAddr};
 use std::sync::mpsc::Sender;
 
 const APU_REGISTER_START: usize = 0x4000;
@@ -54,7 +56,10 @@ impl Default for RegisterSnapshot {
 }
 
 impl RegisterSnapshot {
-    fn create_from_memory<M>(memory: &M) -> Self where M: ReadAddr<u16, u8> {
+    fn create_from_memory<M>(memory: &M) -> Self
+    where
+        M: ReadAddr<u16, u8>,
+    {
         let mut registers: SnapshotRepr = [0; APU_REGISTER_RANGE];
         for offset in 0..APU_REGISTER_RANGE {
             let read_index = (APU_REGISTER_START + offset) as u16;
@@ -72,10 +77,15 @@ impl RegisterSnapshot {
         return self.registers[at] != other.registers[at];
     }
 
-    fn diff<M>(self: &Self, other: &Self, _memory: &M) -> Vec<ApuChannelDelta> where M: ReadAddr<u16, u8> {
+    fn diff<M>(self: &Self, other: &Self, _memory: &M) -> Vec<ApuChannelDelta>
+    where
+        M: ReadAddr<u16, u8>,
+    {
+        use self::WhichPulse::*;
         let mut changes = vec![];
-        self.make_pulse_differ(other, WhichPulse::P1).diff(&mut changes);
-        self.make_pulse_differ(other, WhichPulse::P2).diff(&mut changes);
+
+        self.make_pulse_differ(other, P1).diff(&mut changes);
+        self.make_pulse_differ(other, P2).diff(&mut changes);
         self.make_triangle_differ(other).diff(&mut changes);
         self.make_noise_differ(other).diff(&mut changes);
         return changes;
