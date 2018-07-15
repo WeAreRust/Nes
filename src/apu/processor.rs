@@ -1,8 +1,8 @@
-use apu::channel::{ApuChannelDelta, PulseDelta, WhichPulse};
+use apu::channel::{ApuChannelDelta, PulseDelta, TriangleDelta, WhichPulse};
 use apu::channel_differ::{ChannelDiffer, ChannelSnapshot, APU_CHANNEL_SIZE};
-use memory::Memory;
 use clock::Executable;
-use std::sync::mpsc::{Sender};
+use memory::Memory;
+use std::sync::mpsc::Sender;
 
 const APU_REGISTER_START: usize = 0x4000;
 const APU_REGISTER_RANGE: usize = 22;
@@ -76,16 +76,21 @@ impl RegisterSnapshot {
         let mut changes = vec![];
         self.make_pulse_differ(other, WhichPulse::P1).diff(memory, &mut changes);
         self.make_pulse_differ(other, WhichPulse::P2).diff(memory, &mut changes);
+        self.make_triangle_differ(other).diff(memory, &mut changes);
         return changes;
     }
 
     fn get_channel(self: &Self, root: usize) -> ChannelSnapshot {
         let mut channel_registers = [0; APU_CHANNEL_SIZE];
-        channel_registers.clone_from_slice(&self.registers[root .. root + 4]);
+        channel_registers.clone_from_slice(&self.registers[root..root + 4]);
         return channel_registers;
     }
 
-    fn make_pulse_differ(self: &Self, other: &Self, which: WhichPulse) -> ChannelDiffer<PulseDelta> {
+    fn make_pulse_differ(
+        self: &Self,
+        other: &Self,
+        which: WhichPulse,
+    ) -> ChannelDiffer<PulseDelta> {
         let channel_offset = match which {
             WhichPulse::P1 => REG_PULSE1_ROOT,
             WhichPulse::P2 => REG_PULSE2_ROOT,
@@ -104,15 +109,26 @@ impl RegisterSnapshot {
         differ.set_period = Some(PulseDelta::SetPeriod);
         return differ;
     }
+
+    fn make_triangle_differ(self: &Self, other: &Self) -> ChannelDiffer<TriangleDelta> {
+        let mut differ = ChannelDiffer::create(
+            self.get_channel(REG_TRIANGLE_ROOT),
+            other.get_channel(REG_TRIANGLE_ROOT),
+            ApuChannelDelta::Triangle,
+        );
+
+        differ.set_period = Some(TriangleDelta::SetPeriod);
+        return differ;
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use apu::channel::ApuChannelDelta as A;
+    use apu::channel::*;
     use bytes::BytesMut;
     use memory::Memory;
-    use apu::channel::*;
-    use apu::channel::ApuChannelDelta as A;
 
     fn init_memory(cap: usize) -> Memory {
         Memory::with_bytes(BytesMut::with_capacity(cap))
@@ -126,14 +142,13 @@ mod tests {
         fn with(at: usize, value: u8) -> Self {
             let mut r = RegisterSnapshot::default();
             r.registers[at] = value;
-            return r
+            return r;
         }
     }
 
     #[test]
     fn duty_changes() {
-        let channel_conf: [(usize, fn(PulseDelta) -> A); 2]
-            = [(0, A::Pulse1), (4, A::Pulse2)];
+        let channel_conf: [(usize, fn(PulseDelta) -> A); 2] = [(0, A::Pulse1), (4, A::Pulse2)];
 
         for (offset, make) in channel_conf.iter() {
             let memory = init_memory(0);
@@ -167,16 +182,19 @@ mod tests {
     #[test]
     fn period_changes() {
         let (memory, initial) = init_states(0);
-        let change_1 = RegisterSnapshot::with(3, 0b0000_0001);
-        let change_2 = RegisterSnapshot::with(2, 0b0010_0000);
+        let change_1 = RegisterSnapshot::with(REG_PULSE1_ROOT + 2, 0b0000_0001);
+        let change_2 = RegisterSnapshot::with(REG_PULSE2_ROOT + 2, 0b0000_0001);
+        let change_3 = RegisterSnapshot::with(REG_TRIANGLE_ROOT + 2, 0b0000_0001);
 
         let mut changes = vec![];
         changes.extend(initial.diff(&change_1, &memory));
         changes.extend(initial.diff(&change_2, &memory));
+        changes.extend(initial.diff(&change_3, &memory));
 
         let expected = vec![
             A::Pulse1(PulseDelta::SetPeriod(1)),
-            A::Pulse1(PulseDelta::SetPeriod(1 << 8)),
+            A::Pulse2(PulseDelta::SetPeriod(1)),
+            A::Triangle(TriangleDelta::SetPeriod(1)),
         ];
 
         assert_eq!(changes, expected);

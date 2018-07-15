@@ -48,7 +48,6 @@ fn _arp(send: &Sender<ApuChannelDelta>) {
 }
 
 fn _random_tune(send: &Sender<ApuChannelDelta>) {
-
     for note in 0..80 {
         pew_all(
             send,

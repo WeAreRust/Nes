@@ -199,7 +199,10 @@ impl ChannelState for ApuChannelState {
 
 ////////////////////////////////////////////////////////////////////////////
 
-pub enum WhichPulse { P1, P2 }
+pub enum WhichPulse {
+    P1,
+    P2,
+}
 
 const FREQ_CHUNK: f32 = 0.125;
 
@@ -225,10 +228,15 @@ pub enum PulseWidth {
 impl PulseWidth {
     pub fn calculate(byte: u8) -> PulseWidth {
         let masked = (byte & 0b11000000) >> 6;
-        if masked == 0 { PulseWidth::Duty0 }
-        else if masked == 1 { PulseWidth::Duty1 }
-        else if masked == 2 { PulseWidth::Duty2 }
-        else { PulseWidth::Duty3 }
+        if masked == 0 {
+            PulseWidth::Duty0
+        } else if masked == 1 {
+            PulseWidth::Duty1
+        } else if masked == 2 {
+            PulseWidth::Duty2
+        } else {
+            PulseWidth::Duty3
+        }
     }
 
     fn pulse_sign(self: &Self, frequency_progress: f32) -> f32 {
@@ -387,7 +395,10 @@ impl ChannelState for TriangleState {
     fn transform(self: Self, delta: TriangleDelta) -> Self {
         match delta {
             TriangleDelta::SetPeriod(p) => Self { period: p, ..self },
-            TriangleDelta::SetControlFlag(c) => Self { control_flag: c, ..self },
+            TriangleDelta::SetControlFlag(c) => Self {
+                control_flag: c,
+                ..self
+            },
         }
     }
 
