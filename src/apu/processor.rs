@@ -1,5 +1,5 @@
 use apu::channel::{ApuChannelDelta, NoiseDelta, PulseDelta, TriangleDelta, WhichPulse};
-use apu::channel_differ::{ChannelDiffer, ChannelSnapshot, APU_CHANNEL_SIZE};
+use apu::channel_differ::{APU_CHANNEL_SIZE, ChannelSnapshot, PulseDiffer, NoiseDiffer, TriangleDiffer};
 use clock::Processor;
 use memory::{ReadAddr, Memory};
 use std::sync::mpsc::Sender;
@@ -72,12 +72,12 @@ impl RegisterSnapshot {
         return self.registers[at] != other.registers[at];
     }
 
-    fn diff<M>(self: &Self, other: &Self, memory: &M) -> Vec<ApuChannelDelta> where M: ReadAddr<u16, u8> {
+    fn diff<M>(self: &Self, other: &Self, _memory: &M) -> Vec<ApuChannelDelta> where M: ReadAddr<u16, u8> {
         let mut changes = vec![];
-        self.make_pulse_differ(other, WhichPulse::P1).diff(memory, &mut changes);
-        self.make_pulse_differ(other, WhichPulse::P2).diff(memory, &mut changes);
-        self.make_triangle_differ(other).diff(memory, &mut changes);
-        self.make_noise_differ(other).diff(memory, &mut changes);
+        self.make_pulse_differ(other, WhichPulse::P1).diff(&mut changes);
+        self.make_pulse_differ(other, WhichPulse::P2).diff(&mut changes);
+        self.make_triangle_differ(other).diff(&mut changes);
+        self.make_noise_differ(other).diff(&mut changes);
         return changes;
     }
 
@@ -87,17 +87,13 @@ impl RegisterSnapshot {
         return channel_registers;
     }
 
-    fn make_pulse_differ(
-        self: &Self,
-        other: &Self,
-        which: WhichPulse,
-    ) -> ChannelDiffer<PulseDelta> {
+    fn make_pulse_differ(self: &Self, other: &Self, which: WhichPulse) -> PulseDiffer {
         let channel_offset = match which {
             WhichPulse::P1 => REG_PULSE1_ROOT,
             WhichPulse::P2 => REG_PULSE2_ROOT,
         };
 
-        let mut differ = ChannelDiffer::create(
+        return PulseDiffer::create(
             self.get_channel(channel_offset),
             other.get_channel(channel_offset),
             match which {
@@ -105,33 +101,20 @@ impl RegisterSnapshot {
                 WhichPulse::P2 => ApuChannelDelta::Pulse2,
             },
         );
-
-        differ.set_pulse = Some(PulseDelta::SetPulseWidth);
-        differ.set_period = Some(PulseDelta::SetPeriod);
-        differ.set_volume = Some(PulseDelta::SetVolume);
-        return differ;
     }
 
-    fn make_triangle_differ(self: &Self, other: &Self) -> ChannelDiffer<TriangleDelta> {
-        let mut differ = ChannelDiffer::create(
+    fn make_triangle_differ(self: &Self, other: &Self) -> TriangleDiffer {
+        return TriangleDiffer::create(
             self.get_channel(REG_TRIANGLE_ROOT),
             other.get_channel(REG_TRIANGLE_ROOT),
-            ApuChannelDelta::Triangle,
         );
-
-        differ.set_period = Some(TriangleDelta::SetPeriod);
-        return differ;
     }
 
-    fn make_noise_differ(self: &Self, other: &Self) -> ChannelDiffer<NoiseDelta> {
-        let mut differ = ChannelDiffer::create(
+    fn make_noise_differ(self: &Self, other: &Self) -> NoiseDiffer {
+        return NoiseDiffer::create(
             self.get_channel(REG_NOISE_ROOT),
             other.get_channel(REG_NOISE_ROOT),
-            ApuChannelDelta::Noise,
         );
-
-        differ.set_volume = Some(NoiseDelta::SetVolume);
-        return differ;
     }
 }
 

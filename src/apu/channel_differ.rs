@@ -1,54 +1,61 @@
-use apu::channel::{ApuChannelDelta, PulseWidth};
+use apu::channel::{ApuChannelDelta, NoiseDelta, PulseDelta, PulseWidth, TriangleDelta};
 use memory::ReadAddr;
+
+type Deltas = Vec<ApuChannelDelta>;
 
 pub const APU_CHANNEL_SIZE: usize = 4;
 pub type ChannelSnapshot = [u8; APU_CHANNEL_SIZE];
 
-pub struct ChannelDiffer<D> {
+pub struct PulseDiffer {
+    make_pulse_delta: fn(PulseDelta) -> ApuChannelDelta,
     old_registers: ChannelSnapshot,
     new_registers: ChannelSnapshot,
-    make_delta: fn(D) -> ApuChannelDelta,
-    pub set_pulse: Option<fn(PulseWidth) -> D>,
-    pub set_period: Option<fn(u16) -> D>,
-    pub set_volume: Option<fn(u8) -> D>,
 }
 
-type Deltas = Vec<ApuChannelDelta>;
+pub struct TriangleDiffer {
+    old_registers: ChannelSnapshot,
+    new_registers: ChannelSnapshot,
+}
 
-impl<D> ChannelDiffer<D> {
-    pub fn create(old: [u8; 4], new: [u8; 4], make_delta: fn(D) -> ApuChannelDelta) -> Self {
-        ChannelDiffer {
-            old_registers: old,
-            new_registers: new,
-            make_delta: make_delta,
-            set_pulse: None,
-            set_period: None,
-            set_volume: None,
-        }
-    }
+pub struct NoiseDiffer {
+    old_registers: ChannelSnapshot,
+    new_registers: ChannelSnapshot,
+}
 
-    pub fn diff<M>(self: &Self, _memory: &M, changes: &mut Deltas) where M: ReadAddr<u16, u8> {
-        self.add_delta(changes, self.diff_pulse_width());
-        self.add_delta(changes, self.diff_period());
-        self.add_delta(changes, self.diff_volume());
-    }
+trait ChannelDiffer {
+    type DeltaInternal;
+
+    fn make_delta(self: &Self, internal: Self::DeltaInternal) -> ApuChannelDelta;
+    fn get_old_registers(self: &Self) -> &ChannelSnapshot;
+    fn get_new_registers(self: &Self) -> &ChannelSnapshot;
 
     /// Checks if a register has changed at a certain byte
     /// under a certain byte mask, between the old and new
     /// registers.
     fn get_changes(self: &Self, byte: usize, mask: u8) -> Option<u8> {
-        let old = read(&self.old_registers, byte, mask);
-        let new = read(&self.new_registers, byte, mask);
+        let old = read(self.get_old_registers(), byte, mask);
+        let new = read(self.get_new_registers(), byte, mask);
         return if new != old { Some(new) } else { None };
     }
 
-    fn add_delta(self: &Self, changes: &mut Deltas, maybe_delta: Option<D>) {
+    fn add_delta(self: &Self, changes: &mut Deltas, maybe_delta: Option<Self::DeltaInternal>) {
         if let Some(delta) = maybe_delta {
-            changes.push((self.make_delta)(delta));
+            changes.push(self.make_delta(delta));
         }
     }
+}
 
-    fn diff_period(self: &Self) -> Option<D> {
+trait CommonVolumeDiffer: ChannelDiffer {
+    fn diff_volume(self: &Self) -> Option<u8> {
+        const REGISTER: usize = 0;
+        const MASK: u8 = 0b0000_1111;
+
+        return self.get_changes(REGISTER, MASK);
+    }
+}
+
+trait CommonPeriodDiffer: ChannelDiffer {
+    fn diff_period(self: &Self) -> Option<u16> {
         const LO_REGISTER: usize = 2;
         const LO_MASK: u8 = 0b1111_1111;
 
@@ -56,35 +63,115 @@ impl<D> ChannelDiffer<D> {
         const HI_SHIFT: u16 = 3;
         const HI_MASK: u8 = 0b1110_0000;
 
-        return self.set_period.and_then(|set_period| {
-            let lo = self.get_changes(LO_REGISTER, LO_MASK);
-            let hi = self.get_changes(HI_REGISTER, HI_MASK);
+        let lo = self.get_changes(LO_REGISTER, LO_MASK);
+        let hi = self.get_changes(HI_REGISTER, HI_MASK);
 
-            if lo.is_none() && hi.is_none() {
-                return None;
-            }
+        if lo.is_none() && hi.is_none() {
+            return None;
+        }
 
-            let lo = lo.unwrap_or(read(&self.old_registers, LO_REGISTER, LO_MASK)) as u16;
-            let hi = hi.unwrap_or(read(&self.old_registers, HI_REGISTER, HI_MASK)) as u16;
-            return Some(set_period((hi << HI_SHIFT) + lo));
-        });
+        let old_registers = self.get_old_registers();
+        let lo = lo.unwrap_or(read(old_registers, LO_REGISTER, LO_MASK)) as u16;
+        let hi = hi.unwrap_or(read(old_registers, HI_REGISTER, HI_MASK)) as u16;
+        return Some((hi << HI_SHIFT) + lo);
+    }
+}
+
+impl ChannelDiffer for PulseDiffer {
+    type DeltaInternal = PulseDelta;
+
+    fn make_delta(self: &Self, delta: Self::DeltaInternal) -> ApuChannelDelta {
+        (self.make_pulse_delta)(delta)
     }
 
-    fn diff_volume(self: &Self) -> Option<D> {
-        const REGISTER: usize = 0;
-        const MASK: u8 = 0b0000_1111;
-
-        return self.set_volume.and_then(|set_volume|
-            self.get_changes(REGISTER, MASK).map(set_volume));
+    fn get_old_registers(self: &Self) -> &ChannelSnapshot {
+        &self.old_registers
     }
 
-    fn diff_pulse_width(self: &Self) -> Option<D> {
+    fn get_new_registers(self: &Self) -> &ChannelSnapshot {
+        &self.new_registers
+    }
+}
+
+impl ChannelDiffer for TriangleDiffer {
+    type DeltaInternal = TriangleDelta;
+
+    fn make_delta(self: &Self, delta: Self::DeltaInternal) -> ApuChannelDelta {
+        ApuChannelDelta::Triangle(delta)
+    }
+
+    fn get_old_registers(self: &Self) -> &ChannelSnapshot {
+        &self.old_registers
+    }
+
+    fn get_new_registers(self: &Self) -> &ChannelSnapshot {
+        &self.new_registers
+    }
+}
+
+impl ChannelDiffer for NoiseDiffer {
+    type DeltaInternal = NoiseDelta;
+
+    fn make_delta(self: &Self, delta: Self::DeltaInternal) -> ApuChannelDelta {
+        ApuChannelDelta::Noise(delta)
+    }
+
+    fn get_old_registers(self: &Self) -> &ChannelSnapshot {
+        &self.old_registers
+    }
+
+    fn get_new_registers(self: &Self) -> &ChannelSnapshot {
+        &self.new_registers
+    }
+}
+
+impl CommonVolumeDiffer for PulseDiffer {}
+impl CommonVolumeDiffer for NoiseDiffer {}
+impl CommonPeriodDiffer for PulseDiffer {}
+impl CommonPeriodDiffer for TriangleDiffer {}
+
+impl PulseDiffer {
+    pub fn create(old: [u8; 4], new: [u8; 4], make_delta: fn(PulseDelta) -> ApuChannelDelta) -> Self {
+        PulseDiffer {
+            make_pulse_delta: make_delta,
+            old_registers: old,
+            new_registers: new,
+        }
+    }
+
+    pub fn diff(self: &Self, changes: &mut Deltas) {
+        self.add_delta(changes, self.diff_pulse_width());
+        self.add_delta(changes, self.diff_period().map(PulseDelta::SetPeriod));
+        self.add_delta(changes, self.diff_volume().map(PulseDelta::SetVolume));
+    }
+
+    fn diff_pulse_width(self: &Self) -> Option<PulseDelta> {
         const PULSE_REGISTER: usize = 0;
         const PULSE_MASK: u8 = 0b1100_0000;
 
-        return self.set_pulse.and_then(|set_pulse|
-            self.get_changes(PULSE_REGISTER, PULSE_MASK)
-                .map(|change| set_pulse(PulseWidth::calculate(change))));
+        return self
+            .get_changes(PULSE_REGISTER, PULSE_MASK)
+            .map(|change| PulseDelta::SetPulseWidth(PulseWidth::calculate(change)));
+    }
+}
+
+impl TriangleDiffer {
+    pub fn create(old_registers: [u8; 4], new_registers: [u8; 4]) -> Self {
+        TriangleDiffer { old_registers, new_registers }
+    }
+
+    pub fn diff(self: &Self, changes: &mut Deltas) {
+        self.add_delta(changes, self.diff_period().map(TriangleDelta::SetPeriod));
+    }
+}
+
+impl NoiseDiffer {
+    pub fn create(old_registers: [u8; 4], new_registers: [u8; 4]) -> Self {
+        NoiseDiffer { old_registers, new_registers }
+    }
+
+    pub fn diff(self: &Self, changes: &mut Deltas) {
+        self.add_delta(changes, self.diff_volume().map(NoiseDelta::SetVolume));
     }
 }
 
@@ -97,50 +184,41 @@ mod tests {
     use super::*;
     use apu::channel::ApuChannelDelta as A;
     use apu::channel::*;
-    use bytes::BytesMut;
-    use memory::Memory;
 
-    fn init_memory(cap: usize) -> Memory {
-        Memory::with_bytes(BytesMut::with_capacity(cap))
+    fn make_pulse() -> PulseDiffer {
+        let old = [0; APU_CHANNEL_SIZE];
+        let new = [0; APU_CHANNEL_SIZE];
+        return PulseDiffer::create(old, new, ApuChannelDelta::Pulse1);
     }
 
-    impl<D> ChannelDiffer<D> {
-        fn with_constructor(constructor: fn(D) -> A) -> Self {
-            let old = [0; APU_CHANNEL_SIZE];
-            let new = [0; APU_CHANNEL_SIZE];
-            return ChannelDiffer::create(old, new, constructor);
-        }
+    fn make_triangle() -> TriangleDiffer {
+        let old = [0; APU_CHANNEL_SIZE];
+        let new = [0; APU_CHANNEL_SIZE];
+        return TriangleDiffer::create(old, new);
+    }
 
-        fn set_old(self: &mut Self, at: usize, value: u8) -> &mut Self {
-            self.old_registers[at] = value;
-            return self;
-        }
+    fn make_noise() -> NoiseDiffer {
+        let old = [0; APU_CHANNEL_SIZE];
+        let new = [0; APU_CHANNEL_SIZE];
+        return NoiseDiffer::create(old, new);
+    }
 
-        fn set_new(self: &mut Self, at: usize, value: u8) -> &mut Self {
-            self.new_registers[at] = value;
-            return self;
-        }
-
-        fn set_make_period_delta(self: &mut Self, set_period: fn(u16) -> D) -> &mut Self {
-            self.set_period = Some(set_period);
-            return self;
-        }
-
-        fn set_make_pulse_delta(self: &mut Self, set_pulse: fn(PulseWidth) -> D) -> &mut Self {
-            self.set_pulse = Some(set_pulse);
-            return self;
-        }
-
-        fn set_make_volume_delta(self: &mut Self, set_volume: fn(u8) -> D) -> &mut Self {
-            self.set_volume = Some(set_volume);
-            return self;
-        }
+    impl PulseDiffer {
+        fn set_old(self: &mut Self, at: usize, value: u8) -> &mut Self { self.old_registers[at] = value; return self; }
+        fn set_new(self: &mut Self, at: usize, value: u8) -> &mut Self { self.new_registers[at] = value; return self; }
+    }
+    impl TriangleDiffer {
+        fn set_old(self: &mut Self, at: usize, value: u8) -> &mut Self { self.old_registers[at] = value; return self; }
+        fn set_new(self: &mut Self, at: usize, value: u8) -> &mut Self { self.new_registers[at] = value; return self; }
+    }
+    impl NoiseDiffer {
+        fn set_old(self: &mut Self, at: usize, value: u8) -> &mut Self { self.old_registers[at] = value; return self; }
+        fn set_new(self: &mut Self, at: usize, value: u8) -> &mut Self { self.new_registers[at] = value; return self; }
     }
 
     #[test]
     fn duty_changed_to_0() {
-        let change = ChannelDiffer::with_constructor(A::Pulse1)
-            .set_make_pulse_delta(PulseDelta::SetPulseWidth)
+        let change = make_pulse()
             .set_old(0, 0b1000_0000)
             .set_new(0, 0b0000_0000)
             .diff_pulse_width();
@@ -150,8 +228,7 @@ mod tests {
 
     #[test]
     fn duty_changed_to_1() {
-        let change = ChannelDiffer::with_constructor(A::Pulse1)
-            .set_make_pulse_delta(PulseDelta::SetPulseWidth)
+        let change = make_pulse()
             .set_old(0, 0b0000_0000)
             .set_new(0, 0b0100_0000)
             .diff_pulse_width();
@@ -161,8 +238,7 @@ mod tests {
 
     #[test]
     fn duty_changed_to_2() {
-        let change = ChannelDiffer::with_constructor(A::Pulse1)
-            .set_make_pulse_delta(PulseDelta::SetPulseWidth)
+        let change = make_pulse()
             .set_old(0, 0b0000_0000)
             .set_new(0, 0b1000_0000)
             .diff_pulse_width();
@@ -172,8 +248,7 @@ mod tests {
 
     #[test]
     fn duty_changed_to_3() {
-        let change = ChannelDiffer::with_constructor(A::Pulse1)
-            .set_make_pulse_delta(PulseDelta::SetPulseWidth)
+        let change = make_pulse()
             .set_old(0, 0b0000_0000)
             .set_new(0, 0b1100_0000)
             .diff_pulse_width();
@@ -183,61 +258,54 @@ mod tests {
 
     #[test]
     fn period_change__when_hi_unchanged_but_lo_is() {
-        let change = ChannelDiffer::with_constructor(A::Pulse1)
-            .set_make_period_delta(PulseDelta::SetPeriod)
+        let change = make_pulse()
             .set_old(2, 0b0000_0000)
             .set_new(2, 0b0000_0001)
             // stuff that should be ignored by mask
             .set_old(3, 0b0001_0101)
             .set_new(3, 0b0000_0001)
             .diff_period();
-        assert_eq!(change, Some(PulseDelta::SetPeriod(1)));
+        assert_eq!(change, Some(1));
     }
 
     #[test]
     fn period_change__when_lo_unchanged_but_hi_is() {
-        let change = ChannelDiffer::with_constructor(A::Pulse1)
-            .set_make_period_delta(PulseDelta::SetPeriod)
+        let change = make_pulse()
             .set_old(3, 0b0000_0000)
             .set_new(3, 0b0010_0000)
             .diff_period();
-        assert_eq!(change, Some(PulseDelta::SetPeriod(1 << 8)));
+        assert_eq!(change, Some(1 << 8));
     }
 
     #[test]
     fn period_changes__when_both_change() {
-        let change = ChannelDiffer::with_constructor(A::Pulse1)
-            .set_make_period_delta(PulseDelta::SetPeriod)
+        let change = make_pulse()
             .set_old(2, 0b0000_0000)
             .set_new(2, 0b0000_0001)
             .set_old(3, 0b0000_0000)
             .set_new(3, 0b0010_0000)
             .diff_period();
-        assert_eq!(change, Some(PulseDelta::SetPeriod((1 << 8) + 1)));
+        assert_eq!(change, Some((1 << 8) + 1));
     }
 
     #[test]
     fn period_change__when_nothing_changes() {
-        let change = ChannelDiffer::with_constructor(A::Pulse1)
-            .set_make_period_delta(PulseDelta::SetPeriod)
-            .diff_period();
+        let change = make_pulse().diff_period();
         assert_eq!(change, None);
     }
 
     #[test]
     fn volume_changes__with_update() {
-        let change = ChannelDiffer::with_constructor(A::Pulse1)
-            .set_make_volume_delta(PulseDelta::SetVolume)
+        let change = make_pulse()
             .set_old(0, 0b0000_0000)
             .set_new(0, 0b0000_0001)
             .diff_volume();
-        assert_eq!(change, Some(PulseDelta::SetVolume(1)));
+        assert_eq!(change, Some(1));
     }
 
     #[test]
     fn volume_changes__with_no_update() {
-        let change = ChannelDiffer::with_constructor(A::Pulse1)
-            .set_make_volume_delta(PulseDelta::SetVolume)
+        let change = make_pulse()
             .set_old(0, 0b0000_0000)
             .set_new(0, 0b0000_0000)
             .diff_volume();
