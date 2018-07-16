@@ -1,11 +1,11 @@
-use self::clock::Clock;
+use self::pipeline::Pipeline;
 use self::register::Registers;
 
 use clock::Processor;
 use memory::{Memory, ReadAddr};
 use std::u8;
 
-mod clock;
+mod pipeline;
 mod instruction;
 mod register;
 
@@ -13,7 +13,7 @@ pub const PAGE_SIZE: u16 = 256;
 
 pub struct Core {
     reg: Registers,
-    clock: Clock,
+    pipeline: Pipeline,
 }
 
 impl Default for Core {
@@ -28,12 +28,12 @@ impl Processor for Core {
     // Op code execution times are measured in machine cycles; one machine cycle equals one clock
     // cycle. Many instructions require one extra cycle for execution if a page boundary is crossed
     fn cycle(&mut self, memory: &mut Memory) {
-        if !self.clock.has_next() {
+        if !self.pipeline.has_next() {
             let opcode = memory.read_addr(self.reg.pc);
-            self.clock
+            self.pipeline
                 .set_next(opcode, instruction::CYCLES[opcode as usize]);
         }
-        if let Some(opcode) = self.clock.next() {
+        if let Some(opcode) = self.pipeline.next() {
             self.execute(opcode, memory);
         }
     }
@@ -43,7 +43,7 @@ impl Core {
     pub fn new(reg: Registers) -> Self {
         Core {
             reg,
-            clock: Clock::default(),
+            pipeline: Pipeline::default(),
         }
     }
 
@@ -217,22 +217,22 @@ mod tests {
 
         cpu.cycle(&mut memory);
         assert_eq!(instruction::CYCLES[0xa9], 2);
-        assert_eq!(cpu.clock, Clock::new(Some(0xa9), 1));
+        assert_eq!(cpu.pipeline, Pipeline::new(Some(0xa9), 1));
 
         cpu.cycle(&mut memory);
-        assert_eq!(cpu.clock, Clock::new(None, 0));
+        assert_eq!(cpu.pipeline, Pipeline::new(None, 0));
         assert_eq!(cpu.reg.acc, 0x55);
 
         cpu.cycle(&mut memory);
         assert_eq!(instruction::CYCLES[0x4c], 3);
-        assert_eq!(cpu.clock, Clock::new(Some(0x4c), 2));
+        assert_eq!(cpu.pipeline, Pipeline::new(Some(0x4c), 2));
 
         cpu.cycle(&mut memory);
-        assert_eq!(cpu.clock, Clock::new(Some(0x4c), 1));
+        assert_eq!(cpu.pipeline, Pipeline::new(Some(0x4c), 1));
         assert_eq!(cpu.reg.pc, 2);
 
         cpu.cycle(&mut memory);
-        assert_eq!(cpu.clock, Clock::new(None, 0));
+        assert_eq!(cpu.pipeline, Pipeline::new(None, 0));
         assert_eq!(cpu.reg.pc, 0x5597);
     }
 
