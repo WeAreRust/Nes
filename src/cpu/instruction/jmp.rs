@@ -1,4 +1,4 @@
-use cpu::Core;
+use cpu::{self, Core};
 use memory::{Memory, ReadAddr};
 
 impl Core {
@@ -16,28 +16,33 @@ impl Core {
     /// An indirect jump must never use a vector beginning on the last byte of a page. If this
     /// occurs then the low byte should be as expected, and the high byte should wrap to the start
     /// of the page. See http://www.6502.org/tutorials/6502opcodes.html#JMP for details.
-    ///
-    /// TODO: Not sure if this wrap is being done?
     pub fn jmp_indirect(&mut self, memory: &mut Memory) {
-        self.reg.pc = self.indirect_addr(memory);
+        let arg_addr = self.absolute_addr(memory);
+        self.reg.pc = self.indirect_addr(memory, arg_addr);
     }
 
     /// JMP is the only 6502 instruction to support indirection. The instruction contains a 16 bit
     /// address which identifies the location of the least significant byte of another 16 bit
     /// memory address which is the real target of the instruction.
     ///
-    /// For example if location $0120 contains $FC and location $0121 contains $BA then the
-    /// instruction JMP ($0120) will cause the next instruction execution to occur at $BAFC (e.g.
-    /// the contents of $0120 and $0121).
-    fn indirect_addr(&mut self, memory: &mut Memory) -> u16 {
-        let lo_addr = memory.read_addr(self.reg.pc) as u16;
-        let hi_addr = memory.read_addr(self.reg.pc + 1) as u16;
+    /// The 6502 process contains a bug specifically for indirect jumps that needs to be
+    /// reproduced. If address $3000 contains $40, $30FF contains $80, and $3100 contains $50, the
+    /// result of JMP ($30FF) will be a transfer of control to $4080 rather than $5080 as you
+    /// intended i.e. the 6502 took the low byte of the address from $30FF and the high byte from
+    /// $3000.
+    fn indirect_addr(&mut self, memory: &mut Memory, arg_addr: u16) -> u16 {
+        let lo_pc = arg_addr;
+        let mut hi_pc = lo_pc + 1;
 
-        let lo_adjusted = lo_addr + 1 | hi_addr << 8;
-        let hi_adjusted = lo_addr | hi_addr << 8;
+        let lo_page = lo_pc / cpu::PAGE_SIZE;
+        let hi_page = hi_pc / cpu::PAGE_SIZE;
+        if hi_page > lo_page {
+            hi_pc = lo_page * cpu::PAGE_SIZE;
+        }
 
-        let lo = memory.read_addr(lo_adjusted) as u16;
-        let hi = memory.read_addr(hi_adjusted) as u16;
+        let lo = memory.read_addr(lo_pc) as u16;
+        let hi = memory.read_addr(hi_pc) as u16;
+
         lo | hi << 8
     }
 }
@@ -65,7 +70,7 @@ mod tests {
     #[test]
     fn jump_indirect() {
         let mut bytes = nes_asm!("JMP ($0004)");
-        bytes.extend(vec![0xff, 0x55, 0x97]);
+        bytes.extend(vec![0xff, 0x97, 0x55]);
 
         let mut memory = Memory::with_bytes(bytes);
         let mut cpu = Core::new(Registers::empty());
@@ -80,25 +85,28 @@ mod tests {
 
     #[test]
     fn indirect_address() {
-        let mut memory = Memory::with_bytes(vec![0x03, 0x00, 0xff, 0x55, 0x97]);
-        let mut cpu = Core::new(Registers::empty());
-
-        let addr = cpu.indirect_addr(&mut memory);
-        assert_eq!(addr, 0x5597);
-    }
-
-    #[test]
-    #[ignore] // Note (Jordan): added this ignore as the test is failing
-    fn indirect_address_overflow() {
-        let mut bytes = vec![0; 256];
-        bytes[0] = 0x97;
-        bytes[255] = 0x55;
+        let mut bytes = vec![0; 65536];
+        bytes[0x30fe] = 0x80;
+        bytes[0x30ff] = 0x50;
 
         let mut memory = Memory::with_bytes(bytes);
         let mut cpu = Core::new(Registers::empty());
-        cpu.reg.pc = 255;
 
-        let addr = cpu.indirect_addr(&mut memory);
-        assert_eq!(addr, 0x5597);
+        let addr = cpu.indirect_addr(&mut memory, 0x30fe);
+        assert_eq!(addr, 0x5080);
+    }
+
+    #[test]
+    fn indirect_address_overflow() {
+        let mut bytes = vec![0; 65536];
+        bytes[0x30ff] = 0x80;
+        bytes[0x3100] = 0x50;
+        bytes[0x3000] = 0x40;
+
+        let mut memory = Memory::with_bytes(bytes);
+        let mut cpu = Core::new(Registers::empty());
+
+        let addr = cpu.indirect_addr(&mut memory, 0x30ff);
+        assert_eq!(addr, 0x4080);
     }
 }

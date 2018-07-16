@@ -7,6 +7,8 @@ use std::u8;
 mod instruction;
 mod register;
 
+pub const PAGE_SIZE: u16 = 256;
+
 pub struct Core {
     pub reg: Registers,
 }
