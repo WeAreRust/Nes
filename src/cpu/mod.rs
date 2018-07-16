@@ -33,7 +33,9 @@ impl Processor for Core {
             self.clock
                 .set_next(opcode, instruction::CYCLES[opcode as usize]);
         }
-        self.clock.next();
+        if let Some(opcode) = self.clock.next() {
+            self.execute(opcode, memory);
+        }
     }
 }
 
@@ -206,6 +208,33 @@ mod tests {
     use super::*;
 
     use cpu::register::Registers;
+
+    #[test]
+    fn processor_cycle() {
+        // Instructions: `LDA #$5f\nJMP $5597`.
+        let mut memory = Memory::with_bytes(vec![0xa9, 0x55, 0x4c, 0x97, 0x55]);
+        let mut cpu = Core::new(Registers::empty());
+
+        cpu.cycle(&mut memory);
+        assert_eq!(instruction::CYCLES[0xa9], 2);
+        assert_eq!(cpu.clock, Clock::new(Some(0xa9), 1));
+
+        cpu.cycle(&mut memory);
+        assert_eq!(cpu.clock, Clock::new(None, 0));
+        assert_eq!(cpu.reg.acc, 0x55);
+
+        cpu.cycle(&mut memory);
+        assert_eq!(instruction::CYCLES[0x4c], 3);
+        assert_eq!(cpu.clock, Clock::new(Some(0x4c), 2));
+
+        cpu.cycle(&mut memory);
+        assert_eq!(cpu.clock, Clock::new(Some(0x4c), 1));
+        assert_eq!(cpu.reg.pc, 2);
+
+        cpu.cycle(&mut memory);
+        assert_eq!(cpu.clock, Clock::new(None, 0));
+        assert_eq!(cpu.reg.pc, 0x5597);
+    }
 
     #[test]
     fn immediate_address() {

@@ -1,3 +1,4 @@
+#[derive(Debug, PartialEq)]
 pub struct Clock {
     /// Next instruction to execute
     pub opcode: Option<u8>,
@@ -8,10 +9,7 @@ pub struct Clock {
 
 impl Default for Clock {
     fn default() -> Self {
-        Clock {
-            opcode: None,
-            rem_cycles: 0,
-        }
+        Clock::new(None, 0)
     }
 }
 
@@ -19,18 +17,23 @@ impl Iterator for Clock {
     type Item = u8;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.rem_cycles > 0 {
+        if self.rem_cycles > 1 {
             self.rem_cycles -= 1;
             return None;
         }
 
         let opcode = self.opcode;
         self.opcode = None;
+        self.rem_cycles = 0;
         opcode
     }
 }
 
 impl Clock {
+    pub fn new(opcode: Option<u8>, rem_cycles: usize) -> Self {
+        Clock { opcode, rem_cycles }
+    }
+
     pub fn has_next(&self) -> bool {
         self.opcode.is_some()
     }
@@ -66,6 +69,7 @@ mod tests {
         let mut clock = Clock::default();
 
         assert_eq!(clock.next(), None);
+        assert_eq!(clock.rem_cycles, 0);
     }
 
     #[test]
@@ -73,17 +77,22 @@ mod tests {
         let mut clock = Clock::default();
         clock.set_next(0xff, 2);
 
+        assert_eq!(clock.rem_cycles, 2);
         assert_eq!(clock.next(), None);
-        assert_eq!(clock.next(), None);
+
+        assert_eq!(clock.rem_cycles, 1);
         assert_eq!(clock.next(), Some(0xff));
     }
 
     #[test]
     fn overflow_iteration() {
         let mut clock = Clock::default();
-        clock.set_next(0xff, 0);
+        clock.set_next(0xff, 1);
 
         assert_eq!(clock.next(), Some(0xff));
+        assert_eq!(clock.rem_cycles, 0);
+
         assert_eq!(clock.next(), None);
+        assert_eq!(clock.rem_cycles, 0);
     }
 }
