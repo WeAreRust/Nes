@@ -23,7 +23,10 @@ impl Iterator for Clock {
             self.rem_cycles -= 1;
             return None;
         }
-        self.opcode
+
+        let opcode = self.opcode;
+        self.opcode = None;
+        opcode
     }
 }
 
@@ -35,5 +38,52 @@ impl Clock {
     pub fn set_next(&mut self, opcode: u8, cycles: usize) {
         self.opcode = Some(opcode);
         self.rem_cycles = cycles;
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn has_next_instruction() {
+        let clock = Clock::default();
+
+        assert!(!clock.has_next());
+    }
+
+    #[test]
+    fn set_next_instruction() {
+        let mut clock = Clock::default();
+        clock.set_next(0xff, 2);
+
+        assert_eq!(clock.opcode, Some(0xff));
+        assert_eq!(clock.rem_cycles, 2);
+    }
+
+    #[test]
+    fn default_iteration() {
+        let mut clock = Clock::default();
+
+        assert_eq!(clock.next(), None);
+    }
+
+    #[test]
+    fn initial_iteration() {
+        let mut clock = Clock::default();
+        clock.set_next(0xff, 2);
+
+        assert_eq!(clock.next(), None);
+        assert_eq!(clock.next(), None);
+        assert_eq!(clock.next(), Some(0xff));
+    }
+
+    #[test]
+    fn overflow_iteration() {
+        let mut clock = Clock::default();
+        clock.set_next(0xff, 0);
+
+        assert_eq!(clock.next(), Some(0xff));
+        assert_eq!(clock.next(), None);
     }
 }
