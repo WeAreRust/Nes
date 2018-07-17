@@ -1,3 +1,5 @@
+use cpu::instruction;
+
 #[derive(Debug, PartialEq)]
 pub struct Pipeline {
     /// Next instruction to execute
@@ -34,13 +36,13 @@ impl Pipeline {
         Pipeline { opcode, rem_cycles }
     }
 
-    pub fn has_next(&self) -> bool {
-        self.opcode.is_some()
+    pub fn is_empty(&self) -> bool {
+        self.opcode.is_none()
     }
 
-    pub fn set_next(&mut self, opcode: u8, cycles: usize) {
+    pub fn push(&mut self, opcode: u8) {
         self.opcode = Some(opcode);
-        self.rem_cycles = cycles;
+        self.rem_cycles = instruction::CYCLES[opcode as usize];
     }
 }
 
@@ -49,19 +51,18 @@ mod tests {
     use super::*;
 
     #[test]
-    fn has_next_instruction() {
+    fn is_empty_instruction() {
         let pipeline = Pipeline::default();
 
-        assert!(!pipeline.has_next());
+        assert!(pipeline.is_empty());
     }
 
     #[test]
-    fn set_next_instruction() {
+    fn push_instruction() {
         let mut pipeline = Pipeline::default();
-        pipeline.set_next(0xff, 2);
+        pipeline.push(0xff);
 
         assert_eq!(pipeline.opcode, Some(0xff));
-        assert_eq!(pipeline.rem_cycles, 2);
     }
 
     #[test]
@@ -75,7 +76,8 @@ mod tests {
     #[test]
     fn initial_iteration() {
         let mut pipeline = Pipeline::default();
-        pipeline.set_next(0xff, 2);
+        pipeline.push(0xff);
+        pipeline.rem_cycles = 2;
 
         assert_eq!(pipeline.rem_cycles, 2);
         assert_eq!(pipeline.next(), None);
@@ -87,7 +89,8 @@ mod tests {
     #[test]
     fn overflow_iteration() {
         let mut pipeline = Pipeline::default();
-        pipeline.set_next(0xff, 1);
+        pipeline.push(0xff);
+        pipeline.rem_cycles = 1;
 
         assert_eq!(pipeline.next(), Some(0xff));
         assert_eq!(pipeline.rem_cycles, 0);

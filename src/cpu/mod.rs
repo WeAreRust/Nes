@@ -28,10 +28,9 @@ impl Processor for Core {
     // Op code execution times are measured in machine cycles; one machine cycle equals one clock
     // cycle. Many instructions require one extra cycle for execution if a page boundary is crossed
     fn cycle(&mut self, memory: &mut Memory) {
-        if !self.pipeline.has_next() {
+        if self.pipeline.is_empty() {
             let opcode = memory.read_addr(self.reg.pc);
-            self.pipeline
-                .set_next(opcode, instruction::CYCLES[opcode as usize]);
+            self.pipeline.push(opcode);
         }
         if let Some(opcode) = self.pipeline.next() {
             self.execute(opcode, memory);
