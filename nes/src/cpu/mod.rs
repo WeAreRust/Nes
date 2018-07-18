@@ -195,6 +195,8 @@ impl Core {
             0xa1 => self.lda_indirect_x(memory),
             0xb1 => self.lda_indirect_y(memory),
 
+            0xea => self.nop(),
+
             _ => unimplemented!(),
         };
     }
