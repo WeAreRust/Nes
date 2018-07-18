@@ -9,9 +9,8 @@ As a prerequisite, you'll need SDL2.
 brew install sdl2
 ```
 
-
 ```
-cargo run --bin nes ./my_game.nes
+bin/run.sh ./my_game.nes
 ```
 
 ## Notes
