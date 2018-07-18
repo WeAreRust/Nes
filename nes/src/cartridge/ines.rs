@@ -1,3 +1,48 @@
+//! iNES file format
+//! 
+//! iNES is a binary format starting with a 16 byte header block.
+//! 
+//! Starting | Length | Data
+//! Byte     |        |
+//! ---------|--------|--------------------------------------------
+//! 0        | 3      | Constant value: 'NES' (0x4E 0x45 0x1A)
+//! ---------|--------|--------------------------------------------
+//! 3        | 1      | Constant value: 0x1A
+//! ---------|--------|--------------------------------------------
+//! 4        | 1      | Number of 16KB PRG-ROM banks
+//! ---------|--------|--------------------------------------------
+//! 5        | 1      | Number of 8KB CHR-ROM banks
+//! ---------|--------|--------------------------------------------
+//! 6        | 1      | Control byte 1
+//!          |        | 76543210
+//!          |        | ||||||||
+//!          |        | |||||||+- Mirroring: 0: horizontal
+//!          |        | |||||||              1: vertical
+//!          |        | ||||||+-- 1: Battery-backed RAM present
+//!          |        | |||||+--- 1: 512-byte trainer present
+//!          |        | ||||+---- 1: Four-screen mirroring present
+//!          |        | ++++----- Lower bits of mapper number
+//! ---------|--------|--------------------------------------------
+//! 7        | 1      | Control byte 2
+//!          |        | 76543210
+//!          |        | ||||||||
+//!          |        | ||||++++- Reserved for future use,
+//!          |        | ||||      should all be 0
+//!          |        | ++++----- Upper bits of mapper number
+//! ---------|--------|--------------------------------------------
+//! 8        | 1      | Number of 8KB RAM banks. If 0, assume 1 for
+//!          |        | backwards compatibility.
+//! ---------|--------|--------------------------------------------
+//! 9        | 7      | Reserved for future use. Should be 0.
+//! ---------|--------|--------------------------------------------
+//! 
+//! The 512-byte trainer immediately follows the header if it is 
+//! indicated as present (see header byte 6).
+//! 
+//! Next, the PRG-ROM follows. The size is equal to #Banks * 16KB.
+//! 
+//! And finally, the CHR-ROM. The size is equal to #Banks * 8KB.
+
 use std::fmt;
 
 use cartridge::mapper::MapperType;
@@ -27,12 +72,16 @@ const MAPPER_CNROM_SWITCH: u8 = 3;
 const MAPPER_INES_211: u8 = 211;
 
 const SIZE_PRG_ROM_BANK: usize = 16 * 1024;
+const SIZE_CHR_ROM_BANK: usize = 8 * 1024;
 
 pub struct Image {
     pub mirror: Mirroring,
     pub mapper: MapperType,
     pub four_screen_mirroring: bool,
-    pub rom_data: Vec<u8>,
+    pub num_prg_banks: u8,
+    pub prg_rom_data: Vec<u8>,
+    pub num_chr_banks: u8,
+    pub chr_rom_data: Vec<u8>,
     pub has_battery_ram: bool,
     has_trainer: bool,
 }
@@ -68,7 +117,10 @@ pub fn parse_ines(data: &[u8]) -> Result<Image, ParseError> {
         mirror: detect_mirror_type(data),
         mapper: detect_mapper(data)?,
         four_screen_mirroring: has_four_screen_mirroring(data),
-        rom_data: extract_rom_data(data),
+        num_prg_banks: count_prg_rom_banks(data),
+        prg_rom_data: extract_prg_rom_data(data),
+        num_chr_banks: count_chr_rom_banks(data),
+        chr_rom_data: extract_chr_rom_data(data),
         has_trainer: has_trainer(data),
         has_battery_ram: has_battery_backed_ram(data),
     })
@@ -113,16 +165,35 @@ fn detect_mapper(data: &[u8]) -> Result<MapperType, ParseErrorReason> {
     }
 }
 
-fn extract_rom_data(data: &[u8]) -> Vec<u8> {
-    let rom_start = if has_trainer(data) {
+fn prg_rom_start(data: &[u8]) -> usize {
+    let prg_start = if has_trainer(data) {
         LEN_HEADER + LEN_TRAINER
     } else {
         LEN_HEADER
     };
 
-    let len_rom: usize = count_prg_rom_banks(data) as usize * SIZE_PRG_ROM_BANK;
+    prg_start as usize
+}
 
-    data[rom_start..len_rom].to_vec()
+fn extract_prg_rom_data(data: &[u8]) -> Vec<u8> {
+    let prg_start = prg_rom_start(data);
+
+    let len_prg: usize = count_prg_rom_banks(data) as usize * SIZE_PRG_ROM_BANK;
+
+    data[prg_start..prg_start+len_prg].to_vec()
+}
+
+fn chr_rom_start(data: &[u8]) -> usize {
+    let prg_start = prg_rom_start(data);
+    let len_prg = count_prg_rom_banks(data) as usize * SIZE_PRG_ROM_BANK;
+    prg_start + len_prg
+}
+
+fn extract_chr_rom_data(data: &[u8]) -> Vec<u8> {
+    let chr_start = chr_rom_start(data);
+    let len_chr: usize = count_chr_rom_banks(data) as usize * SIZE_CHR_ROM_BANK;
+
+    data[chr_start..chr_start+len_chr].to_vec()
 }
 
 #[cfg(test)]

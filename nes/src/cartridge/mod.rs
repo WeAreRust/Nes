@@ -28,7 +28,13 @@ impl Cartridge {
         Ok(Cartridge {
             mirroring: image.mirror,
             battery_ram_present: image.has_battery_ram,
-            mapper: Mapper::create(image.mapper, image.rom_data),
+            mapper: Mapper::create(
+                image.mapper, 
+                image.prg_rom_data, 
+                image.chr_rom_data,
+                image.num_prg_banks,
+                image.num_chr_banks,
+            ),
         })
     }
 }

@@ -19,7 +19,7 @@ fn main() {
     // TODO(toby): parse the file content
     let cartridge = nes::cartridge::parse_rom_file(&data).unwrap();
     print!("PRG ROM DUMP");
-    for i in 0x0000..0x07ff {
+    for i in 0x8000..0xBFFF {
         if i % 20 == 0 {
             println!();
         }
