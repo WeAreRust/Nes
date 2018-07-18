@@ -23,7 +23,7 @@ fn main() {
         if i % 20 == 0 {
             println!();
         }
-        print!("{:02x} ", cartridge.rom.read(i));
+        print!("{:02x} ", cartridge.mapper.read_addr(i));
     }
     println!();
 

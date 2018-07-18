@@ -33,6 +33,7 @@ pub struct Image {
     pub mapper: MapperType,
     pub four_screen_mirroring: bool,
     pub rom_data: Vec<u8>,
+    pub has_battery_ram: bool,
     has_trainer: bool,
 }
 
@@ -62,13 +63,14 @@ pub fn check_format(data: &[u8]) -> bool {
     data[..LEN_NES] == INES_HEADER
 }
 
-pub fn parse_rom(data: &[u8]) -> Result<Image, ParseError> {
+pub fn parse_ines(data: &[u8]) -> Result<Image, ParseError> {
     Ok(Image {
         mirror: detect_mirror_type(data),
         mapper: detect_mapper(data)?,
         four_screen_mirroring: has_four_screen_mirroring(data),
         rom_data: extract_rom_data(data),
         has_trainer: has_trainer(data),
+        has_battery_ram: has_battery_backed_ram(data),
     })
 }
 
@@ -228,7 +230,7 @@ mod tests {
         let mut data = [00u8; 49168];
         data[..8].clone_from_slice(&[0x4e, 0x45, 0x53, 0x1a, 0x02, 0x02, 0x31, 0x00]);
 
-        let rom = parse_rom(&data).unwrap();
+        let rom = parse_ines(&data).unwrap();
         assert_eq!(rom.mirror, Mirroring::Vertical);
         assert_eq!(rom.mapper, MapperType::CNROMSwitch);
         assert_eq!(rom.four_screen_mirroring, false);
