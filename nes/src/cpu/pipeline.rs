@@ -1,5 +1,3 @@
-use cpu::instruction;
-
 #[derive(Debug, PartialEq)]
 pub struct Pipeline {
     /// Next instruction to execute
@@ -40,9 +38,9 @@ impl Pipeline {
         self.opcode.is_none()
     }
 
-    pub fn push(&mut self, opcode: u8) {
+    pub fn push(&mut self, opcode: u8, cycles: usize) {
         self.opcode = Some(opcode);
-        self.rem_cycles = instruction::CYCLES[opcode as usize];
+        self.rem_cycles = cycles;
     }
 }
 
@@ -60,7 +58,7 @@ mod tests {
     #[test]
     fn push_instruction() {
         let mut pipeline = Pipeline::default();
-        pipeline.push(0xff);
+        pipeline.push(0xff, 0);
 
         assert_eq!(pipeline.opcode, Some(0xff));
     }
@@ -76,8 +74,7 @@ mod tests {
     #[test]
     fn initial_iteration() {
         let mut pipeline = Pipeline::default();
-        pipeline.push(0xff);
-        pipeline.rem_cycles = 2;
+        pipeline.push(0xff, 2);
 
         assert_eq!(pipeline.rem_cycles, 2);
         assert_eq!(pipeline.next(), None);
@@ -89,8 +86,7 @@ mod tests {
     #[test]
     fn overflow_iteration() {
         let mut pipeline = Pipeline::default();
-        pipeline.push(0xff);
-        pipeline.rem_cycles = 1;
+        pipeline.push(0xff, 1);
 
         assert_eq!(pipeline.next(), Some(0xff));
         assert_eq!(pipeline.rem_cycles, 0);

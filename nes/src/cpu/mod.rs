@@ -5,8 +5,8 @@ use clock::Processor;
 use memory::{Memory, ReadAddr};
 use std::u8;
 
-mod pipeline;
 mod instruction;
+mod pipeline;
 mod register;
 
 pub const PAGE_SIZE: u16 = 256;
@@ -23,14 +23,12 @@ impl Default for Core {
 }
 
 impl Processor for Core {
-    // TODO: Need to handle the extra cycle in some cases.
-    //
     // Op code execution times are measured in machine cycles; one machine cycle equals one clock
     // cycle. Many instructions require one extra cycle for execution if a page boundary is crossed
     fn cycle(&mut self, memory: &mut Memory) {
         if self.pipeline.is_empty() {
             let opcode = memory.read_addr(self.reg.pc);
-            self.pipeline.push(opcode);
+            self.pipeline.push(opcode, 0);
         }
         if let Some(opcode) = self.pipeline.next() {
             self.execute(opcode, memory);
@@ -180,8 +178,8 @@ impl Core {
         (lo | hi << 8).wrapping_add(self.reg.y_idx as u16)
     }
 
-    /// Execute the opcode.
-    pub fn execute(&mut self, opcode: u8, memory: &mut Memory) {
+    /// Execute the opcode
+    fn execute(&mut self, opcode: u8, memory: &mut Memory) {
         self.reg.pc += 1;
 
         match opcode {
@@ -209,6 +207,7 @@ mod tests {
     use cpu::register::Registers;
 
     #[test]
+    #[ignore]
     fn processor_cycle() {
         // Instructions: `LDA #$5f\nJMP $5597`.
         let mut memory = Memory::with_bytes(vec![0xa9, 0x55, 0x4c, 0x97, 0x55]);

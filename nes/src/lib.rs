@@ -1,4 +1,5 @@
 #![allow(dead_code)]
+#![feature(nll)]
 
 #[cfg(test)]
 extern crate asm6502;

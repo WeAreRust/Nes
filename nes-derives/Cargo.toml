@@ -1,0 +1,12 @@
+[package]
+name = "nes-derives"
+version = "0.1.0"
+authors = ["Josh Leeb-du Toit <josh.leebdutoit@gmail.com>"]
+
+[dependencies]
+proc-macro2 = "0.3.6"
+quote = "0.5.2"
+syn = "0.13.1"
+
+[lib]
+proc-macro = true

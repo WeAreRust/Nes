@@ -1,0 +1,21 @@
+[package]
+name = "nes"
+version = "0.1.0"
+authors = ["Josh Leeb-du Toit <josh.leebdutoit@gmail.com>"]
+
+[dependencies]
+bitflags = "1.0.3"
+bytes = "0.4.8"
+rand = "0.5.3"
+sdl2 = "0.31.0"
+
+[dev-dependencies]
+asm6502 = "0.1.2"
+
+[[bin]]
+name = "nes"
+path = "src/bin/main.rs"
+
+[[bin]]
+name = "apu-demo"
+path = "src/bin/apu_demo.rs"
