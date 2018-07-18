@@ -1,3 +1,6 @@
+use cartridge::mappers::nrom::NROM;
+use memory::{ReadAddr};
+
 #[derive(PartialEq, Debug, Clone)]
 pub enum MapperType {
     NROM, // No mapper
@@ -6,34 +9,23 @@ pub enum MapperType {
     INESMapper211, // https://wiki.nesdev.com/w/index.php/INES_Mapper_211
 }
 
-pub trait Mapper {
-    fn map(&self, in_addr: u16) -> u16;
+pub trait Mapper: ReadAddr<u16, u8> {
 }
 
-pub fn create_mapper(t: MapperType) -> Box<Mapper> {
-    match t {
-        MapperType::NROM => Box::new(NROM {}),
-        MapperType::CNROMSwitch => Box::new(CNROMSwitch { offset: 0u16 }),
-        _ => panic!("Not implemented."),
+impl Mapper {
+    pub fn create(
+        t: MapperType,
+        prg_rom_data: Vec<u8>,
+        _chr_rom_data: Vec<u8>,
+        num_prg_rom_banks: u8,
+        _num_chr_rom_banks: u8,
+    ) -> Box<Mapper> {
+        match t {
+            MapperType::NROM => Box::new(
+                NROM::new(prg_rom_data, num_prg_rom_banks)
+            ),
+            _ => panic!("Mapper not implemented."),
+        }
     }
 }
 
-struct NROM {}
-
-impl Mapper for NROM {
-    fn map(&self, in_addr: u16) -> u16 {
-        in_addr
-    }
-}
-
-struct CNROMSwitch {
-    // TODO(tobys): This implementation is bunk. Do a proper one.
-    offset: u16,
-}
-
-impl Mapper for CNROMSwitch {
-    // TODO(tobys): This implementation is bunk. Do a proper one.
-    fn map(&self, in_addr: u16) -> u16 {
-        in_addr + self.offset
-    }
-}
