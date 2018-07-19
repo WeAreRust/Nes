@@ -2,13 +2,15 @@
 macro_rules! nes_asm {
     ($e:expr) => {{
         let mut buf = vec![];
-        ::asm6502::assemble($e.as_bytes(), &mut buf).unwrap();
+        // We push a newline into the bytes array because of a known issue in asm6502
+        ::asm6502::assemble(format!("{}\n", $e).as_bytes(), &mut buf).unwrap();
         buf
     }};
 }
 
 mod jmp;
 mod lda;
+mod nop;
 
 pub const CYCLES: [usize; 256] = [
     7, 6, 2, 8, 3, 3, 5, 5, 3, 2, 2, 2, 4, 4, 6, 6, 2, 5, 2, 8, 4, 4, 6, 6, 2, 4, 2, 7, 4, 4, 6, 7,
