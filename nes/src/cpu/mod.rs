@@ -31,7 +31,7 @@ impl Processor for Core {
             self.pipeline.push(opcode, 0);
         }
         if let Some(opcode) = self.pipeline.next() {
-            self.execute(opcode, memory);
+            instruction::execute(opcode, self, memory);
         }
     }
 }
@@ -146,6 +146,31 @@ impl Core {
         (lo | hi << 8).wrapping_add(self.reg.y_idx as u16)
     }
 
+    /// JMP is the only 6502 instruction to support indirection. The instruction contains a 16 bit
+    /// address which identifies the location of the least significant byte of another 16 bit
+    /// memory address which is the real target of the instruction.
+    ///
+    /// The 6502 process contains a bug specifically for indirect jumps that needs to be
+    /// reproduced. If address $3000 contains $40, $30FF contains $80, and $3100 contains $50, the
+    /// result of JMP ($30FF) will be a transfer of control to $4080 rather than $5080 as you
+    /// intended i.e. the 6502 took the low byte of the address from $30FF and the high byte from
+    /// $3000.
+    fn indirect_addr(&mut self, memory: &mut Memory, arg_addr: u16) -> u16 {
+        let lo_pc = arg_addr;
+        let mut hi_pc = lo_pc + 1;
+
+        let lo_page = lo_pc / PAGE_SIZE;
+        let hi_page = hi_pc / PAGE_SIZE;
+        if hi_page > lo_page {
+            hi_pc = lo_page * PAGE_SIZE;
+        }
+
+        let lo = memory.read_addr(lo_pc) as u16;
+        let hi = memory.read_addr(hi_pc) as u16;
+
+        lo | hi << 8
+    }
+
     /// Indexed indirect addressing is normally used in conjunction with a table of address held on
     /// zero page. The address of the table is taken from the instruction and the X register added
     /// to it (with zero page wrap around) to give the location of the least significant byte of
@@ -176,29 +201,6 @@ impl Core {
         let hi = memory.read_addr(addr + 1) as u16;
 
         (lo | hi << 8).wrapping_add(self.reg.y_idx as u16)
-    }
-
-    /// Execute the opcode
-    fn execute(&mut self, opcode: u8, memory: &mut Memory) {
-        self.reg.pc += 1;
-
-        match opcode {
-            0x4c => self.jmp_absolute(memory),
-            0x6c => self.jmp_indirect(memory),
-
-            0xa9 => self.lda_immediate(memory),
-            0xa5 => self.lda_zero_page(memory),
-            0xb5 => self.lda_zero_page_x(memory),
-            0xad => self.lda_absolute(memory),
-            0xbd => self.lda_absolute_x(memory),
-            0xb9 => self.lda_absolute_y(memory),
-            0xa1 => self.lda_indirect_x(memory),
-            0xb1 => self.lda_indirect_y(memory),
-
-            0xea => self.nop(),
-
-            _ => unimplemented!(),
-        };
     }
 }
 
@@ -375,6 +377,33 @@ mod tests {
         let addr = cpu.absolute_addr_y(&mut memory);
         assert_eq!(addr, 0x0001);
         assert_eq!(cpu.reg.pc, 2);
+    }
+
+    #[test]
+    fn indirect_address() {
+        let mut bytes = vec![0; 65536];
+        bytes[0x30fe] = 0x80;
+        bytes[0x30ff] = 0x50;
+
+        let mut memory = Memory::with_bytes(bytes);
+        let mut core = Core::new(Registers::empty());
+
+        let addr = core.indirect_addr(&mut memory, 0x30fe);
+        assert_eq!(addr, 0x5080);
+    }
+
+    #[test]
+    fn indirect_address_overflow() {
+        let mut bytes = vec![0; 65536];
+        bytes[0x30ff] = 0x80;
+        bytes[0x3100] = 0x50;
+        bytes[0x3000] = 0x40;
+
+        let mut memory = Memory::with_bytes(bytes);
+        let mut core = Core::new(Registers::empty());
+
+        let addr = core.indirect_addr(&mut memory, 0x30ff);
+        assert_eq!(addr, 0x4080);
     }
 
     #[test]

@@ -1,4 +1,7 @@
 #![allow(dead_code)]
+
+#![feature(attr_literals)]
+#![feature(custom_attribute)]
 #![feature(nll)]
 
 #[cfg(test)]
@@ -6,6 +9,9 @@ extern crate asm6502;
 
 #[macro_use]
 extern crate bitflags;
+
+#[macro_use]
+extern crate nes_derives;
 
 extern crate bytes;
 extern crate core;
