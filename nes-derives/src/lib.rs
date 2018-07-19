@@ -15,7 +15,10 @@ mod execute;
 
 type DeriveFn = fn(DeriveInput) -> Result<proc_macro2::TokenStream, Diagnostic>;
 
-#[proc_macro_derive(Execute, attributes(opcode, cycles))]
+#[proc_macro_derive(
+    Execute,
+    attributes(opcode, cycles, page_boundary_extra_cycle)
+)]
 pub fn instruction_derive(tokens: TokenStream) -> TokenStream {
     expand_derive(tokens, execute::derive)
 }

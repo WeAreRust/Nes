@@ -60,7 +60,8 @@ fn absolute(core: &mut Core, memory: &mut Memory) {
 /// Load accumulator absolute X
 ///
 /// Flags affected: N, Z
-/// TODO: test
+/// TODO: test normal execution
+/// TODO: test page boundary execution
 #[derive(Execute)]
 #[opcode = 0xbd]
 #[cycles = 4]
@@ -76,7 +77,8 @@ fn absolute_x(core: &mut Core, memory: &mut Memory) {
 /// Load accumulator absolute Y
 ///
 /// Flags affected: N, Z
-/// TODO: test
+/// TODO: test normal execution
+/// TODO: test page boundary execution
 #[derive(Execute)]
 #[opcode = 0xb9]
 #[cycles = 4]
@@ -107,7 +109,8 @@ fn indirect_x(core: &mut Core, memory: &mut Memory) {
 /// Load accumulator indirect Y
 ///
 /// Flags affected: N, Z
-/// TODO: test
+/// TODO: test normal execution
+/// TODO: test page boundary execution
 #[derive(Execute)]
 #[opcode = 0xb1]
 #[cycles = 2]
