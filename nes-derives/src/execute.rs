@@ -1,9 +1,10 @@
 use heck::SnakeCase;
 use proc_macro::Diagnostic;
-use proc_macro2::{Ident, Literal, Span, TokenStream};
-use syn::{DeriveInput, Lit, Meta::NameValue};
+use proc_macro2::{Ident, Span, TokenStream};
+use syn::{DeriveInput, Meta::NameValue};
 
 // TODO(joshleeb): Proper error handling.
+// TODO(joshleeb): Cleanup big time!!
 // Could even update flags from a custom attribute.
 pub fn derive(item: DeriveInput) -> Result<TokenStream, Diagnostic> {
     let ident = item.ident;
@@ -21,16 +22,16 @@ pub fn derive(item: DeriveInput) -> Result<TokenStream, Diagnostic> {
         _ => unimplemented!(),
     };
 
-    let extra_cycles = match attrs.find(|a| a.name() == "extra_cycles") {
-        Some(NameValue(value)) => value.lit,
-        _ => Lit::new(Literal::usize_unsuffixed(0)),
+    let extra_cycles = match attrs.find(|a| a.name() == "page_boundary_extra_cycle") {
+        Some(NameValue(_)) => true,
+        _ => false,
     };
 
     Ok(quote! {
-        impl Instruction for #ident {
+        impl Execute for #ident {
             const OPCODE: u8 = #opcode;
             const CYCLES: usize = #cycles;
-            const PAGE_BOUNDARY_EXTRA_CYCLES: usize = #extra_cycles;
+            const PAGE_BOUNDARY_EXTRA_CYCLES: bool = #extra_cycles;
 
             fn exec(core: &mut Core, memory: &mut Memory) {
                 #lower_ident(core, memory)

@@ -1,8 +1,8 @@
 #![feature(proc_macro)]
 
 extern crate heck;
-extern crate proc_macro2;
 extern crate proc_macro;
+extern crate proc_macro2;
 extern crate syn;
 
 #[macro_use]
@@ -11,13 +11,13 @@ extern crate quote;
 use proc_macro::{Diagnostic, TokenStream};
 use syn::{parse2, DeriveInput};
 
-mod instruction;
+mod execute;
 
 type DeriveFn = fn(DeriveInput) -> Result<proc_macro2::TokenStream, Diagnostic>;
 
-#[proc_macro_derive(Instruction, attributes(opcode, cycles))]
+#[proc_macro_derive(Execute, attributes(opcode, cycles))]
 pub fn instruction_derive(tokens: TokenStream) -> TokenStream {
-    expand_derive(tokens, instruction::derive)
+    expand_derive(tokens, execute::derive)
 }
 
 fn expand_derive(tokens: TokenStream, derive: DeriveFn) -> TokenStream {

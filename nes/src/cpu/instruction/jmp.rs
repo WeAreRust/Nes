@@ -1,10 +1,10 @@
-use cpu::{instruction::Instruction, Core};
+use cpu::{instruction::Execute, Core};
 use memory::Memory;
 
 /// Jump absolute
 ///
 /// Flags affected: None
-#[derive(Instruction)]
+#[derive(Execute)]
 #[opcode = 0x4c]
 #[cycles = 3]
 pub struct Absolute;
@@ -20,7 +20,7 @@ fn absolute(core: &mut Core, memory: &mut Memory) {
 /// An indirect jump must never use a vector beginning on the last byte of a page. If this
 /// occurs then the low byte should be as expected, and the high byte should wrap to the start
 /// of the page. See http://www.6502.org/tutorials/6502opcodes.html#JMP for details.
-#[derive(Instruction)]
+#[derive(Execute)]
 #[opcode = 0x6c]
 #[cycles = 5]
 pub struct Indirect;
@@ -34,7 +34,7 @@ fn indirect(core: &mut Core, memory: &mut Memory) {
 mod tests {
     use super::*;
 
-    use cpu::{instruction, register::Registers};
+    use cpu::{instruction::Instruction, register::Registers};
     use memory::ReadAddr;
 
     #[test]
@@ -43,9 +43,9 @@ mod tests {
         let mut core = Core::new(Registers::empty());
 
         let opcode = memory.read_addr(0);
-        assert_eq!(opcode, <Absolute as Instruction>::OPCODE);
+        assert_eq!(opcode, <Absolute as Execute>::OPCODE);
 
-        instruction::execute(opcode, &mut core, &mut memory);
+        Instruction::from(opcode).execute(&mut core, &mut memory);
         assert_eq!(core.reg.pc, 0x5597);
     }
 
@@ -58,9 +58,9 @@ mod tests {
         let mut core = Core::new(Registers::empty());
 
         let opcode = memory.read_addr(0);
-        assert_eq!(opcode, <Indirect as Instruction>::OPCODE);
+        assert_eq!(opcode, <Indirect as Execute>::OPCODE);
 
-        instruction::execute(opcode, &mut core, &mut memory);
+        Instruction::from(opcode).execute(&mut core, &mut memory);
         assert_eq!(core.reg.pc, 0x5597);
     }
 }

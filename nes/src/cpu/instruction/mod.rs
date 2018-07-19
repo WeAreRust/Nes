@@ -1,6 +1,21 @@
 use cpu::Core;
 use memory::Memory;
+use std::convert::From;
 
+#[macro_export]
+macro_rules! instruction_match {
+    ($op:ident, $fn:ident, $($a:ident),*) => {
+        match $op {
+            <jmp::Absolute as Execute>::OPCODE => <jmp::Absolute as Execute>::$fn($($a),*),
+            <jmp::Indirect as Execute>::OPCODE => <jmp::Indirect as Execute>::$fn($($a),*),
+
+            _ => unimplemented!(),
+        }
+    };
+    ($op:ident, $fn:ident) => (instruction_match!($op, $fn,))
+}
+
+#[cfg(test)]
 #[macro_export]
 macro_rules! nes_asm {
     ($e:expr) => {{
@@ -15,98 +30,52 @@ mod jmp;
 mod lda;
 mod nop;
 
-#[macro_export]
-macro_rules! attr {
-    ($p:path) => {
-        Attributes {
-            opcode: <$p as Instruction>::OPCODE,
-            cycles: <$p as Instruction>::CYCLES,
-            extra_cycles: <$p as Instruction>::PAGE_BOUNDARY_EXTRA_CYCLES,
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! opcode {
-    ($p:path) => {
-        <$p as Instruction>::OPCODE
-    };
-}
-
-#[macro_export]
-macro_rules! exec {
-    ($p:path, $c:ident, $m:ident) => {
-        <$p as Instruction>::exec($c, $m)
-    };
-}
-
-pub trait Instruction {
+trait Execute {
     const OPCODE: u8;
     const CYCLES: usize;
-    const PAGE_BOUNDARY_EXTRA_CYCLES: usize = 0;
+    const PAGE_BOUNDARY_EXTRA_CYCLES: bool = false;
 
     fn exec(core: &mut Core, memory: &mut Memory);
-}
 
-pub struct Attributes {
-    pub opcode: u8,
-    pub cycles: usize,
-    pub extra_cycles: usize,
-}
-
-// TODO: Dedup lists.
-// TODO: Make macros cleaner.
-
-pub fn execute(opcode: u8, core: &mut Core, memory: &mut Memory) {
-    // TODO(joshleeb): Move this out of the `execute` function.
-    core.reg.pc += 1;
-
-    match opcode {
-        opcode!(jmp::Absolute) => exec!(jmp::Absolute, core, memory),
-        opcode!(jmp::Indirect) => exec!(jmp::Indirect, core, memory),
-
-        opcode!(lda::Immediate) => exec!(lda::Immediate, core, memory),
-        opcode!(lda::ZeroPage) => exec!(lda::ZeroPage, core, memory),
-        opcode!(lda::ZeroPageX) => exec!(lda::ZeroPageX, core, memory),
-        opcode!(lda::Absolute) => exec!(lda::Absolute, core, memory),
-        opcode!(lda::AbsoluteX) => exec!(lda::AbsoluteX, core, memory),
-        opcode!(lda::AbsoluteY) => exec!(lda::AbsoluteY, core, memory),
-        opcode!(lda::IndirectX) => exec!(lda::IndirectX, core, memory),
-        opcode!(lda::IndirectY) => exec!(lda::IndirectY, core, memory),
-
-        opcode!(nop::Implicit) => exec!(nop::Implicit, core, memory),
-
-        _ => unimplemented!(),
+    fn to_instruction() -> Instruction {
+        Instruction {
+            opcode: Self::OPCODE,
+            cycles: Self::CYCLES,
+            page_boundary_extra_cycle: Self::PAGE_BOUNDARY_EXTRA_CYCLES,
+        }
     }
 }
 
-pub fn get_attrs(opcode: u8) -> Attributes {
-    match opcode {
-        opcode!(jmp::Absolute) => attr!(jmp::Absolute),
-        opcode!(jmp::Indirect) => attr!(jmp::Indirect),
+pub struct Instruction {
+    opcode: u8,
+    cycles: usize,
+    page_boundary_extra_cycle: bool,
+}
 
-        opcode!(lda::Immediate) => attr!(lda::Immediate),
-        opcode!(lda::ZeroPage) => attr!(lda::ZeroPage),
-        opcode!(lda::ZeroPageX) => attr!(lda::ZeroPageX),
-        opcode!(lda::Absolute) => attr!(lda::Absolute),
-        opcode!(lda::AbsoluteX) => attr!(lda::AbsoluteX),
-        opcode!(lda::AbsoluteY) => attr!(lda::AbsoluteY),
-        opcode!(lda::IndirectX) => attr!(lda::IndirectX),
-        opcode!(lda::IndirectY) => attr!(lda::IndirectY),
+impl Instruction {
+    pub fn opcode(&self) -> u8 {
+        self.opcode
+    }
 
-        opcode!(nop::Implicit) => attr!(nop::Implicit),
+    pub fn cycles(&self, _core: &Core, _memory: &Memory) -> usize {
+        if !self.page_boundary_extra_cycle {
+            return self.cycles;
+        }
 
-        _ => unimplemented!(),
+        // TODO: Implement properly: Check if across page boundary.
+        self.cycles
+    }
+
+    pub fn execute(&self, core: &mut Core, memory: &mut Memory) {
+        core.reg.pc += 1;
+
+        let opcode = self.opcode;
+        instruction_match!(opcode, exec, core, memory)
     }
 }
 
-pub const CYCLES: [usize; 256] = [
-    7, 6, 2, 8, 3, 3, 5, 5, 3, 2, 2, 2, 4, 4, 6, 6, 2, 5, 2, 8, 4, 4, 6, 6, 2, 4, 2, 7, 4, 4, 6, 7,
-    6, 6, 2, 8, 3, 3, 5, 5, 4, 2, 2, 2, 4, 4, 6, 6, 2, 5, 2, 8, 4, 4, 6, 6, 2, 4, 2, 7, 4, 4, 6, 7,
-    6, 6, 2, 8, 3, 3, 5, 5, 3, 2, 2, 2, 3, 4, 6, 6, 2, 5, 2, 8, 4, 4, 6, 6, 2, 4, 2, 7, 4, 4, 6, 7,
-    6, 6, 2, 8, 3, 3, 5, 5, 4, 2, 2, 2, 5, 4, 6, 6, 2, 5, 2, 8, 4, 4, 6, 6, 2, 4, 2, 7, 4, 4, 6, 7,
-    2, 6, 2, 6, 3, 3, 3, 3, 2, 2, 2, 2, 4, 4, 4, 4, 2, 6, 2, 6, 4, 4, 4, 4, 2, 4, 2, 5, 5, 4, 5, 5,
-    2, 6, 2, 6, 3, 3, 3, 3, 2, 2, 2, 2, 4, 4, 4, 4, 2, 5, 2, 5, 4, 4, 4, 4, 2, 4, 2, 4, 4, 4, 4, 4,
-    2, 6, 2, 8, 3, 3, 5, 5, 2, 2, 2, 2, 4, 4, 6, 6, 2, 5, 2, 8, 4, 4, 6, 6, 2, 4, 2, 7, 4, 4, 7, 7,
-    2, 6, 3, 8, 3, 3, 5, 5, 2, 2, 2, 2, 4, 4, 6, 6, 2, 5, 2, 8, 4, 4, 6, 6, 2, 4, 2, 7, 4, 4, 7, 7,
-];
+impl From<u8> for Instruction {
+    fn from(opcode: u8) -> Self {
+        instruction_match!(opcode, to_instruction)
+    }
+}
