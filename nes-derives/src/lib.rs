@@ -1,4 +1,4 @@
-#![feature(proc_macro)]
+#![feature(proc_macro_diagnostic)]
 
 extern crate heck;
 extern crate proc_macro;

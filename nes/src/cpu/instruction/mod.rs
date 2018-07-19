@@ -9,6 +9,17 @@ macro_rules! instruction_match {
             <jmp::Absolute as Execute>::OPCODE => <jmp::Absolute as Execute>::$fn($($a),*),
             <jmp::Indirect as Execute>::OPCODE => <jmp::Indirect as Execute>::$fn($($a),*),
 
+            <lda::Immediate as Execute>::OPCODE => <lda::Immediate as Execute>::$fn($($a),*),
+            <lda::ZeroPage as Execute>::OPCODE => <lda::ZeroPage as Execute>::$fn($($a),*),
+            <lda::ZeroPageX as Execute>::OPCODE => <lda::ZeroPageX as Execute>::$fn($($a),*),
+            <lda::Absolute as Execute>::OPCODE => <lda::Absolute as Execute>::$fn($($a),*),
+            <lda::AbsoluteX as Execute>::OPCODE => <lda::AbsoluteX as Execute>::$fn($($a),*),
+            <lda::AbsoluteY as Execute>::OPCODE => <lda::AbsoluteY as Execute>::$fn($($a),*),
+            <lda::IndirectX as Execute>::OPCODE => <lda::IndirectX as Execute>::$fn($($a),*),
+            <lda::IndirectY as Execute>::OPCODE => <lda::IndirectY as Execute>::$fn($($a),*),
+
+            <nop::Implicit as Execute>::OPCODE => <nop::Implicit as Execute>::$fn($($a),*),
+
             _ => unimplemented!(),
         }
     };

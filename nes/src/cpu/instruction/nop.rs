@@ -11,26 +11,26 @@ pub struct Implicit;
 
 fn implicit(_core: &mut Core, _memory: &mut Memory) {}
 
-// #[cfg(test)]
-// mod tests {
-//     use super::*;
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-//     use cpu::{
-//         instruction,
-//         register::{Registers, StatusFlags},
-//     };
-//     use memory::{Memory, ReadAddr};
+    use cpu::{
+        instruction::Instruction,
+        register::{Registers, StatusFlags},
+    };
+    use memory::ReadAddr;
 
-//     #[test]
-//     #[ignore]
-//     fn nop() {
-//         let mut memory = Memory::with_bytes(nes_asm!("NOP"));
-//         let mut cpu = Core::new(Registers::empty());
+    #[test]
+    #[ignore]
+    fn nop() {
+        let mut memory = Memory::with_bytes(nes_asm!("NOP"));
+        let mut core = Core::new(Registers::empty());
 
-//         let opcode = memory.read_addr(0);
-//         assert_eq!(opcode, <Implicit as Execute>::OPCODE);
+        let opcode = memory.read_addr(0);
+        assert_eq!(opcode, <Implicit as Execute>::OPCODE);
 
-//         instruction::execute(opcode, &mut cpu, &mut memory);
-//         assert_eq!(cpu.reg.status, StatusFlags::empty());
-//     }
-// }
+        Instruction::from(opcode).execute(&mut core, &mut memory);
+        assert_eq!(core.reg.status, StatusFlags::empty());
+    }
+}

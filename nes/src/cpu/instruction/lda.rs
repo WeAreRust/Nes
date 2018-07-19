@@ -125,84 +125,84 @@ fn update_flags(core: &mut Core) {
     core.reg.status.set_zero(core.reg.acc);
 }
 
-// #[cfg(test)]
-// mod tests {
-//     use super::*;
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-//     use cpu::{
-//         instruction,
-//         register::{Registers, StatusFlags},
-//     };
-//     use memory::ReadAddr;
+    use cpu::{
+        instruction::Instruction,
+        register::{Registers, StatusFlags},
+    };
+    use memory::ReadAddr;
 
-//     #[test]
-//     fn load_accumulator_immediate() {
-//         let mut memory = Memory::with_bytes(nes_asm!("LDA #$5f"));
-//         let mut core = Core::new(Registers::empty());
+    #[test]
+    fn load_accumulator_immediate() {
+        let mut memory = Memory::with_bytes(nes_asm!("LDA #$5f"));
+        let mut core = Core::new(Registers::empty());
 
-//         let opcode = memory.read_addr(0);
-//         assert_eq!(opcode, <Immediate as Execute>::OPCODE);
+        let opcode = memory.read_addr(0);
+        assert_eq!(opcode, <Immediate as Execute>::OPCODE);
 
-//         instruction::execute(opcode, &mut core, &mut memory);
-//         assert_eq!(core.reg.acc, 0x5f);
-//         assert_eq!(core.reg.status, StatusFlags::empty());
-//     }
+        Instruction::from(opcode).execute(&mut core, &mut memory);
+        assert_eq!(core.reg.acc, 0x5f);
+        assert_eq!(core.reg.status, StatusFlags::empty());
+    }
 
-//     #[test]
-//     fn load_accumulator_zero_page() {
-//         let mut bytes = nes_asm!("LDA $03");
-//         bytes.extend(vec![0xff, 0x44]);
+    #[test]
+    fn load_accumulator_zero_page() {
+        let mut bytes = nes_asm!("LDA $03");
+        bytes.extend(vec![0xff, 0x44]);
 
-//         let mut memory = Memory::with_bytes(bytes);
-//         let mut core = Core::new(Registers::empty());
+        let mut memory = Memory::with_bytes(bytes);
+        let mut core = Core::new(Registers::empty());
 
-//         let opcode = memory.read_addr(0);
-//         assert_eq!(opcode, <ZeroPage as Execute>::OPCODE);
+        let opcode = memory.read_addr(0);
+        assert_eq!(opcode, <ZeroPage as Execute>::OPCODE);
 
-//         instruction::execute(opcode, &mut core, &mut memory);
-//         assert_eq!(core.reg.acc, 0x44);
-//         assert_eq!(core.reg.status, StatusFlags::empty());
-//     }
+        Instruction::from(opcode).execute(&mut core, &mut memory);
+        assert_eq!(core.reg.acc, 0x44);
+        assert_eq!(core.reg.status, StatusFlags::empty());
+    }
 
-//     #[test]
-//     fn load_accumulator_absolute() {
-//         let mut bytes = nes_asm!("LDA $0004");
-//         bytes.extend(vec![0xff, 0x44]);
+    #[test]
+    fn load_accumulator_absolute() {
+        let mut bytes = nes_asm!("LDA $0004");
+        bytes.extend(vec![0xff, 0x44]);
 
-//         let mut memory = Memory::with_bytes(bytes);
-//         let mut core = Core::new(Registers::empty());
+        let mut memory = Memory::with_bytes(bytes);
+        let mut core = Core::new(Registers::empty());
 
-//         let opcode = memory.read_addr(0);
-//         assert_eq!(opcode, <Absolute as Execute>::OPCODE);
+        let opcode = memory.read_addr(0);
+        assert_eq!(opcode, <Absolute as Execute>::OPCODE);
 
-//         instruction::execute(opcode, &mut core, &mut memory);
-//         assert_eq!(core.reg.acc, 0x44);
-//         assert_eq!(core.reg.status, StatusFlags::empty());
-//     }
+        Instruction::from(opcode).execute(&mut core, &mut memory);
+        assert_eq!(core.reg.acc, 0x44);
+        assert_eq!(core.reg.status, StatusFlags::empty());
+    }
 
-//     #[test]
-//     fn load_accumulator_zero_flag() {
-//         let mut memory = Memory::with_bytes(nes_asm!("LDA #$00"));
-//         let mut core = Core::new(Registers::empty());
+    #[test]
+    fn load_accumulator_zero_flag() {
+        let mut memory = Memory::with_bytes(nes_asm!("LDA #$00"));
+        let mut core = Core::new(Registers::empty());
 
-//         let opcode = memory.read_addr(0);
-//         assert_eq!(opcode, <Immediate as Execute>::OPCODE);
+        let opcode = memory.read_addr(0);
+        assert_eq!(opcode, <Immediate as Execute>::OPCODE);
 
-//         instruction::execute(opcode, &mut core, &mut memory);
-//         assert_eq!(core.reg.acc, 0x00);
-//         assert_eq!(core.reg.status, StatusFlags::Z_FLAG);
-//     }
+        Instruction::from(opcode).execute(&mut core, &mut memory);
+        assert_eq!(core.reg.acc, 0x00);
+        assert_eq!(core.reg.status, StatusFlags::Z_FLAG);
+    }
 
-//     #[test]
-//     fn load_accumulator_negative_flag() {
-//         let mut memory = Memory::with_bytes(nes_asm!("LDA #$98"));
-//         let mut core = Core::new(Registers::empty());
+    #[test]
+    fn load_accumulator_negative_flag() {
+        let mut memory = Memory::with_bytes(nes_asm!("LDA #$98"));
+        let mut core = Core::new(Registers::empty());
 
-//         let opcode = memory.read_addr(0);
-//         assert_eq!(opcode, <Immediate as Execute>::OPCODE);
+        let opcode = memory.read_addr(0);
+        assert_eq!(opcode, <Immediate as Execute>::OPCODE);
 
-//         instruction::execute(opcode, &mut core, &mut memory);
-//         assert_eq!(core.reg.acc, 0b10011000);
-//         assert_eq!(core.reg.status, StatusFlags::N_FLAG);
-//     }
-// }
+        Instruction::from(opcode).execute(&mut core, &mut memory);
+        assert_eq!(core.reg.acc, 0b10011000);
+        assert_eq!(core.reg.status, StatusFlags::N_FLAG);
+    }
+}
