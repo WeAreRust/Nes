@@ -1,5 +1,5 @@
-use cpu::Core;
-use memory::Memory;
+use cpu::{self, Core};
+use memory::{Memory, ReadAddr};
 use std::convert::From;
 
 #[macro_export]
@@ -68,15 +68,20 @@ impl Instruction {
         self.opcode
     }
 
-    pub fn cycles(&self, _core: &Core, _memory: &Memory) -> usize {
+    // TODO: test.
+    pub fn cycles(&self, core: &Core, memory: &Memory) -> usize {
         if !self.page_boundary_extra_cycle {
             return self.cycles;
         }
 
-        // TODO: Implement properly: Check if across page boundary.
-        self.cycles
+        let lo = memory.read_addr(core.reg.pc) as u16;
+        let hi = memory.read_addr(core.reg.pc + 1) as u16;
+        let addr = lo | hi << 8;
+
+        self.cycles + is_upper_page_boundary(addr) as usize
     }
 
+    // TODO: test.
     pub fn execute(&self, core: &mut Core, memory: &mut Memory) {
         core.reg.pc += 1;
 
@@ -88,5 +93,23 @@ impl Instruction {
 impl From<u8> for Instruction {
     fn from(opcode: u8) -> Self {
         instruction_match!(opcode, to_instruction)
+    }
+}
+
+#[inline(always)]
+fn is_upper_page_boundary(addr: u16) -> bool {
+    addr / cpu::PAGE_SIZE != (addr + 1) / cpu::PAGE_SIZE
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn page_boundary() {
+        assert!(is_upper_page_boundary(0x30ff));
+
+        assert!(!is_upper_page_boundary(0x30fe));
+        assert!(!is_upper_page_boundary(0x3100));
     }
 }

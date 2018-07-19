@@ -22,7 +22,6 @@ mod tests {
     use memory::ReadAddr;
 
     #[test]
-    #[ignore]
     fn nop() {
         let mut memory = Memory::with_bytes(nes_asm!("NOP"));
         let mut core = Core::new(Registers::empty());
