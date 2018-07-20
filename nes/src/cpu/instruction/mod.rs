@@ -48,6 +48,7 @@ trait Execute {
 
     fn exec<T: ReadAddr + WriteAddr>(core: &mut Core, memory: &mut T);
 
+    #[inline(always)]
     fn to_instruction() -> Instruction {
         Instruction {
             opcode: Self::OPCODE,
@@ -64,8 +65,14 @@ pub struct Instruction {
 }
 
 impl Instruction {
+    #[inline(always)]
     pub fn opcode(&self) -> u8 {
         self.opcode
+    }
+
+    #[inline(always)]
+    pub fn base_cycles(&self) -> usize {
+        self.cycles
     }
 
     // TODO: test.

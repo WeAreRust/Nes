@@ -24,6 +24,7 @@ impl Default for Core {
 }
 
 impl Processor for Core {
+    /// Execute a Core
     fn cycle(&mut self, memory: &mut Memory) {
         if self.pipeline.is_empty() {
             let instr: Instruction = memory.read_addr(self.reg.pc).into();
@@ -208,175 +209,183 @@ impl Core {
 mod tests {
     use super::*;
 
-    use cpu::register::Registers;
+    use self::{instruction::Instruction, register::Registers};
 
-    // #[test]
-    // #[ignore]
-    // fn processor_cycle() {
-    //     // Instructions: `LDA #$5f\nJMP $5597`.
-    //     let mut memory = Memory::with_bytes(vec![0xa9, 0x55, 0x4c, 0x97, 0x55]);
-    //     let mut cpu = Core::new(Registers::empty());
+    #[test]
+    fn processor_cycle() {
+        let lda = Instruction::from(0xa9); // LDA Immedate
+        let jmp = Instruction::from(0x4c); // JMP Absolute
 
-    //     cpu.cycle(&mut memory);
-    //     assert_eq!(instruction::CYCLES[0xa9], 2);
-    //     assert_eq!(cpu.pipeline, Pipeline::new(Some(0xa9), 1));
+        let mut memory = Memory::with_bytes(vec![
+            // LDA #$5f
+            lda.opcode(),
+            0x55,
+            //JMP $5597
+            jmp.opcode(),
+            0x97,
+            0x55,
+        ]);
+        let mut core = Core::new(Registers::empty());
 
-    //     cpu.cycle(&mut memory);
-    //     assert_eq!(cpu.pipeline, Pipeline::new(None, 0));
-    //     assert_eq!(cpu.reg.acc, 0x55);
+        core.cycle(&mut memory);
+        assert_eq!(core.pipeline.rem_cycles, lda.base_cycles() - 1);
 
-    //     cpu.cycle(&mut memory);
-    //     assert_eq!(instruction::CYCLES[0x4c], 3);
-    //     assert_eq!(cpu.pipeline, Pipeline::new(Some(0x4c), 2));
+        core.cycle(&mut memory);
+        assert_eq!(core.pipeline, Pipeline::new(None, 0));
+        assert_eq!(core.reg.acc, 0x55);
 
-    //     cpu.cycle(&mut memory);
-    //     assert_eq!(cpu.pipeline, Pipeline::new(Some(0x4c), 1));
-    //     assert_eq!(cpu.reg.pc, 2);
+        core.cycle(&mut memory);
+        assert_eq!(core.pipeline.rem_cycles, jmp.base_cycles() - 1);
 
-    //     cpu.cycle(&mut memory);
-    //     assert_eq!(cpu.pipeline, Pipeline::new(None, 0));
-    //     assert_eq!(cpu.reg.pc, 0x5597);
-    // }
+        core.cycle(&mut memory);
+        assert_eq!(core.pipeline.rem_cycles, jmp.base_cycles() - 2);
+        assert_eq!(core.reg.pc, 2);
+
+        core.cycle(&mut memory);
+        assert!(core.pipeline.opcode.is_none());
+        assert_eq!(core.pipeline.rem_cycles, jmp.base_cycles() - 3);
+        assert_eq!(core.reg.pc, 0x5597);
+    }
 
     #[test]
     fn immediate_address() {
         let mut memory = Memory::with_bytes(vec![0x00, 0xff]);
-        let mut cpu = Core::new(Registers::empty());
-        cpu.reg.pc = 1;
+        let mut core = Core::new(Registers::empty());
+        core.reg.pc = 1;
 
-        let addr = cpu.immediate_addr(&mut memory);
+        let addr = core.immediate_addr(&mut memory);
         assert_eq!(addr, 0xff);
-        assert_eq!(cpu.reg.pc, 2);
+        assert_eq!(core.reg.pc, 2);
     }
 
     #[test]
     fn zero_page_address() {
         let mut memory = Memory::with_bytes(vec![0x97]);
-        let mut cpu = Core::new(Registers::empty());
+        let mut core = Core::new(Registers::empty());
 
-        let addr = cpu.zero_page_addr(&mut memory);
+        let addr = core.zero_page_addr(&mut memory);
         assert_eq!(addr, 0x0097);
-        assert_eq!(cpu.reg.pc, 1);
+        assert_eq!(core.reg.pc, 1);
     }
 
     #[test]
     fn zero_page_address_x() {
         let mut memory = Memory::with_bytes(vec![0x97]);
-        let mut cpu = Core::new(Registers::empty());
-        cpu.reg.x_idx = 1;
+        let mut core = Core::new(Registers::empty());
+        core.reg.x_idx = 1;
 
-        let addr = cpu.zero_page_addr_x(&mut memory);
+        let addr = core.zero_page_addr_x(&mut memory);
         assert_eq!(addr, 0x0098);
-        assert_eq!(cpu.reg.pc, 1);
+        assert_eq!(core.reg.pc, 1);
     }
 
     #[test]
     fn zero_page_address_x_overflow() {
         let mut memory = Memory::with_bytes(vec![0xff]);
-        let mut cpu = Core::new(Registers::empty());
-        cpu.reg.x_idx = 3;
+        let mut core = Core::new(Registers::empty());
+        core.reg.x_idx = 3;
 
-        let addr = cpu.zero_page_addr_x(&mut memory);
+        let addr = core.zero_page_addr_x(&mut memory);
         assert_eq!(addr, 0x0002);
-        assert_eq!(cpu.reg.pc, 1);
+        assert_eq!(core.reg.pc, 1);
     }
 
     #[test]
     fn zero_page_address_y() {
         let mut memory = Memory::with_bytes(vec![0x97]);
-        let mut cpu = Core::new(Registers::empty());
-        cpu.reg.y_idx = 1;
+        let mut core = Core::new(Registers::empty());
+        core.reg.y_idx = 1;
 
-        let addr = cpu.zero_page_addr_y(&mut memory);
+        let addr = core.zero_page_addr_y(&mut memory);
         assert_eq!(addr, 0x0098);
-        assert_eq!(cpu.reg.pc, 1);
+        assert_eq!(core.reg.pc, 1);
     }
 
     #[test]
     fn zero_page_address_y_overflow() {
         let mut memory = Memory::with_bytes(vec![0xff]);
-        let mut cpu = Core::new(Registers::empty());
-        cpu.reg.y_idx = 3;
+        let mut core = Core::new(Registers::empty());
+        core.reg.y_idx = 3;
 
-        let addr = cpu.zero_page_addr_y(&mut memory);
+        let addr = core.zero_page_addr_y(&mut memory);
         assert_eq!(addr, 0x0002);
-        assert_eq!(cpu.reg.pc, 1);
+        assert_eq!(core.reg.pc, 1);
     }
 
     #[test]
     fn relative_address() {
         let mut memory = Memory::with_bytes(vec![0x00, 0x00, 0x12]);
-        let mut cpu = Core::new(Registers::empty());
-        cpu.reg.pc = 2;
+        let mut core = Core::new(Registers::empty());
+        core.reg.pc = 2;
 
-        let addr = cpu.relative_addr(&mut memory);
-        assert_eq!(addr, cpu.reg.pc + 0x12);
-        assert_eq!(cpu.reg.pc, 4);
+        let addr = core.relative_addr(&mut memory);
+        assert_eq!(addr, core.reg.pc + 0x12);
+        assert_eq!(core.reg.pc, 4);
     }
 
     #[test]
     fn relative_address_overflow() {
         let mut memory = Memory::with_bytes(vec![0x00, 0x00, 0x80]);
-        let mut cpu = Core::new(Registers::empty());
-        cpu.reg.pc = 2;
+        let mut core = Core::new(Registers::empty());
+        core.reg.pc = 2;
 
-        let addr = cpu.relative_addr(&mut memory);
-        assert_eq!(addr, 256 - 0x80 + cpu.reg.pc);
-        assert_eq!(cpu.reg.pc, 4);
+        let addr = core.relative_addr(&mut memory);
+        assert_eq!(addr, 256 - 0x80 + core.reg.pc);
+        assert_eq!(core.reg.pc, 4);
     }
 
     #[test]
     fn absolute_address() {
         let mut memory = Memory::with_bytes(vec![0x97, 0x55]);
-        let mut cpu = Core::new(Registers::empty());
+        let mut core = Core::new(Registers::empty());
 
-        let addr = cpu.absolute_addr(&mut memory);
+        let addr = core.absolute_addr(&mut memory);
         assert_eq!(addr, 0x5597);
-        assert_eq!(cpu.reg.pc, 2);
+        assert_eq!(core.reg.pc, 2);
     }
 
     #[test]
     fn absolute_address_x() {
         let mut memory = Memory::with_bytes(vec![0x97, 0x55]);
-        let mut cpu = Core::new(Registers::empty());
-        cpu.reg.x_idx = 2;
+        let mut core = Core::new(Registers::empty());
+        core.reg.x_idx = 2;
 
-        let addr = cpu.absolute_addr_x(&mut memory);
+        let addr = core.absolute_addr_x(&mut memory);
         assert_eq!(addr, 0x5599);
-        assert_eq!(cpu.reg.pc, 2);
+        assert_eq!(core.reg.pc, 2);
     }
 
     #[test]
     fn absolute_address_x_overflow() {
         let mut memory = Memory::with_bytes(vec![0xff, 0xff]);
-        let mut cpu = Core::new(Registers::empty());
-        cpu.reg.x_idx = 2;
+        let mut core = Core::new(Registers::empty());
+        core.reg.x_idx = 2;
 
-        let addr = cpu.absolute_addr_x(&mut memory);
+        let addr = core.absolute_addr_x(&mut memory);
         assert_eq!(addr, 0x0001);
-        assert_eq!(cpu.reg.pc, 2);
+        assert_eq!(core.reg.pc, 2);
     }
 
     #[test]
     fn absolute_address_y() {
         let mut memory = Memory::with_bytes(vec![0x97, 0x55]);
-        let mut cpu = Core::new(Registers::empty());
-        cpu.reg.y_idx = 2;
+        let mut core = Core::new(Registers::empty());
+        core.reg.y_idx = 2;
 
-        let addr = cpu.absolute_addr_y(&mut memory);
+        let addr = core.absolute_addr_y(&mut memory);
         assert_eq!(addr, 0x5599);
-        assert_eq!(cpu.reg.pc, 2);
+        assert_eq!(core.reg.pc, 2);
     }
 
     #[test]
     fn absolute_address_y_overflow() {
         let mut memory = Memory::with_bytes(vec![0xff, 0xff]);
-        let mut cpu = Core::new(Registers::empty());
-        cpu.reg.y_idx = 2;
+        let mut core = Core::new(Registers::empty());
+        core.reg.y_idx = 2;
 
-        let addr = cpu.absolute_addr_y(&mut memory);
+        let addr = core.absolute_addr_y(&mut memory);
         assert_eq!(addr, 0x0001);
-        assert_eq!(cpu.reg.pc, 2);
+        assert_eq!(core.reg.pc, 2);
     }
 
     #[test]
@@ -409,44 +418,44 @@ mod tests {
     #[test]
     fn index_indirect() {
         let mut memory = Memory::with_bytes(vec![0x01, 0xff, 0xff, 0x97, 0x55]);
-        let mut cpu = Core::new(Registers::empty());
-        cpu.reg.x_idx = 2;
+        let mut core = Core::new(Registers::empty());
+        core.reg.x_idx = 2;
 
-        let addr = cpu.idx_indirect(&mut memory);
+        let addr = core.idx_indirect(&mut memory);
         assert_eq!(addr, 0x5597);
-        assert_eq!(cpu.reg.pc, 1);
+        assert_eq!(core.reg.pc, 1);
     }
 
     #[test]
     fn index_indirect_overflow() {
         let mut memory = Memory::with_bytes(vec![0xff, 0x97, 0x55]);
-        let mut cpu = Core::new(Registers::empty());
-        cpu.reg.x_idx = 2;
+        let mut core = Core::new(Registers::empty());
+        core.reg.x_idx = 2;
 
-        let addr = cpu.idx_indirect(&mut memory);
+        let addr = core.idx_indirect(&mut memory);
         assert_eq!(addr, 0x5597);
-        assert_eq!(cpu.reg.pc, 1);
+        assert_eq!(core.reg.pc, 1);
     }
 
     #[test]
     fn indirect_index() {
         let mut memory = Memory::with_bytes(vec![0x03, 0xff, 0xff, 0x97, 0x55]);
-        let mut cpu = Core::new(Registers::empty());
-        cpu.reg.y_idx = 2;
+        let mut core = Core::new(Registers::empty());
+        core.reg.y_idx = 2;
 
-        let addr = cpu.indirect_idx(&mut memory);
+        let addr = core.indirect_idx(&mut memory);
         assert_eq!(addr, 0x5599);
-        assert_eq!(cpu.reg.pc, 1);
+        assert_eq!(core.reg.pc, 1);
     }
 
     #[test]
     fn indirect_index_overflow() {
         let mut memory = Memory::with_bytes(vec![0x01, 0xff, 0xff]);
-        let mut cpu = Core::new(Registers::empty());
-        cpu.reg.y_idx = 2;
+        let mut core = Core::new(Registers::empty());
+        core.reg.y_idx = 2;
 
-        let addr = cpu.indirect_idx(&mut memory);
+        let addr = core.indirect_idx(&mut memory);
         assert_eq!(addr, 0x0001);
-        assert_eq!(cpu.reg.pc, 1);
+        assert_eq!(core.reg.pc, 1);
     }
 }
