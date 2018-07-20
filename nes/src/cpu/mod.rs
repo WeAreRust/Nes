@@ -10,7 +10,7 @@ mod instruction;
 mod pipeline;
 mod register;
 
-pub const PAGE_SIZE: u16 = 256;
+const PAGE_SIZE: u16 = 256;
 
 pub struct Core {
     reg: Registers,
@@ -156,18 +156,14 @@ impl Core {
     /// result of JMP ($30FF) will be a transfer of control to $4080 rather than $5080 as you
     /// intended i.e. the 6502 took the low byte of the address from $30FF and the high byte from
     /// $3000.
-    fn indirect_addr(&mut self, memory: &mut Memory, arg_addr: u16) -> u16 {
-        let lo_pc = arg_addr;
-        let mut hi_pc = lo_pc + 1;
-
-        let lo_page = lo_pc / PAGE_SIZE;
-        let hi_page = hi_pc / PAGE_SIZE;
-        if hi_page > lo_page {
-            hi_pc = lo_page * PAGE_SIZE;
+    fn indirect_addr(&mut self, memory: &mut Memory, lo_addr: u16) -> u16 {
+        let mut hi_addr = lo_addr + 1;
+        if instruction::is_upper_page_boundary(lo_addr) {
+            hi_addr = (lo_addr / PAGE_SIZE) * PAGE_SIZE;
         }
 
-        let lo = memory.read_addr(lo_pc) as u16;
-        let hi = memory.read_addr(hi_pc) as u16;
+        let lo = memory.read_addr(lo_addr) as u16;
+        let hi = memory.read_addr(hi_addr) as u16;
 
         lo | hi << 8
     }

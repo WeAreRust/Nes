@@ -1,4 +1,4 @@
-use cpu::{self, Core};
+use cpu::Core;
 use memory::{Memory, ReadAddr};
 use std::convert::From;
 
@@ -97,8 +97,8 @@ impl From<u8> for Instruction {
 }
 
 #[inline(always)]
-fn is_upper_page_boundary(addr: u16) -> bool {
-    addr / cpu::PAGE_SIZE != (addr + 1) / cpu::PAGE_SIZE
+pub fn is_upper_page_boundary(addr: u16) -> bool {
+    addr & 0x00ff == 0x00ff
 }
 
 #[cfg(test)]
