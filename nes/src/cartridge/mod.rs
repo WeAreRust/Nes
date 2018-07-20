@@ -1,10 +1,10 @@
 //! A NES cartridge includes the the game data, stored in ROM.
-//! The cartridge may also include a memory mapper (MMC) and/or 
+//! The cartridge may also include a memory mapper (MMC) and/or
 //! battery-powered RAM for game save data.
-//! 
-//! A memory mapper will allow a cartridge to swap memory out and utilize memory 
+//!
+//! A memory mapper will allow a cartridge to swap memory out and utilize memory
 //! address space beyond $FFFF.
-//! 
+//!
 //! NROM indicates no mapper is present.
 
 mod ines;
@@ -12,8 +12,8 @@ mod mapper;
 mod mappers;
 mod mirroring;
 
-use cartridge::mirroring::Mirroring;
 use cartridge::mapper::Mapper;
+use cartridge::mirroring::Mirroring;
 
 pub struct Cartridge {
     pub mirroring: Mirroring,
@@ -29,8 +29,8 @@ impl Cartridge {
             mirroring: image.mirror,
             battery_ram_present: image.has_battery_ram,
             mapper: Mapper::create(
-                image.mapper, 
-                image.prg_rom_data, 
+                image.mapper,
+                image.prg_rom_data,
                 image.chr_rom_data,
                 image.num_prg_banks,
                 image.num_chr_banks,

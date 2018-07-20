@@ -1,5 +1,5 @@
 use cartridge::mappers::nrom::NROM;
-use memory::{ReadAddr};
+use memory::ReadAddr;
 
 #[derive(PartialEq, Debug, Clone)]
 pub enum MapperType {
@@ -9,8 +9,7 @@ pub enum MapperType {
     INESMapper211, // https://wiki.nesdev.com/w/index.php/INES_Mapper_211
 }
 
-pub trait Mapper: ReadAddr {
-}
+pub trait Mapper: ReadAddr {}
 
 impl Mapper {
     pub fn create(
@@ -21,11 +20,8 @@ impl Mapper {
         _num_chr_rom_banks: u8,
     ) -> Box<Mapper> {
         match t {
-            MapperType::NROM => Box::new(
-                NROM::new(prg_rom_data, num_prg_rom_banks)
-            ),
+            MapperType::NROM => Box::new(NROM::new(prg_rom_data, num_prg_rom_banks)),
             _ => panic!("Mapper not implemented."),
         }
     }
 }
-

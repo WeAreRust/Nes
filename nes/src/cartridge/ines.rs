@@ -1,7 +1,7 @@
 //! iNES file format
-//! 
+//!
 //! iNES is a binary format starting with a 16 byte header block.
-//! 
+//!
 //! Starting | Length | Data
 //! Byte     |        |
 //! ---------|--------|--------------------------------------------
@@ -35,12 +35,12 @@
 //! ---------|--------|--------------------------------------------
 //! 9        | 7      | Reserved for future use. Should be 0.
 //! ---------|--------|--------------------------------------------
-//! 
-//! The 512-byte trainer immediately follows the header if it is 
+//!
+//! The 512-byte trainer immediately follows the header if it is
 //! indicated as present (see header byte 6).
-//! 
+//!
 //! Next, the PRG-ROM follows. The size is equal to #Banks * 16KB.
-//! 
+//!
 //! And finally, the CHR-ROM. The size is equal to #Banks * 8KB.
 
 use std::fmt;
@@ -180,7 +180,7 @@ fn extract_prg_rom_data(data: &[u8]) -> Vec<u8> {
 
     let len_prg: usize = count_prg_rom_banks(data) as usize * SIZE_PRG_ROM_BANK;
 
-    data[prg_start..prg_start+len_prg].to_vec()
+    data[prg_start..prg_start + len_prg].to_vec()
 }
 
 fn chr_rom_start(data: &[u8]) -> usize {
@@ -193,7 +193,7 @@ fn extract_chr_rom_data(data: &[u8]) -> Vec<u8> {
     let chr_start = chr_rom_start(data);
     let len_chr: usize = count_chr_rom_banks(data) as usize * SIZE_CHR_ROM_BANK;
 
-    data[chr_start..chr_start+len_chr].to_vec()
+    data[chr_start..chr_start + len_chr].to_vec()
 }
 
 #[cfg(test)]

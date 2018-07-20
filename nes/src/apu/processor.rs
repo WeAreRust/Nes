@@ -127,8 +127,8 @@ impl RegisterSnapshot {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use apu::channel::*;
     use apu::channel::ApuChannelDelta as A;
+    use apu::channel::*;
     use memory::ReadAddr;
 
     impl ReadAddr for Vec<u8> {
