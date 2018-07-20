@@ -61,10 +61,10 @@ impl Core {
     /// (important for space saving) and one less memory fetch during execution (important for
     /// speed)
     fn zero_page_addr(&mut self, memory: &mut Memory) -> u16 {
-        let lo = memory.read_addr(self.reg.pc) as u16;
+        let lo = memory.read_addr(self.reg.pc);
         self.reg.pc += 1;
 
-        lo
+        lo.into()
     }
 
     /// The address to be accessed by an instruction using indexed zero page addressing is
@@ -81,7 +81,7 @@ impl Core {
         let lo = memory.read_addr(self.reg.pc).wrapping_add(self.reg.x_idx);
         self.reg.pc += 1;
 
-        lo as u16
+        lo.into()
     }
 
     /// The address to be accessed by an instruction using indexed zero page addressing is
@@ -97,7 +97,7 @@ impl Core {
         let lo = memory.read_addr(self.reg.pc).wrapping_add(self.reg.y_idx);
         self.reg.pc += 1;
 
-        lo as u16
+        lo.into()
     }
 
     /// The address to be accessed by an instruction using relative addressing is calculated by a
@@ -107,7 +107,7 @@ impl Core {
     /// program counter itself is incremented during the instruction execution, so the distance to
     /// jump is truly in the range [-126, +129].
     fn relative_addr(&mut self, memory: &mut Memory) -> u16 {
-        let offset = memory.read_addr(self.reg.pc) as u16;
+        let offset = memory.read_addr(self.reg.pc).into();
         self.reg.pc += 2;
 
         self.reg.pc.wrapping_add(offset)
@@ -115,8 +115,8 @@ impl Core {
 
     /// Absolute addressing allows the use of an 16 bit address to identify the target location.
     fn absolute_addr(&mut self, memory: &mut Memory) -> u16 {
-        let lo = memory.read_addr(self.reg.pc) as u16;
-        let hi = memory.read_addr(self.reg.pc + 1) as u16;
+        let lo = u16::from(memory.read_addr(self.reg.pc));
+        let hi = u16::from(memory.read_addr(self.reg.pc + 1));
         self.reg.pc += 2;
 
         lo | hi << 8
@@ -129,22 +129,22 @@ impl Core {
     /// For example if X contains $92 then an STA $2000,X instruction will store the accumulator at
     /// $2092 (e.g. $2000 + $92).
     fn absolute_addr_x(&mut self, memory: &mut Memory) -> u16 {
-        let lo = memory.read_addr(self.reg.pc) as u16;
-        let hi = memory.read_addr(self.reg.pc + 1) as u16;
+        let lo = u16::from(memory.read_addr(self.reg.pc));
+        let hi = u16::from(memory.read_addr(self.reg.pc + 1));
         self.reg.pc += 2;
 
-        (lo | hi << 8).wrapping_add(self.reg.x_idx as u16)
+        (lo | hi << 8).wrapping_add(self.reg.x_idx.into())
     }
 
     /// The address to be accessed by an instruction using Y register indexed absolute addressing
     /// is computed by taking the sum of the 16 bit address from the instruction, the value of the
     /// Y Index register
     fn absolute_addr_y(&mut self, memory: &mut Memory) -> u16 {
-        let lo = memory.read_addr(self.reg.pc) as u16;
-        let hi = memory.read_addr(self.reg.pc + 1) as u16;
+        let lo = u16::from(memory.read_addr(self.reg.pc));
+        let hi = u16::from(memory.read_addr(self.reg.pc + 1));
         self.reg.pc += 2;
 
-        (lo | hi << 8).wrapping_add(self.reg.y_idx as u16)
+        (lo | hi << 8).wrapping_add(self.reg.y_idx.into())
     }
 
     /// JMP is the only 6502 instruction to support indirection. The instruction contains a 16 bit
@@ -157,13 +157,14 @@ impl Core {
     /// intended i.e. the 6502 took the low byte of the address from $30FF and the high byte from
     /// $3000.
     fn indirect_addr(&mut self, memory: &mut Memory, lo_addr: u16) -> u16 {
-        let mut hi_addr = lo_addr + 1;
-        if instruction::is_upper_page_boundary(lo_addr) {
-            hi_addr = (lo_addr / PAGE_SIZE) * PAGE_SIZE;
-        }
+        let hi_addr = if instruction::is_upper_page_boundary(lo_addr) {
+            (lo_addr / PAGE_SIZE) * PAGE_SIZE
+        } else {
+            lo_addr + 1
+        };
 
-        let lo = memory.read_addr(lo_addr) as u16;
-        let hi = memory.read_addr(hi_addr) as u16;
+        let lo = u16::from(memory.read_addr(lo_addr));
+        let hi = u16::from(memory.read_addr(hi_addr));
 
         lo | hi << 8
     }
@@ -175,11 +176,11 @@ impl Core {
     ///
     /// Also seen in spec sheets as `Indirect,X`.
     fn idx_indirect(&mut self, memory: &mut Memory) -> u16 {
-        let addr = memory.read_addr(self.reg.pc).wrapping_add(self.reg.x_idx) as u16;
+        let addr = u16::from(memory.read_addr(self.reg.pc).wrapping_add(self.reg.x_idx));
         self.reg.pc += 1;
 
-        let lo = memory.read_addr(addr) as u16;
-        let hi = memory.read_addr(addr + 1) as u16;
+        let lo = u16::from(memory.read_addr(addr));
+        let hi = u16::from(memory.read_addr(addr + 1));
 
         lo | hi << 8
     }
@@ -191,13 +192,13 @@ impl Core {
     ///
     /// Also seen in spec sheets as `Indirect,Y`.
     fn indirect_idx(&mut self, memory: &mut Memory) -> u16 {
-        let addr = memory.read_addr(self.reg.pc) as u16;
+        let addr = u16::from(memory.read_addr(self.reg.pc));
         self.reg.pc += 1;
 
-        let lo = memory.read_addr(addr) as u16;
-        let hi = memory.read_addr(addr + 1) as u16;
+        let lo = u16::from(memory.read_addr(addr));
+        let hi = u16::from(memory.read_addr(addr + 1));
 
-        (lo | hi << 8).wrapping_add(self.reg.y_idx as u16)
+        (lo | hi << 8).wrapping_add(self.reg.y_idx.into())
     }
 }
 

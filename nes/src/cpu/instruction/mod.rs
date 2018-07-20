@@ -74,8 +74,8 @@ impl Instruction {
             return self.cycles;
         }
 
-        let lo = memory.read_addr(core.reg.pc) as u16;
-        let hi = memory.read_addr(core.reg.pc + 1) as u16;
+        let lo = u16::from(memory.read_addr(core.reg.pc));
+        let hi = u16::from(memory.read_addr(core.reg.pc + 1));
         let addr = lo | hi << 8;
 
         self.cycles + is_upper_page_boundary(addr) as usize
