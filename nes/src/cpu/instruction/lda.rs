@@ -64,8 +64,6 @@ fn absolute(core: &mut Core, memory: &mut Memory) {
 /// Load accumulator absolute X
 ///
 /// Flags affected: N, Z
-/// TODO: test normal execution
-/// TODO: test page boundary execution
 #[derive(Execute)]
 #[opcode = 0xbd]
 #[cycles = 4]
@@ -82,8 +80,6 @@ fn absolute_x(core: &mut Core, memory: &mut Memory) {
 /// Load accumulator absolute Y
 ///
 /// Flags affected: N, Z
-/// TODO: test normal execution
-/// TODO: test page boundary execution
 #[derive(Execute)]
 #[opcode = 0xb9]
 #[cycles = 4]
@@ -100,7 +96,6 @@ fn absolute_y(core: &mut Core, memory: &mut Memory) {
 /// Load accumulator indirect X
 ///
 /// Flags affected: N, Z
-/// TODO: test
 #[derive(Execute)]
 #[opcode = 0xa1]
 #[cycles = 6]
@@ -116,8 +111,6 @@ fn indirect_x(core: &mut Core, memory: &mut Memory) {
 /// Load accumulator indirect Y
 ///
 /// Flags affected: N, Z
-/// TODO: test normal execution
-/// TODO: test page boundary execution
 #[derive(Execute)]
 #[opcode = 0xb1]
 #[cycles = 2]
@@ -186,6 +179,74 @@ mod tests {
 
         let opcode = memory.read_addr(0);
         assert_eq!(opcode, <Absolute as Execute>::OPCODE);
+
+        Instruction::from(opcode).execute(&mut core, &mut memory);
+        assert_eq!(core.reg.acc, 0x44);
+        assert_eq!(core.reg.status, StatusFlags::empty());
+    }
+
+    #[test]
+    fn load_accumulator_absolute_x() {
+        let mut bytes = nes_asm!("LDA $0004,X");
+        bytes.extend(vec![0xff, 0xff, 0x44]);
+
+        let mut memory = Memory::with_bytes(bytes);
+        let mut core = Core::new(Registers::empty());
+        core.reg.x_idx = 0x01;
+
+        let opcode = memory.read_addr(0);
+        assert_eq!(opcode, <AbsoluteX as Execute>::OPCODE);
+
+        Instruction::from(opcode).execute(&mut core, &mut memory);
+        assert_eq!(core.reg.acc, 0x44);
+        assert_eq!(core.reg.status, StatusFlags::empty());
+    }
+
+    #[test]
+    fn load_accumulator_absolute_y() {
+        let mut bytes = nes_asm!("LDA $0004,Y");
+        bytes.extend(vec![0xff, 0xff, 0x44]);
+
+        let mut memory = Memory::with_bytes(bytes);
+        let mut core = Core::new(Registers::empty());
+        core.reg.y_idx = 0x01;
+
+        let opcode = memory.read_addr(0);
+        assert_eq!(opcode, <AbsoluteY as Execute>::OPCODE);
+
+        Instruction::from(opcode).execute(&mut core, &mut memory);
+        assert_eq!(core.reg.acc, 0x44);
+        assert_eq!(core.reg.status, StatusFlags::empty());
+    }
+
+    #[test]
+    fn load_accumulator_indirect_x() {
+        let mut bytes = nes_asm!("LDA ($03,X)");
+        bytes.extend(vec![0xff, 0xff, 0x06, 0x00, 0x44, 0x00]);
+
+        let mut memory = Memory::with_bytes(bytes);
+        let mut core = Core::new(Registers::empty());
+        core.reg.x_idx = 0x01;
+
+        let opcode = memory.read_addr(0);
+        assert_eq!(opcode, <IndirectX as Execute>::OPCODE);
+
+        Instruction::from(opcode).execute(&mut core, &mut memory);
+        assert_eq!(core.reg.acc, 0x44);
+        assert_eq!(core.reg.status, StatusFlags::empty());
+    }
+
+    #[test]
+    fn load_accumulator_indirect_y() {
+        let mut bytes = nes_asm!("LDA ($03),Y");
+        bytes.extend(vec![0xff, 0x05, 0x00, 0xff, 0xff, 0x44, 0x00]);
+
+        let mut memory = Memory::with_bytes(bytes);
+        let mut core = Core::new(Registers::empty());
+        core.reg.y_idx = 0x02;
+
+        let opcode = memory.read_addr(0);
+        assert_eq!(opcode, <IndirectY as Execute>::OPCODE);
 
         Instruction::from(opcode).execute(&mut core, &mut memory);
         assert_eq!(core.reg.acc, 0x44);

@@ -174,6 +174,8 @@ impl Core {
     /// to it (with zero page wrap around) to give the location of the least significant byte of
     /// the target address
     ///
+    /// TODO: Test ZEROPAGE wrap wround.
+    ///
     /// Also seen in spec sheets as `Indirect,X`.
     fn idx_indirect(&mut self, memory: &mut Memory) -> u16 {
         let addr = u16::from(memory.read_addr(self.reg.pc).wrapping_add(self.reg.x_idx));
