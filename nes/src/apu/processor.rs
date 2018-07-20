@@ -58,10 +58,7 @@ impl Default for RegisterSnapshot {
 }
 
 impl RegisterSnapshot {
-    fn create_from_memory<M>(memory: &M) -> Self
-    where
-        M: ReadAddr<u16, u8>,
-    {
+    fn create_from_memory<M: ReadAddr>(memory: &M) -> Self {
         let mut registers: SnapshotRepr = [0; APU_REGISTER_RANGE];
         for offset in 0..APU_REGISTER_RANGE {
             let read_index = (APU_REGISTER_START + offset) as u16;
@@ -79,10 +76,7 @@ impl RegisterSnapshot {
         return self.registers[at] != other.registers[at];
     }
 
-    fn diff<M>(self: &Self, other: &Self, _memory: &M) -> Vec<ApuChannelDelta>
-    where
-        M: ReadAddr<u16, u8>,
-    {
+    fn diff<M: ReadAddr>(self: &Self, other: &Self, _memory: &M) -> Vec<ApuChannelDelta> {
         use self::WhichPulse::*;
         let mut changes = vec![];
 
@@ -137,17 +131,17 @@ mod tests {
     use apu::channel::ApuChannelDelta as A;
     use memory::ReadAddr;
 
-    impl ReadAddr<u16, u8> for Vec<u8> {
+    impl ReadAddr for Vec<u8> {
         fn read_addr(self: &Self, addr: u16) -> u8 {
             self[addr as usize]
         }
     }
 
-    fn init_memory(cap: usize) -> impl ReadAddr<u16, u8> {
+    fn init_memory(cap: usize) -> impl ReadAddr {
         Vec::with_capacity(cap)
     }
 
-    fn init_states(cap: usize) -> (impl ReadAddr<u16, u8>, RegisterSnapshot) {
+    fn init_states(cap: usize) -> (impl ReadAddr, RegisterSnapshot) {
         (init_memory(cap), RegisterSnapshot::default())
     }
 

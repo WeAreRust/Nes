@@ -9,7 +9,7 @@ pub enum MapperType {
     INESMapper211, // https://wiki.nesdev.com/w/index.php/INES_Mapper_211
 }
 
-pub trait Mapper: ReadAddr<u16, u8> {
+pub trait Mapper: ReadAddr {
 }
 
 impl Mapper {

@@ -46,7 +46,7 @@ impl Core {
     }
 
     /// Immediate addressing allows the use of an 8 bit constant as the arguments to an address.
-    fn immediate_addr(&mut self, memory: &mut Memory) -> u8 {
+    fn immediate_addr<T: ReadAddr>(&mut self, memory: &mut T) -> u8 {
         let value = memory.read_addr(self.reg.pc);
         self.reg.pc += 1;
 
@@ -60,7 +60,7 @@ impl Core {
     /// significant byte of the address is held in the instruction making it shorter by one byte
     /// (important for space saving) and one less memory fetch during execution (important for
     /// speed)
-    fn zero_page_addr(&mut self, memory: &mut Memory) -> u16 {
+    fn zero_page_addr<T: ReadAddr>(&mut self, memory: &mut T) -> u16 {
         let lo = memory.read_addr(self.reg.pc);
         self.reg.pc += 1;
 
@@ -77,7 +77,7 @@ impl Core {
     /// The address calculation wraps around if the sum of the base address and the register exceed
     /// $FF. If we repeat the last example but with $FF in the X register then the accumulator will
     /// be loaded from $007F (e.g. $80 + $FF => $7F) and not $017F.
-    fn zero_page_addr_x(&mut self, memory: &mut Memory) -> u16 {
+    fn zero_page_addr_x<T: ReadAddr>(&mut self, memory: &mut T) -> u16 {
         let lo = memory.read_addr(self.reg.pc).wrapping_add(self.reg.x_idx);
         self.reg.pc += 1;
 
@@ -93,7 +93,7 @@ impl Core {
     /// The address calculation wraps around if the sum of the base address and the register exceed
     /// $FF. If we repeat the last example but with $FF in the X register then the accumulator will
     /// be loaded from $007F (e.g. $80 + $FF => $7F) and not $017F.
-    fn zero_page_addr_y(&mut self, memory: &mut Memory) -> u16 {
+    fn zero_page_addr_y<T: ReadAddr>(&mut self, memory: &mut T) -> u16 {
         let lo = memory.read_addr(self.reg.pc).wrapping_add(self.reg.y_idx);
         self.reg.pc += 1;
 
@@ -106,7 +106,7 @@ impl Core {
     /// The relative offset is in the range [-128, +127] and is added to the program counter. The
     /// program counter itself is incremented during the instruction execution, so the distance to
     /// jump is truly in the range [-126, +129].
-    fn relative_addr(&mut self, memory: &mut Memory) -> u16 {
+    fn relative_addr<T: ReadAddr>(&mut self, memory: &mut T) -> u16 {
         let offset = memory.read_addr(self.reg.pc).into();
         self.reg.pc += 2;
 
@@ -114,7 +114,7 @@ impl Core {
     }
 
     /// Absolute addressing allows the use of an 16 bit address to identify the target location.
-    fn absolute_addr(&mut self, memory: &mut Memory) -> u16 {
+    fn absolute_addr<T: ReadAddr>(&mut self, memory: &mut T) -> u16 {
         let lo = u16::from(memory.read_addr(self.reg.pc));
         let hi = u16::from(memory.read_addr(self.reg.pc + 1));
         self.reg.pc += 2;
@@ -128,7 +128,7 @@ impl Core {
     ///
     /// For example if X contains $92 then an STA $2000,X instruction will store the accumulator at
     /// $2092 (e.g. $2000 + $92).
-    fn absolute_addr_x(&mut self, memory: &mut Memory) -> u16 {
+    fn absolute_addr_x<T: ReadAddr>(&mut self, memory: &mut T) -> u16 {
         let lo = u16::from(memory.read_addr(self.reg.pc));
         let hi = u16::from(memory.read_addr(self.reg.pc + 1));
         self.reg.pc += 2;
@@ -139,7 +139,7 @@ impl Core {
     /// The address to be accessed by an instruction using Y register indexed absolute addressing
     /// is computed by taking the sum of the 16 bit address from the instruction, the value of the
     /// Y Index register
-    fn absolute_addr_y(&mut self, memory: &mut Memory) -> u16 {
+    fn absolute_addr_y<T: ReadAddr>(&mut self, memory: &mut T) -> u16 {
         let lo = u16::from(memory.read_addr(self.reg.pc));
         let hi = u16::from(memory.read_addr(self.reg.pc + 1));
         self.reg.pc += 2;
@@ -156,7 +156,7 @@ impl Core {
     /// result of JMP ($30FF) will be a transfer of control to $4080 rather than $5080 as you
     /// intended i.e. the 6502 took the low byte of the address from $30FF and the high byte from
     /// $3000.
-    fn indirect_addr(&mut self, memory: &mut Memory, lo_addr: u16) -> u16 {
+    fn indirect_addr<T: ReadAddr>(&mut self, memory: &mut T, lo_addr: u16) -> u16 {
         let hi_addr = if instruction::is_upper_page_boundary(lo_addr) {
             (lo_addr / PAGE_SIZE) * PAGE_SIZE
         } else {
@@ -177,7 +177,7 @@ impl Core {
     /// TODO: Test ZEROPAGE wrap wround.
     ///
     /// Also seen in spec sheets as `Indirect,X`.
-    fn idx_indirect(&mut self, memory: &mut Memory) -> u16 {
+    fn idx_indirect<T: ReadAddr>(&mut self, memory: &mut T) -> u16 {
         let addr = u16::from(memory.read_addr(self.reg.pc).wrapping_add(self.reg.x_idx));
         self.reg.pc += 1;
 
@@ -193,7 +193,7 @@ impl Core {
     /// address for operation
     ///
     /// Also seen in spec sheets as `Indirect,Y`.
-    fn indirect_idx(&mut self, memory: &mut Memory) -> u16 {
+    fn indirect_idx<T: ReadAddr>(&mut self, memory: &mut T) -> u16 {
         let addr = u16::from(memory.read_addr(self.reg.pc));
         self.reg.pc += 1;
 

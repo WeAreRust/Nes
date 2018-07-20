@@ -1,5 +1,5 @@
 #![allow(dead_code)]
-
+#![feature(associated_type_defaults)]
 #![feature(attr_literals)]
 #![feature(custom_attribute)]
 #![feature(nll)]

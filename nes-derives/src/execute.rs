@@ -33,7 +33,10 @@ pub fn derive(item: DeriveInput) -> Result<TokenStream, Diagnostic> {
             const CYCLES: usize = #cycles;
             const PAGE_BOUNDARY_EXTRA_CYCLES: bool = #extra_cycles;
 
-            fn exec(core: &mut Core, memory: &mut Memory) {
+            fn exec<T>(core: &mut ::cpu::Core, memory: &mut T)
+            where
+                T: ::memory::ReadAddr + ::memory::WriteAddr,
+            {
                 #lower_ident(core, memory)
             }
         }

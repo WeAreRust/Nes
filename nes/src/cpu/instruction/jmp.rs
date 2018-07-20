@@ -1,5 +1,5 @@
 use cpu::{instruction::Execute, Core};
-use memory::Memory;
+use memory::ReadAddr;
 
 /// Jump absolute
 ///
@@ -10,7 +10,7 @@ use memory::Memory;
 pub struct Absolute;
 
 #[inline(always)]
-fn absolute(core: &mut Core, memory: &mut Memory) {
+fn absolute<T: ReadAddr>(core: &mut Core, memory: &mut T) {
     core.reg.pc = core.absolute_addr(memory);
 }
 
@@ -27,7 +27,7 @@ fn absolute(core: &mut Core, memory: &mut Memory) {
 pub struct Indirect;
 
 #[inline(always)]
-fn indirect(core: &mut Core, memory: &mut Memory) {
+fn indirect<T: ReadAddr>(core: &mut Core, memory: &mut T) {
     let arg_addr = core.absolute_addr(memory);
     core.reg.pc = core.indirect_addr(memory, arg_addr);
 }
@@ -37,7 +37,7 @@ mod tests {
     use super::*;
 
     use cpu::{instruction::Instruction, register::Registers};
-    use memory::ReadAddr;
+    use memory::{Memory, ReadAddr};
 
     #[test]
     fn jump_absolute() {

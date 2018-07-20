@@ -12,24 +12,27 @@ impl Memory {
     }
 }
 
-pub trait ReadAddr<A, T> {
-    fn read_addr(&self, addr: A) -> T;
+pub trait ReadAddr {
+    fn read_addr(&self, addr: u16) -> u8;
 }
 
-impl ReadAddr<u16, u8> for Memory {
+impl ReadAddr for Memory {
     fn read_addr(&self, addr: u16) -> u8 {
-        self.bytes[addr as usize]
+        self.bytes[usize::from(addr)]
     }
 }
 
-pub trait WriteAddr<A, T> {
-    fn write_addr(&mut self, addr: A, value: T) -> T;
+pub trait WriteAddr {
+    type Width = u16;
+    type Value = u8;
+
+    fn write_addr(&mut self, addr: u16, value: u8) -> u8;
 }
 
-impl WriteAddr<u16, u8> for Memory {
+impl WriteAddr for Memory {
     fn write_addr(&mut self, addr: u16, value: u8) -> u8 {
         let old = self.read_addr(addr);
-        self.bytes[addr as usize] = value;
+        self.bytes[usize::from(addr)] = value;
         old
     }
 }

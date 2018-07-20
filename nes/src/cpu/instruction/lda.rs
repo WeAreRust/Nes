@@ -1,5 +1,5 @@
 use cpu::{instruction::Execute, Core};
-use memory::{Memory, ReadAddr};
+use memory::ReadAddr;
 
 /// Load accumulator immediate
 ///
@@ -10,7 +10,7 @@ use memory::{Memory, ReadAddr};
 pub struct Immediate;
 
 #[inline(always)]
-fn immediate(core: &mut Core, memory: &mut Memory) {
+fn immediate<T: ReadAddr>(core: &mut Core, memory: &mut T) {
     let value = core.immediate_addr(memory);
     core.reg.acc = value;
     update_flags(core);
@@ -25,7 +25,7 @@ fn immediate(core: &mut Core, memory: &mut Memory) {
 pub struct ZeroPage;
 
 #[inline(always)]
-fn zero_page(core: &mut Core, memory: &mut Memory) {
+fn zero_page<T: ReadAddr>(core: &mut Core, memory: &mut T) {
     let addr = core.zero_page_addr(memory);
     core.reg.acc = memory.read_addr(addr);
     update_flags(core);
@@ -40,7 +40,7 @@ fn zero_page(core: &mut Core, memory: &mut Memory) {
 pub struct ZeroPageX;
 
 #[inline(always)]
-fn zero_page_x(core: &mut Core, memory: &mut Memory) {
+fn zero_page_x<T: ReadAddr>(core: &mut Core, memory: &mut T) {
     let addr = core.zero_page_addr_x(memory);
     core.reg.acc = memory.read_addr(addr);
     update_flags(core);
@@ -55,7 +55,7 @@ fn zero_page_x(core: &mut Core, memory: &mut Memory) {
 pub struct Absolute;
 
 #[inline(always)]
-fn absolute(core: &mut Core, memory: &mut Memory) {
+fn absolute<T: ReadAddr>(core: &mut Core, memory: &mut T) {
     let addr = core.absolute_addr(memory);
     core.reg.acc = memory.read_addr(addr);
     update_flags(core);
@@ -71,7 +71,7 @@ fn absolute(core: &mut Core, memory: &mut Memory) {
 pub struct AbsoluteX;
 
 #[inline(always)]
-fn absolute_x(core: &mut Core, memory: &mut Memory) {
+fn absolute_x<T: ReadAddr>(core: &mut Core, memory: &mut T) {
     let addr = core.absolute_addr_x(memory);
     core.reg.acc = memory.read_addr(addr);
     update_flags(core);
@@ -87,7 +87,7 @@ fn absolute_x(core: &mut Core, memory: &mut Memory) {
 pub struct AbsoluteY;
 
 #[inline(always)]
-fn absolute_y(core: &mut Core, memory: &mut Memory) {
+fn absolute_y<T: ReadAddr>(core: &mut Core, memory: &mut T) {
     let addr = core.absolute_addr_y(memory);
     core.reg.acc = memory.read_addr(addr);
     update_flags(core);
@@ -102,7 +102,7 @@ fn absolute_y(core: &mut Core, memory: &mut Memory) {
 pub struct IndirectX;
 
 #[inline(always)]
-fn indirect_x(core: &mut Core, memory: &mut Memory) {
+fn indirect_x<T: ReadAddr>(core: &mut Core, memory: &mut T) {
     let addr = core.idx_indirect(memory);
     core.reg.acc = memory.read_addr(addr);
     update_flags(core);
@@ -118,7 +118,7 @@ fn indirect_x(core: &mut Core, memory: &mut Memory) {
 pub struct IndirectY;
 
 #[inline(always)]
-fn indirect_y(core: &mut Core, memory: &mut Memory) {
+fn indirect_y<T: ReadAddr>(core: &mut Core, memory: &mut T) {
     let addr = core.indirect_idx(memory);
     core.reg.acc = memory.read_addr(addr);
     update_flags(core);
@@ -138,7 +138,7 @@ mod tests {
         instruction::Instruction,
         register::{Registers, StatusFlags},
     };
-    use memory::ReadAddr;
+    use memory::{Memory, ReadAddr};
 
     #[test]
     fn load_accumulator_immediate() {

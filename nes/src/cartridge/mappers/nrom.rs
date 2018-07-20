@@ -25,7 +25,7 @@ impl NROM {
 impl Mapper for NROM {
 }
 
-impl ReadAddr<u16, u8> for NROM {
+impl ReadAddr for NROM {
     fn read_addr(&self, r_addr: u16) -> u8 {
         match r_addr {
             // $8000-$FFFF is PRG-ROM data.

@@ -1,5 +1,4 @@
 use cpu::{instruction::Execute, Core};
-use memory::Memory;
 
 /// No Operation
 ///
@@ -10,7 +9,7 @@ use memory::Memory;
 pub struct Implicit;
 
 #[inline(always)]
-fn implicit(_core: &mut Core, _memory: &mut Memory) {}
+fn implicit<T>(_core: &mut Core, _memory: &mut T) {}
 
 #[cfg(test)]
 mod tests {
@@ -20,7 +19,7 @@ mod tests {
         instruction::Instruction,
         register::{Registers, StatusFlags},
     };
-    use memory::ReadAddr;
+    use memory::{Memory, ReadAddr};
 
     #[test]
     fn nop() {

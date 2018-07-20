@@ -1,6 +1,21 @@
 use cpu::Core;
-use memory::{Memory, ReadAddr};
+use memory::{ReadAddr, WriteAddr};
 use std::convert::From;
+
+#[cfg(test)]
+#[macro_export]
+macro_rules! nes_asm {
+    ($e:expr) => {{
+        let mut buf = vec![];
+        // We push a newline into the bytes array because of a known issue in asm6502
+        $crate::asm6502::assemble(format!("{}\n", $e).as_bytes(), &mut buf).unwrap();
+        buf
+    }};
+}
+
+mod jmp;
+mod lda;
+mod nop;
 
 #[macro_export]
 macro_rules! instruction_match {
@@ -26,27 +41,12 @@ macro_rules! instruction_match {
     ($op:ident, $fn:ident) => (instruction_match!($op, $fn,))
 }
 
-#[cfg(test)]
-#[macro_export]
-macro_rules! nes_asm {
-    ($e:expr) => {{
-        let mut buf = vec![];
-        // We push a newline into the bytes array because of a known issue in asm6502
-        ::asm6502::assemble(format!("{}\n", $e).as_bytes(), &mut buf).unwrap();
-        buf
-    }};
-}
-
-mod jmp;
-mod lda;
-mod nop;
-
 trait Execute {
     const OPCODE: u8;
     const CYCLES: usize;
     const PAGE_BOUNDARY_EXTRA_CYCLES: bool = false;
 
-    fn exec(core: &mut Core, memory: &mut Memory);
+    fn exec<T: ReadAddr + WriteAddr>(core: &mut Core, memory: &mut T);
 
     fn to_instruction() -> Instruction {
         Instruction {
@@ -69,7 +69,7 @@ impl Instruction {
     }
 
     // TODO: test.
-    pub fn cycles(&self, core: &Core, memory: &Memory) -> usize {
+    pub fn cycles<T: ReadAddr>(&self, core: &Core, memory: &T) -> usize {
         if !self.page_boundary_extra_cycle {
             return self.cycles;
         }
@@ -82,7 +82,7 @@ impl Instruction {
     }
 
     // TODO: test.
-    pub fn execute(&self, core: &mut Core, memory: &mut Memory) {
+    pub fn execute<T: ReadAddr + WriteAddr>(&self, core: &mut Core, memory: &mut T) {
         core.reg.pc += 1;
 
         let opcode = self.opcode;
