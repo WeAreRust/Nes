@@ -138,11 +138,11 @@ mod tests {
         instruction::Instruction,
         register::{Registers, StatusFlags},
     };
-    use memory::{Memory, ReadAddr};
+    use memory::{block::BlockMemory, ReadAddr};
 
     #[test]
     fn load_accumulator_immediate() {
-        let mut memory = Memory::with_bytes(nes_asm!("LDA #$5f"));
+        let mut memory = BlockMemory::with_bytes(nes_asm!("LDA #$5f"));
         let mut core = Core::new(Registers::empty());
 
         let opcode = memory.read_addr(0);
@@ -158,7 +158,7 @@ mod tests {
         let mut bytes = nes_asm!("LDA $03");
         bytes.extend(vec![0xff, 0x44]);
 
-        let mut memory = Memory::with_bytes(bytes);
+        let mut memory = BlockMemory::with_bytes(bytes);
         let mut core = Core::new(Registers::empty());
 
         let opcode = memory.read_addr(0);
@@ -174,7 +174,7 @@ mod tests {
         let mut bytes = nes_asm!("LDA $0004");
         bytes.extend(vec![0xff, 0x44]);
 
-        let mut memory = Memory::with_bytes(bytes);
+        let mut memory = BlockMemory::with_bytes(bytes);
         let mut core = Core::new(Registers::empty());
 
         let opcode = memory.read_addr(0);
@@ -190,7 +190,7 @@ mod tests {
         let mut bytes = nes_asm!("LDA $0004,X");
         bytes.extend(vec![0xff, 0xff, 0x44]);
 
-        let mut memory = Memory::with_bytes(bytes);
+        let mut memory = BlockMemory::with_bytes(bytes);
         let mut core = Core::new(Registers::empty());
         core.reg.x_idx = 0x01;
 
@@ -207,7 +207,7 @@ mod tests {
         let mut bytes = nes_asm!("LDA $0004,Y");
         bytes.extend(vec![0xff, 0xff, 0x44]);
 
-        let mut memory = Memory::with_bytes(bytes);
+        let mut memory = BlockMemory::with_bytes(bytes);
         let mut core = Core::new(Registers::empty());
         core.reg.y_idx = 0x01;
 
@@ -224,7 +224,7 @@ mod tests {
         let mut bytes = nes_asm!("LDA ($03,X)");
         bytes.extend(vec![0xff, 0xff, 0x06, 0x00, 0x44, 0x00]);
 
-        let mut memory = Memory::with_bytes(bytes);
+        let mut memory = BlockMemory::with_bytes(bytes);
         let mut core = Core::new(Registers::empty());
         core.reg.x_idx = 0x01;
 
@@ -241,7 +241,7 @@ mod tests {
         let mut bytes = nes_asm!("LDA ($03),Y");
         bytes.extend(vec![0xff, 0x05, 0x00, 0xff, 0xff, 0x44, 0x00]);
 
-        let mut memory = Memory::with_bytes(bytes);
+        let mut memory = BlockMemory::with_bytes(bytes);
         let mut core = Core::new(Registers::empty());
         core.reg.y_idx = 0x02;
 
@@ -255,7 +255,7 @@ mod tests {
 
     #[test]
     fn load_accumulator_zero_flag() {
-        let mut memory = Memory::with_bytes(nes_asm!("LDA #$00"));
+        let mut memory = BlockMemory::with_bytes(nes_asm!("LDA #$00"));
         let mut core = Core::new(Registers::empty());
 
         let opcode = memory.read_addr(0);
@@ -268,7 +268,7 @@ mod tests {
 
     #[test]
     fn load_accumulator_negative_flag() {
-        let mut memory = Memory::with_bytes(nes_asm!("LDA #$98"));
+        let mut memory = BlockMemory::with_bytes(nes_asm!("LDA #$98"));
         let mut core = Core::new(Registers::empty());
 
         let opcode = memory.read_addr(0);

@@ -3,7 +3,7 @@ use apu::channel_differ::{
     ChannelSnapshot, NoiseDiffer, PulseDiffer, TriangleDiffer, APU_CHANNEL_SIZE,
 };
 use clock::Processor;
-use memory::{Memory, ReadAddr};
+use memory::{ReadAddr, WriteAddr};
 use std::sync::mpsc::Sender;
 
 const APU_REGISTER_START: usize = 0x4000;
@@ -36,8 +36,8 @@ impl APU {
     }
 }
 
-impl Processor for APU {
-    fn cycle(self: &mut Self, memory: &mut Memory) {
+impl<T: ReadAddr + WriteAddr> Processor<T> for APU {
+    fn cycle(self: &mut Self, memory: &mut T) {
         let new_snapshot = RegisterSnapshot::create_from_memory(memory);
         let deltas = self.previous_snapshot.diff(&new_snapshot, memory);
         let result = self.delta_stream.send(ApuChannelDelta::Many(deltas));
@@ -77,7 +77,8 @@ impl RegisterSnapshot {
     }
 
     fn diff<M: ReadAddr>(self: &Self, other: &Self, _memory: &M) -> Vec<ApuChannelDelta> {
-        use self::WhichPulse::*;
+        use apu::channel::WhichPulse::*;
+
         let mut changes = vec![];
 
         self.make_pulse_differ(other, P1).diff(&mut changes);

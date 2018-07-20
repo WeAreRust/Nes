@@ -1,4 +1,4 @@
-use memory::Memory;
+use memory::{ReadAddr, WriteAddr};
 
 /// NTSC master clock frequency (per second)
 pub const MASTER_FREQUENCY: usize = 21_477_272;
@@ -13,8 +13,8 @@ pub const CPU_PERIOD: usize = 12;
 /// Used to calculate the frequency of the PPU = `MASTER_FREQUENCY / PPU_PERIOD`.
 pub const PPU_FREQUENCY: usize = 4;
 
-pub trait Processor {
-    fn cycle(&mut self, memory: &mut Memory);
+pub trait Processor<T: ReadAddr + WriteAddr> {
+    fn cycle(&mut self, memory: &mut T);
 }
 
 pub struct Clock {

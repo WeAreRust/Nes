@@ -1,9 +1,6 @@
-use self::instruction::Instruction;
-use self::pipeline::Pipeline;
-use self::register::Registers;
-
 use clock::Processor;
-use memory::{Memory, ReadAddr};
+use cpu::{instruction::Instruction, pipeline::Pipeline, register::Registers};
+use memory::{ReadAddr, WriteAddr};
 use std::u8;
 
 mod instruction;
@@ -23,9 +20,9 @@ impl Default for Core {
     }
 }
 
-impl Processor for Core {
+impl<T: ReadAddr + WriteAddr> Processor<T> for Core {
     /// Execute a Core
-    fn cycle(&mut self, memory: &mut Memory) {
+    fn cycle(&mut self, memory: &mut T) {
         if self.pipeline.is_empty() {
             let instr: Instruction = memory.read_addr(self.reg.pc).into();
             self.pipeline
@@ -209,14 +206,15 @@ impl Core {
 mod tests {
     use super::*;
 
-    use self::{instruction::Instruction, register::Registers};
+    use cpu::{instruction::Instruction, register::Registers};
+    use memory::block::BlockMemory;
 
     #[test]
     fn processor_cycle() {
         let lda = Instruction::from(0xa9); // LDA Immedate
         let jmp = Instruction::from(0x4c); // JMP Absolute
 
-        let mut memory = Memory::with_bytes(vec![
+        let mut memory = BlockMemory::with_bytes(vec![
             // LDA #$5f
             lda.opcode(),
             0x55,
@@ -249,7 +247,7 @@ mod tests {
 
     #[test]
     fn immediate_address() {
-        let mut memory = Memory::with_bytes(vec![0x00, 0xff]);
+        let mut memory = BlockMemory::with_bytes(vec![0x00, 0xff]);
         let mut core = Core::new(Registers::empty());
         core.reg.pc = 1;
 
@@ -260,7 +258,7 @@ mod tests {
 
     #[test]
     fn zero_page_address() {
-        let mut memory = Memory::with_bytes(vec![0x97]);
+        let mut memory = BlockMemory::with_bytes(vec![0x97]);
         let mut core = Core::new(Registers::empty());
 
         let addr = core.zero_page_addr(&mut memory);
@@ -270,7 +268,7 @@ mod tests {
 
     #[test]
     fn zero_page_address_x() {
-        let mut memory = Memory::with_bytes(vec![0x97]);
+        let mut memory = BlockMemory::with_bytes(vec![0x97]);
         let mut core = Core::new(Registers::empty());
         core.reg.x_idx = 1;
 
@@ -281,7 +279,7 @@ mod tests {
 
     #[test]
     fn zero_page_address_x_overflow() {
-        let mut memory = Memory::with_bytes(vec![0xff]);
+        let mut memory = BlockMemory::with_bytes(vec![0xff]);
         let mut core = Core::new(Registers::empty());
         core.reg.x_idx = 3;
 
@@ -292,7 +290,7 @@ mod tests {
 
     #[test]
     fn zero_page_address_y() {
-        let mut memory = Memory::with_bytes(vec![0x97]);
+        let mut memory = BlockMemory::with_bytes(vec![0x97]);
         let mut core = Core::new(Registers::empty());
         core.reg.y_idx = 1;
 
@@ -303,7 +301,7 @@ mod tests {
 
     #[test]
     fn zero_page_address_y_overflow() {
-        let mut memory = Memory::with_bytes(vec![0xff]);
+        let mut memory = BlockMemory::with_bytes(vec![0xff]);
         let mut core = Core::new(Registers::empty());
         core.reg.y_idx = 3;
 
@@ -314,7 +312,7 @@ mod tests {
 
     #[test]
     fn relative_address() {
-        let mut memory = Memory::with_bytes(vec![0x00, 0x00, 0x12]);
+        let mut memory = BlockMemory::with_bytes(vec![0x00, 0x00, 0x12]);
         let mut core = Core::new(Registers::empty());
         core.reg.pc = 2;
 
@@ -325,7 +323,7 @@ mod tests {
 
     #[test]
     fn relative_address_overflow() {
-        let mut memory = Memory::with_bytes(vec![0x00, 0x00, 0x80]);
+        let mut memory = BlockMemory::with_bytes(vec![0x00, 0x00, 0x80]);
         let mut core = Core::new(Registers::empty());
         core.reg.pc = 2;
 
@@ -336,7 +334,7 @@ mod tests {
 
     #[test]
     fn absolute_address() {
-        let mut memory = Memory::with_bytes(vec![0x97, 0x55]);
+        let mut memory = BlockMemory::with_bytes(vec![0x97, 0x55]);
         let mut core = Core::new(Registers::empty());
 
         let addr = core.absolute_addr(&mut memory);
@@ -346,7 +344,7 @@ mod tests {
 
     #[test]
     fn absolute_address_x() {
-        let mut memory = Memory::with_bytes(vec![0x97, 0x55]);
+        let mut memory = BlockMemory::with_bytes(vec![0x97, 0x55]);
         let mut core = Core::new(Registers::empty());
         core.reg.x_idx = 2;
 
@@ -357,7 +355,7 @@ mod tests {
 
     #[test]
     fn absolute_address_x_overflow() {
-        let mut memory = Memory::with_bytes(vec![0xff, 0xff]);
+        let mut memory = BlockMemory::with_bytes(vec![0xff, 0xff]);
         let mut core = Core::new(Registers::empty());
         core.reg.x_idx = 2;
 
@@ -368,7 +366,7 @@ mod tests {
 
     #[test]
     fn absolute_address_y() {
-        let mut memory = Memory::with_bytes(vec![0x97, 0x55]);
+        let mut memory = BlockMemory::with_bytes(vec![0x97, 0x55]);
         let mut core = Core::new(Registers::empty());
         core.reg.y_idx = 2;
 
@@ -379,7 +377,7 @@ mod tests {
 
     #[test]
     fn absolute_address_y_overflow() {
-        let mut memory = Memory::with_bytes(vec![0xff, 0xff]);
+        let mut memory = BlockMemory::with_bytes(vec![0xff, 0xff]);
         let mut core = Core::new(Registers::empty());
         core.reg.y_idx = 2;
 
@@ -394,7 +392,7 @@ mod tests {
         bytes[0x30fe] = 0x80;
         bytes[0x30ff] = 0x50;
 
-        let mut memory = Memory::with_bytes(bytes);
+        let mut memory = BlockMemory::with_bytes(bytes);
         let mut core = Core::new(Registers::empty());
 
         let addr = core.indirect_addr(&mut memory, 0x30fe);
@@ -408,7 +406,7 @@ mod tests {
         bytes[0x3100] = 0x50;
         bytes[0x3000] = 0x40;
 
-        let mut memory = Memory::with_bytes(bytes);
+        let mut memory = BlockMemory::with_bytes(bytes);
         let mut core = Core::new(Registers::empty());
 
         let addr = core.indirect_addr(&mut memory, 0x30ff);
@@ -417,7 +415,7 @@ mod tests {
 
     #[test]
     fn index_indirect() {
-        let mut memory = Memory::with_bytes(vec![0x01, 0xff, 0xff, 0x97, 0x55]);
+        let mut memory = BlockMemory::with_bytes(vec![0x01, 0xff, 0xff, 0x97, 0x55]);
         let mut core = Core::new(Registers::empty());
         core.reg.x_idx = 2;
 
@@ -428,7 +426,7 @@ mod tests {
 
     #[test]
     fn index_indirect_overflow() {
-        let mut memory = Memory::with_bytes(vec![0xff, 0x97, 0x55]);
+        let mut memory = BlockMemory::with_bytes(vec![0xff, 0x97, 0x55]);
         let mut core = Core::new(Registers::empty());
         core.reg.x_idx = 2;
 
@@ -439,7 +437,7 @@ mod tests {
 
     #[test]
     fn indirect_index() {
-        let mut memory = Memory::with_bytes(vec![0x03, 0xff, 0xff, 0x97, 0x55]);
+        let mut memory = BlockMemory::with_bytes(vec![0x03, 0xff, 0xff, 0x97, 0x55]);
         let mut core = Core::new(Registers::empty());
         core.reg.y_idx = 2;
 
@@ -450,7 +448,7 @@ mod tests {
 
     #[test]
     fn indirect_index_overflow() {
-        let mut memory = Memory::with_bytes(vec![0x01, 0xff, 0xff]);
+        let mut memory = BlockMemory::with_bytes(vec![0x01, 0xff, 0xff]);
         let mut core = Core::new(Registers::empty());
         core.reg.y_idx = 2;
 

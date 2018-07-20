@@ -19,11 +19,11 @@ mod tests {
         instruction::Instruction,
         register::{Registers, StatusFlags},
     };
-    use memory::{Memory, ReadAddr};
+    use memory::{block::BlockMemory, ReadAddr};
 
     #[test]
     fn nop() {
-        let mut memory = Memory::with_bytes(nes_asm!("NOP"));
+        let mut memory = BlockMemory::with_bytes(nes_asm!("NOP"));
         let mut core = Core::new(Registers::empty());
 
         let opcode = memory.read_addr(0);

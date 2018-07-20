@@ -37,11 +37,11 @@ mod tests {
     use super::*;
 
     use cpu::{instruction::Instruction, register::Registers};
-    use memory::{Memory, ReadAddr};
+    use memory::{block::BlockMemory, ReadAddr};
 
     #[test]
     fn jump_absolute() {
-        let mut memory = Memory::with_bytes(nes_asm!("JMP $5597"));
+        let mut memory = BlockMemory::with_bytes(nes_asm!("JMP $5597"));
         let mut core = Core::new(Registers::empty());
 
         let opcode = memory.read_addr(0);
@@ -56,7 +56,7 @@ mod tests {
         let mut bytes = nes_asm!("JMP ($0004)");
         bytes.extend(vec![0xff, 0x97, 0x55]);
 
-        let mut memory = Memory::with_bytes(bytes);
+        let mut memory = BlockMemory::with_bytes(bytes);
         let mut core = Core::new(Registers::empty());
 
         let opcode = memory.read_addr(0);
