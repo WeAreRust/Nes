@@ -4,9 +4,10 @@ version = "0.1.0"
 authors = ["Josh Leeb-du Toit <josh.leebdutoit@gmail.com>"]
 
 [dependencies]
-proc-macro2 = "0.3.6"
-quote = "0.5.2"
-syn = "0.13.1"
+heck = "0.3.0"
+proc-macro2 = "0.4.8"
+quote = "0.6.3"
+syn = "0.14.4"
 
 [lib]
 proc-macro = true

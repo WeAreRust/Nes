@@ -1,3 +1,4 @@
+use self::instruction::Instruction;
 use self::pipeline::Pipeline;
 use self::register::Registers;
 
@@ -9,7 +10,7 @@ mod instruction;
 mod pipeline;
 mod register;
 
-pub const PAGE_SIZE: u16 = 256;
+const PAGE_SIZE: u16 = 256;
 
 pub struct Core {
     reg: Registers,
@@ -23,15 +24,15 @@ impl Default for Core {
 }
 
 impl Processor for Core {
-    // Op code execution times are measured in machine cycles; one machine cycle equals one clock
-    // cycle. Many instructions require one extra cycle for execution if a page boundary is crossed
     fn cycle(&mut self, memory: &mut Memory) {
         if self.pipeline.is_empty() {
-            let opcode = memory.read_addr(self.reg.pc);
-            self.pipeline.push(opcode, 0);
+            let instr: Instruction = memory.read_addr(self.reg.pc).into();
+            self.pipeline
+                .push(instr.opcode(), instr.cycles(self, memory));
         }
         if let Some(opcode) = self.pipeline.next() {
-            self.execute(opcode, memory);
+            let instr: Instruction = opcode.into();
+            instr.execute(self, memory);
         }
     }
 }
@@ -146,6 +147,27 @@ impl Core {
         (lo | hi << 8).wrapping_add(self.reg.y_idx as u16)
     }
 
+    /// JMP is the only 6502 instruction to support indirection. The instruction contains a 16 bit
+    /// address which identifies the location of the least significant byte of another 16 bit
+    /// memory address which is the real target of the instruction.
+    ///
+    /// The 6502 process contains a bug specifically for indirect jumps that needs to be
+    /// reproduced. If address $3000 contains $40, $30FF contains $80, and $3100 contains $50, the
+    /// result of JMP ($30FF) will be a transfer of control to $4080 rather than $5080 as you
+    /// intended i.e. the 6502 took the low byte of the address from $30FF and the high byte from
+    /// $3000.
+    fn indirect_addr(&mut self, memory: &mut Memory, lo_addr: u16) -> u16 {
+        let mut hi_addr = lo_addr + 1;
+        if instruction::is_upper_page_boundary(lo_addr) {
+            hi_addr = (lo_addr / PAGE_SIZE) * PAGE_SIZE;
+        }
+
+        let lo = memory.read_addr(lo_addr) as u16;
+        let hi = memory.read_addr(hi_addr) as u16;
+
+        lo | hi << 8
+    }
+
     /// Indexed indirect addressing is normally used in conjunction with a table of address held on
     /// zero page. The address of the table is taken from the instruction and the X register added
     /// to it (with zero page wrap around) to give the location of the least significant byte of
@@ -177,29 +199,6 @@ impl Core {
 
         (lo | hi << 8).wrapping_add(self.reg.y_idx as u16)
     }
-
-    /// Execute the opcode
-    fn execute(&mut self, opcode: u8, memory: &mut Memory) {
-        self.reg.pc += 1;
-
-        match opcode {
-            0x4c => self.jmp_absolute(memory),
-            0x6c => self.jmp_indirect(memory),
-
-            0xa9 => self.lda_immediate(memory),
-            0xa5 => self.lda_zero_page(memory),
-            0xb5 => self.lda_zero_page_x(memory),
-            0xad => self.lda_absolute(memory),
-            0xbd => self.lda_absolute_x(memory),
-            0xb9 => self.lda_absolute_y(memory),
-            0xa1 => self.lda_indirect_x(memory),
-            0xb1 => self.lda_indirect_y(memory),
-
-            0xea => self.nop(),
-
-            _ => unimplemented!(),
-        };
-    }
 }
 
 #[cfg(test)]
@@ -208,33 +207,33 @@ mod tests {
 
     use cpu::register::Registers;
 
-    #[test]
-    #[ignore]
-    fn processor_cycle() {
-        // Instructions: `LDA #$5f\nJMP $5597`.
-        let mut memory = Memory::with_bytes(vec![0xa9, 0x55, 0x4c, 0x97, 0x55]);
-        let mut cpu = Core::new(Registers::empty());
+    // #[test]
+    // #[ignore]
+    // fn processor_cycle() {
+    //     // Instructions: `LDA #$5f\nJMP $5597`.
+    //     let mut memory = Memory::with_bytes(vec![0xa9, 0x55, 0x4c, 0x97, 0x55]);
+    //     let mut cpu = Core::new(Registers::empty());
 
-        cpu.cycle(&mut memory);
-        assert_eq!(instruction::CYCLES[0xa9], 2);
-        assert_eq!(cpu.pipeline, Pipeline::new(Some(0xa9), 1));
+    //     cpu.cycle(&mut memory);
+    //     assert_eq!(instruction::CYCLES[0xa9], 2);
+    //     assert_eq!(cpu.pipeline, Pipeline::new(Some(0xa9), 1));
 
-        cpu.cycle(&mut memory);
-        assert_eq!(cpu.pipeline, Pipeline::new(None, 0));
-        assert_eq!(cpu.reg.acc, 0x55);
+    //     cpu.cycle(&mut memory);
+    //     assert_eq!(cpu.pipeline, Pipeline::new(None, 0));
+    //     assert_eq!(cpu.reg.acc, 0x55);
 
-        cpu.cycle(&mut memory);
-        assert_eq!(instruction::CYCLES[0x4c], 3);
-        assert_eq!(cpu.pipeline, Pipeline::new(Some(0x4c), 2));
+    //     cpu.cycle(&mut memory);
+    //     assert_eq!(instruction::CYCLES[0x4c], 3);
+    //     assert_eq!(cpu.pipeline, Pipeline::new(Some(0x4c), 2));
 
-        cpu.cycle(&mut memory);
-        assert_eq!(cpu.pipeline, Pipeline::new(Some(0x4c), 1));
-        assert_eq!(cpu.reg.pc, 2);
+    //     cpu.cycle(&mut memory);
+    //     assert_eq!(cpu.pipeline, Pipeline::new(Some(0x4c), 1));
+    //     assert_eq!(cpu.reg.pc, 2);
 
-        cpu.cycle(&mut memory);
-        assert_eq!(cpu.pipeline, Pipeline::new(None, 0));
-        assert_eq!(cpu.reg.pc, 0x5597);
-    }
+    //     cpu.cycle(&mut memory);
+    //     assert_eq!(cpu.pipeline, Pipeline::new(None, 0));
+    //     assert_eq!(cpu.reg.pc, 0x5597);
+    // }
 
     #[test]
     fn immediate_address() {
@@ -375,6 +374,33 @@ mod tests {
         let addr = cpu.absolute_addr_y(&mut memory);
         assert_eq!(addr, 0x0001);
         assert_eq!(cpu.reg.pc, 2);
+    }
+
+    #[test]
+    fn indirect_address() {
+        let mut bytes = vec![0; 65536];
+        bytes[0x30fe] = 0x80;
+        bytes[0x30ff] = 0x50;
+
+        let mut memory = Memory::with_bytes(bytes);
+        let mut core = Core::new(Registers::empty());
+
+        let addr = core.indirect_addr(&mut memory, 0x30fe);
+        assert_eq!(addr, 0x5080);
+    }
+
+    #[test]
+    fn indirect_address_overflow() {
+        let mut bytes = vec![0; 65536];
+        bytes[0x30ff] = 0x80;
+        bytes[0x3100] = 0x50;
+        bytes[0x3000] = 0x40;
+
+        let mut memory = Memory::with_bytes(bytes);
+        let mut core = Core::new(Registers::empty());
+
+        let addr = core.indirect_addr(&mut memory, 0x30ff);
+        assert_eq!(addr, 0x4080);
     }
 
     #[test]

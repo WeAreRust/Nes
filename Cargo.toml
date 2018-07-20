@@ -3,6 +3,3 @@ members = [
     "nes",
     "nes-derives",
 ]
-
-[replace]
-"nes-derives:0.1.0" = { path = "nes-derives" }
