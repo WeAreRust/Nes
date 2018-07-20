@@ -9,6 +9,7 @@ use memory::Memory;
 #[cycles = 2]
 pub struct Implicit;
 
+#[inline(always)]
 fn implicit(_core: &mut Core, _memory: &mut Memory) {}
 
 #[cfg(test)]

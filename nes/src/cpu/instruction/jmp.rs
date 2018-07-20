@@ -9,6 +9,7 @@ use memory::Memory;
 #[cycles = 3]
 pub struct Absolute;
 
+#[inline(always)]
 fn absolute(core: &mut Core, memory: &mut Memory) {
     core.reg.pc = core.absolute_addr(memory);
 }
@@ -25,6 +26,7 @@ fn absolute(core: &mut Core, memory: &mut Memory) {
 #[cycles = 5]
 pub struct Indirect;
 
+#[inline(always)]
 fn indirect(core: &mut Core, memory: &mut Memory) {
     let arg_addr = core.absolute_addr(memory);
     core.reg.pc = core.indirect_addr(memory, arg_addr);

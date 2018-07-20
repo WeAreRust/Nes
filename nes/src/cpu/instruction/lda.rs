@@ -9,6 +9,7 @@ use memory::{Memory, ReadAddr};
 #[cycles = 2]
 pub struct Immediate;
 
+#[inline(always)]
 fn immediate(core: &mut Core, memory: &mut Memory) {
     let value = core.immediate_addr(memory);
     core.reg.acc = value;
@@ -23,6 +24,7 @@ fn immediate(core: &mut Core, memory: &mut Memory) {
 #[cycles = 3]
 pub struct ZeroPage;
 
+#[inline(always)]
 fn zero_page(core: &mut Core, memory: &mut Memory) {
     let addr = core.zero_page_addr(memory);
     core.reg.acc = memory.read_addr(addr);
@@ -37,6 +39,7 @@ fn zero_page(core: &mut Core, memory: &mut Memory) {
 #[cycles = 2]
 pub struct ZeroPageX;
 
+#[inline(always)]
 fn zero_page_x(core: &mut Core, memory: &mut Memory) {
     let addr = core.zero_page_addr_x(memory);
     core.reg.acc = memory.read_addr(addr);
@@ -51,6 +54,7 @@ fn zero_page_x(core: &mut Core, memory: &mut Memory) {
 #[cycles = 4]
 pub struct Absolute;
 
+#[inline(always)]
 fn absolute(core: &mut Core, memory: &mut Memory) {
     let addr = core.absolute_addr(memory);
     core.reg.acc = memory.read_addr(addr);
@@ -68,6 +72,7 @@ fn absolute(core: &mut Core, memory: &mut Memory) {
 #[page_boundary_extra_cycle]
 pub struct AbsoluteX;
 
+#[inline(always)]
 fn absolute_x(core: &mut Core, memory: &mut Memory) {
     let addr = core.absolute_addr_x(memory);
     core.reg.acc = memory.read_addr(addr);
@@ -85,6 +90,7 @@ fn absolute_x(core: &mut Core, memory: &mut Memory) {
 #[page_boundary_extra_cycle]
 pub struct AbsoluteY;
 
+#[inline(always)]
 fn absolute_y(core: &mut Core, memory: &mut Memory) {
     let addr = core.absolute_addr_y(memory);
     core.reg.acc = memory.read_addr(addr);
@@ -100,6 +106,7 @@ fn absolute_y(core: &mut Core, memory: &mut Memory) {
 #[cycles = 6]
 pub struct IndirectX;
 
+#[inline(always)]
 fn indirect_x(core: &mut Core, memory: &mut Memory) {
     let addr = core.idx_indirect(memory);
     core.reg.acc = memory.read_addr(addr);
@@ -117,12 +124,14 @@ fn indirect_x(core: &mut Core, memory: &mut Memory) {
 #[page_boundary_extra_cycle]
 pub struct IndirectY;
 
+#[inline(always)]
 fn indirect_y(core: &mut Core, memory: &mut Memory) {
     let addr = core.indirect_idx(memory);
     core.reg.acc = memory.read_addr(addr);
     update_flags(core);
 }
 
+#[inline(always)]
 fn update_flags(core: &mut Core) {
     core.reg.status.set_negative(core.reg.acc);
     core.reg.status.set_zero(core.reg.acc);
