@@ -1,5 +1,7 @@
 # Nes
 
+![](https://travis-ci.org/WeAreRust/Nes.svg?branch=master)
+
 NES Emulator.
 
 ## Running
