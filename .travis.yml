@@ -15,9 +15,10 @@ matrix:
     - rust: stable
     - rust: beta
 
-# Add clippy
 before_script:
-  - export PATH=$PATH:~/.cargo/bin
+  - |
+    export PATH=$PATH:~/.cargo/bin
+    sudo apt-get install -y libsdl2-dev
 
 script:
   - |
