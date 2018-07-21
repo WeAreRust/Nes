@@ -9,11 +9,9 @@ cache:
 matrix:
   include:
     - rust: stable
-    - rust: beta
     - rust: nightly
   allow_failures:
     - rust: stable
-    - rust: beta
 
 before_script:
   - |
