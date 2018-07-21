@@ -6,7 +6,7 @@ authors = ["Josh Leeb-du Toit <josh.leebdutoit@gmail.com>"]
 [dependencies]
 bitflags = "1.0.3"
 bytes = "0.4.8"
-nes-derives = { path = "../nes-derives" }
+nes-derives = "0.1.0"
 rand = "0.5.3"
 sdl2 = "0.31.0"
 

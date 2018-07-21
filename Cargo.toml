@@ -3,3 +3,6 @@ members = [
     "nes",
     "nes-derives",
 ]
+
+[patch.crates-io]
+nes-derives = { path = "nes-derives" }
