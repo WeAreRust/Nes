@@ -101,7 +101,7 @@ pub trait ChannelFrequency {
         }
 
         let f_divider = 16.0 / (period as f32 + 1.0);
-        return Some(((MASTER_FREQUENCY / CPU_PERIOD) as f32) / f_divider);
+        return Some(((MASTER_FREQUENCY / CPU_PERIOD as u32) as f32) / f_divider);
     }
 }
 
