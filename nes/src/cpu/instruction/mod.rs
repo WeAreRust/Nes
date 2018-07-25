@@ -45,7 +45,7 @@ macro_rules! instruction_match {
 
             <nop::Implicit as Execute>::OPCODE => <nop::Implicit as Execute>::$fn($($a),*),
 
-            _ => panic!("not yet implemented ({:?})", $op),
+            _ => panic!("instruction not implemented: 0x{:02X}", $op),
         }
     };
     ($op:ident, $fn:ident) => (instruction_match!($op, $fn,))
