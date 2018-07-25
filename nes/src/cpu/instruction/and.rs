@@ -11,7 +11,7 @@ pub struct Immediate;
 
 #[inline(always)]
 fn immediate<T: ReadAddr>(core: &mut Core, memory: &mut T) {
-    core.reg.acc = core.reg.acc & core.immediate_addr(memory);
+    core.reg.acc &= core.immediate_addr(memory);
     update_flags(core);
 }
 
@@ -26,7 +26,7 @@ pub struct ZeroPage;
 #[inline(always)]
 fn zero_page<T: ReadAddr>(core: &mut Core, memory: &mut T) {
     let addr = core.zero_page_addr(memory);
-    core.reg.acc = core.reg.acc & memory.read_addr(addr);
+    core.reg.acc &= memory.read_addr(addr);
     update_flags(core);
 }
 
@@ -41,7 +41,7 @@ pub struct ZeroPageX;
 #[inline(always)]
 fn zero_page_x<T: ReadAddr>(core: &mut Core, memory: &mut T) {
     let addr = core.zero_page_addr_x(memory);
-    core.reg.acc = core.reg.acc & memory.read_addr(addr);
+    core.reg.acc &= memory.read_addr(addr);
     update_flags(core);
 }
 
@@ -56,7 +56,7 @@ pub struct Absolute;
 #[inline(always)]
 fn absolute<T: ReadAddr>(core: &mut Core, memory: &mut T) {
     let addr = core.absolute_addr(memory);
-    core.reg.acc = core.reg.acc & memory.read_addr(addr);
+    core.reg.acc &= memory.read_addr(addr);
     update_flags(core);
 }
 
@@ -72,7 +72,7 @@ pub struct AbsoluteX;
 #[inline(always)]
 fn absolute_x<T: ReadAddr>(core: &mut Core, memory: &mut T) {
     let addr = core.absolute_addr_x(memory);
-    core.reg.acc = core.reg.acc & memory.read_addr(addr);
+    core.reg.acc &= memory.read_addr(addr);
     update_flags(core);
 }
 
@@ -88,7 +88,7 @@ pub struct AbsoluteY;
 #[inline(always)]
 fn absolute_y<T: ReadAddr>(core: &mut Core, memory: &mut T) {
     let addr = core.absolute_addr_y(memory);
-    core.reg.acc = core.reg.acc & memory.read_addr(addr);
+    core.reg.acc &= memory.read_addr(addr);
     update_flags(core);
 }
 
@@ -103,7 +103,7 @@ pub struct IndirectX;
 #[inline(always)]
 fn indirect_x<T: ReadAddr>(core: &mut Core, memory: &mut T) {
     let addr = core.idx_indirect(memory);
-    core.reg.acc = core.reg.acc & memory.read_addr(addr);
+    core.reg.acc &= memory.read_addr(addr);
     update_flags(core);
 }
 
@@ -119,7 +119,7 @@ pub struct IndirectY;
 #[inline(always)]
 fn indirect_y<T: ReadAddr>(core: &mut Core, memory: &mut T) {
     let addr = core.indirect_idx(memory);
-    core.reg.acc = core.reg.acc & memory.read_addr(addr);
+    core.reg.acc &= memory.read_addr(addr);
     update_flags(core);
 }
 
