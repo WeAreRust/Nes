@@ -19,7 +19,7 @@ pub const PPU_FREQUENCY: u8 = 4;
 
 // We want a value that will not be noticable to the human eye (> 24/sec),
 // will not round down to zero in sleep (< 1000/sec),
-// and is close to a factor of our Master frequence.
+// and is close to a factor of MASTER_FREQUENCY.
 // 352 * 61_015 = 21_477_272 + 8
 const BATCHES_PER_SECOND: u32 = 352;
 const CYCLE_BATCH_SIZE: u32 = MASTER_FREQUENCY / BATCHES_PER_SECOND;
