@@ -43,6 +43,8 @@ fn main() {
     let mut total_cycles: u64 = 0;
     let mut report_cycle: u32 = 0;
     let start = Instant::now();
+
+    cpu.reset(&bus);
     loop {
         clock.cycle();
         cpu_interval += 1;

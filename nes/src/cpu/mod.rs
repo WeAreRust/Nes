@@ -43,6 +43,18 @@ impl Core {
         }
     }
 
+    /// After a system initialization time of six clock cycles, the mask
+    /// interrupt flag will be set and the microprocessor will load the
+    /// program counter from the memory vector locations FFFC and
+    /// FFFD. This is the start location for program control.
+    /// Reference: http://archive.6502.org/datasheets/mos_6500_mpu_nov_1985.pdf
+    pub fn reset<T: ReadAddr>(&mut self, memory: &T) {
+        let a: u8 = memory.read_addr(0xFFFC);
+        let b: u8 = memory.read_addr(0xFFFD);
+
+        self.reg.pc = (b as u16) << 8 | a as u16;
+    }
+
     /// Immediate addressing allows the use of an 8 bit constant as the arguments to an address.
     fn immediate_addr<T: ReadAddr>(&mut self, memory: &mut T) -> u8 {
         let value = memory.read_addr(self.reg.pc);
@@ -70,7 +82,7 @@ impl Core {
     /// Index register
     ///
     /// For example if the X register contains $0F and the instruction LDA $80,X is executed then
-    /// the accumulator will be loaded from $008F (e.g. $80 + $0F => $8F).  
+    /// the accumulator will be loaded from $008F (e.g. $80 + $0F => $8F).
     ///
     /// The address calculation wraps around if the sum of the base address and the register exceed
     /// $FF. If we repeat the last example but with $FF in the X register then the accumulator will
@@ -243,6 +255,20 @@ mod tests {
         assert!(core.pipeline.opcode.is_none());
         assert_eq!(core.pipeline.rem_cycles, jmp.base_cycles() - 3);
         assert_eq!(core.reg.pc, 0x5597);
+    }
+
+    #[test]
+    fn reset() {
+        let mut v = vec![0x00u8; 0xffff];
+        v[0xfffc] = 0xaa;
+        v[0xfffd] = 0xbb;
+        let memory = BlockMemory::with_bytes(v);
+        let mut core = Core::new(Registers::empty());
+        core.reg.pc = 1;
+
+        core.reset(&memory);
+
+        assert_eq!(core.reg.pc, 0xbbaa);
     }
 
     #[test]
