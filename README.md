@@ -13,7 +13,7 @@ $ brew install sdl2
 ```
 
 ```bash
-$ bin/run.sh ./my_game.nes
+$ bin/run.sh ./roms/color_test.nes
 ```
 
 ## Notes
