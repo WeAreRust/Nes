@@ -19,6 +19,7 @@ extern crate rand;
 extern crate sdl2;
 
 pub mod apu;
+pub mod bus;
 pub mod cartridge;
 pub mod clock;
 pub mod cpu;

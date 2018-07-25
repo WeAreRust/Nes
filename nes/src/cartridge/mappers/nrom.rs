@@ -6,7 +6,7 @@
 //! NROM supports either 1 or 2 banks of PRG-ROM and no CHR-ROM.
 
 use cartridge::mapper::Mapper;
-use memory::ReadAddr;
+use memory::{ReadAddr, WriteAddr};
 
 pub struct NROM {
     prg_rom: Vec<u8>,
@@ -38,6 +38,12 @@ impl ReadAddr for NROM {
             0xC000...0xFFFF => self.prg_rom[(r_addr - 0x8000) as usize],
             _ => panic!("Reading outside cartridge range."),
         }
+    }
+}
+
+impl WriteAddr for NROM {
+    fn write_addr(&mut self, w_addr: u16, _value: u8) -> u8 {
+        panic!("Attempted write to ${:04X} on NROM", w_addr);
     }
 }
 

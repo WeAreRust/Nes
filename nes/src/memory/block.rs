@@ -7,6 +7,10 @@ pub struct BlockMemory {
 }
 
 impl BlockMemory {
+    pub fn with_size(size: usize) -> Self {
+        BlockMemory::with_bytes(vec![0x00; size])
+    }
+
     pub fn with_bytes<B: Into<BytesMut>>(bytes: B) -> Self {
         BlockMemory {
             bytes: bytes.into(),
