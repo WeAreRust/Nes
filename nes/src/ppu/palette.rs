@@ -6,7 +6,7 @@
 //!
 //! Maps a colour palette entry to an RGB value.
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub struct Color(pub u8, pub u8, pub u8);
 
 static PALETTE: &'static [Color] = &[
@@ -50,6 +50,6 @@ mod tests {
 
     #[test]
     fn palette_contains_green() {
-        assert!(PALETTE[0x1A] == (0x00, 0xAB, 0x00));
+        assert!(PALETTE[0x1A] == Color(0x00, 0xAB, 0x00));
     }
 }
