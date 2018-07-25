@@ -13,6 +13,7 @@ $ brew install sdl2
 ```
 
 ```bash
+# Current recommended game: Ice Climbers
 $ bin/run.sh ./my_game.nes
 ```
 
