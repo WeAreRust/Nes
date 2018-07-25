@@ -6,6 +6,7 @@ use std::io::Read;
 use std::time::Instant;
 
 use nes::clock::Clock;
+use nes::clock::Processor;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -20,7 +21,7 @@ fn main() {
     f.read_to_end(&mut data).unwrap();
 
     // TODO(toby): parse the file content
-    let cartridge = nes::cartridge::parse_rom_file(&data).unwrap();
+    let mut cartridge = nes::cartridge::parse_rom_file(&data).unwrap();
     print!("PRG ROM DUMP");
     for i in 0x8000..0xC000 {
         if (i - 0x8000) % 0x10 == 0 {
@@ -34,6 +35,8 @@ fn main() {
     println!("Cartridge loaded.");
 
     let mut clock = Clock::new();
+    let mut cpu = nes::cpu::Core::default();
+    let mut bus = nes::bus::Bus::new(&mut cartridge);
     let mut cpu_interval: u8 = 0;
     let mut ppu_interval: u8 = 0;
     let mut total_cycles: u64 = 0;
@@ -46,7 +49,7 @@ fn main() {
 
         if cpu_interval == nes::clock::CPU_PERIOD {
             cpu_interval = 0;
-            // TODO: cpu.cycle()
+            cpu.cycle(&mut bus);
         }
 
         if ppu_interval == nes::clock::PPU_FREQUENCY {

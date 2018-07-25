@@ -1,5 +1,5 @@
 use cartridge::mappers::nrom::NROM;
-use memory::ReadAddr;
+use memory::{ReadAddr, WriteAddr};
 
 #[derive(PartialEq, Debug, Clone)]
 pub enum MapperType {
@@ -9,7 +9,7 @@ pub enum MapperType {
     INESMapper211, // https://wiki.nesdev.com/w/index.php/INES_Mapper_211
 }
 
-pub trait Mapper: ReadAddr {}
+pub trait Mapper: ReadAddr + WriteAddr {}
 
 impl Mapper {
     pub fn create(
