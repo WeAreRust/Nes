@@ -36,7 +36,8 @@ fn main() {
 
     let mut clock = Clock::new();
     let mut cpu = nes::cpu::Core::default();
-    let mut bus = nes::bus::Bus::new(&mut cartridge);
+    let mut ram = nes::memory::block::BlockMemory::with_size(0x0800);
+    let mut bus = nes::bus::Bus::new(&mut cartridge, &mut ram);
     let mut cpu_interval: u8 = 0;
     let mut ppu_interval: u8 = 0;
     let mut total_cycles: u64 = 0;
