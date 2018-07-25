@@ -17,9 +17,13 @@ pub const CPU_PERIOD: u8 = 12;
 /// Used to calculate the frequency of the PPU = `MASTER_FREQUENCY / PPU_PERIOD`.
 pub const PPU_FREQUENCY: u8 = 4;
 
-const CYCLE_BATCH_SIZE: u32 = 61015;
-const CYCLE_BATCHES_PER_SECOND: u32 = MASTER_FREQUENCY / CYCLE_BATCH_SIZE;
-const NANOS_PER_BATCH: u32 = 1_000_000_000 / CYCLE_BATCHES_PER_SECOND;
+// We want a value that will not be noticable to the human eye (> 24/sec),
+// will not round down to zero in sleep (< 1000/sec),
+// and is close to a factor of MASTER_FREQUENCY.
+// 352 * 61_015 = 21_477_272 + 8
+const BATCHES_PER_SECOND: u32 = 352;
+const CYCLE_BATCH_SIZE: u32 = MASTER_FREQUENCY / BATCHES_PER_SECOND;
+const NANOS_PER_BATCH: u32 = 1_000_000_000 / BATCHES_PER_SECOND;
 
 pub trait Processor<T: ReadAddr + WriteAddr> {
     fn cycle(&mut self, memory: &mut T);
