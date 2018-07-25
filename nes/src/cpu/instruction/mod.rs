@@ -13,6 +13,7 @@ macro_rules! nes_asm {
     }};
 }
 
+mod and;
 mod jmp;
 mod lda;
 mod nop;
@@ -21,6 +22,15 @@ mod nop;
 macro_rules! instruction_match {
     ($op:ident, $fn:ident, $($a:ident),*) => {
         match $op {
+            <and::Immediate as Execute>::OPCODE => <and::Immediate as Execute>::$fn($($a),*),
+            <and::ZeroPage as Execute>::OPCODE => <and::ZeroPage as Execute>::$fn($($a),*),
+            <and::ZeroPageX as Execute>::OPCODE => <and::ZeroPageX as Execute>::$fn($($a),*),
+            <and::Absolute as Execute>::OPCODE => <and::Absolute as Execute>::$fn($($a),*),
+            <and::AbsoluteX as Execute>::OPCODE => <and::AbsoluteX as Execute>::$fn($($a),*),
+            <and::AbsoluteY as Execute>::OPCODE => <and::AbsoluteY as Execute>::$fn($($a),*),
+            <and::IndirectX as Execute>::OPCODE => <and::IndirectX as Execute>::$fn($($a),*),
+            <and::IndirectY as Execute>::OPCODE => <and::IndirectY as Execute>::$fn($($a),*),
+
             <jmp::Absolute as Execute>::OPCODE => <jmp::Absolute as Execute>::$fn($($a),*),
             <jmp::Indirect as Execute>::OPCODE => <jmp::Indirect as Execute>::$fn($($a),*),
 
