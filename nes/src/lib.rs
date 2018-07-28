@@ -22,5 +22,6 @@ pub mod clock;
 pub mod console;
 pub mod cpu;
 pub mod io;
+pub mod joypad;
 pub mod memory;
 pub mod ppu;
