@@ -1,5 +1,5 @@
 #[derive(PartialEq, Debug)]
 pub enum Mirroring {
-    Horizontal,
-    Vertical,
+  Horizontal,
+  Vertical,
 }

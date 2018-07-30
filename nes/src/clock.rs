@@ -1,6 +1,6 @@
-use std::time::{Instant, Duration};
-use std::thread;
 use std::ops::Add;
+use std::thread;
+use std::time::{Duration, Instant};
 
 use memory::{ReadAddr, WriteAddr};
 
@@ -26,33 +26,33 @@ const CYCLE_BATCH_SIZE: u32 = MASTER_FREQUENCY / BATCHES_PER_SECOND;
 const NANOS_PER_BATCH: u32 = 1_000_000_000 / BATCHES_PER_SECOND;
 
 pub trait Processor<T: ReadAddr + WriteAddr> {
-    fn cycle(&mut self, memory: &mut T);
+  fn cycle(&mut self, memory: &mut T);
 }
 
 pub struct Clock {
-    batch: u32,
-    next_batch: Instant,
+  batch: u32,
+  next_batch: Instant,
 }
 
 impl Clock {
-    pub fn new() -> Self {
-        Clock {
-            batch: 0,
-            next_batch: Instant::now().add(Duration::new(0, NANOS_PER_BATCH)),
-        }
+  pub fn new() -> Self {
+    Clock {
+      batch: 0,
+      next_batch: Instant::now().add(Duration::new(0, NANOS_PER_BATCH)),
+    }
+  }
+
+  pub fn cycle(&mut self) {
+    if self.batch != CYCLE_BATCH_SIZE {
+      self.batch += 1;
+      return;
     }
 
-    pub fn cycle(&mut self) {
-        if self.batch != CYCLE_BATCH_SIZE {
-            self.batch += 1;
-            return;
-        }
-
-        self.batch = 0;
-        if self.next_batch > Instant::now() {
-            let delay = self.next_batch.duration_since(Instant::now());
-            thread::sleep(delay);
-        }
-        self.next_batch = self.next_batch.add(Duration::new(0, NANOS_PER_BATCH));
+    self.batch = 0;
+    if self.next_batch > Instant::now() {
+      let delay = self.next_batch.duration_since(Instant::now());
+      thread::sleep(delay);
     }
+    self.next_batch = self.next_batch.add(Duration::new(0, NANOS_PER_BATCH));
+  }
 }

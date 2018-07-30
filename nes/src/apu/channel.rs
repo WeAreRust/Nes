@@ -75,133 +75,133 @@ const MAX_PEROID: u16 = (1 << 12) - 1;
 
 #[derive(Clone, Debug, PartialEq, PartialOrd, Eq, Ord)]
 pub enum Envelope {
-    Constant(u64),
+  Constant(u64),
 }
 
 pub struct ChannelTuning {
-    pub sample: u64,
-    pub sample_rate: u32,
+  pub sample: u64,
+  pub sample_rate: u32,
 }
 
 pub trait ChannelState: Clone + Default {
-    type Delta;
-    fn transform(self: Self, delta: Self::Delta) -> Self;
-    fn signal_at(self: &Self, config: &ChannelTuning) -> f32;
+  type Delta;
+  fn transform(self: Self, delta: Self::Delta) -> Self;
+  fn signal_at(self: &Self, config: &ChannelTuning) -> f32;
 }
 
 pub trait ChannelFrequency {
-    fn get_period(self: &Self) -> u16;
-    fn get_period_min(self: &Self) -> u16;
+  fn get_period(self: &Self) -> u16;
+  fn get_period_min(self: &Self) -> u16;
 
-    fn get_frequency(self: &Self) -> Option<f32> {
-        let period = self.get_period();
-        let min = self.get_period_min();
-        if period < min || period > MAX_PEROID {
-            return None;
-        }
-
-        let f_divider = 16.0 / (period as f32 + 1.0);
-        return Some(((MASTER_FREQUENCY / CPU_PERIOD as u32) as f32) / f_divider);
+  fn get_frequency(self: &Self) -> Option<f32> {
+    let period = self.get_period();
+    let min = self.get_period_min();
+    if period < min || period > MAX_PEROID {
+      return None;
     }
+
+    let f_divider = 16.0 / (period as f32 + 1.0);
+    return Some(((MASTER_FREQUENCY / CPU_PERIOD as u32) as f32) / f_divider);
+  }
 }
 
 pub trait ChannelAmplitude {
-    fn get_volume(self: &Self) -> u8;
+  fn get_volume(self: &Self) -> u8;
 
-    fn get_amplitude(self: &Self) -> Option<f32> {
-        let volume = self.get_volume();
-        if volume == 0 {
-            return None;
-        }
-        return Some((volume as f32) / (u8::max_value() as f32));
+  fn get_amplitude(self: &Self) -> Option<f32> {
+    let volume = self.get_volume();
+    if volume == 0 {
+      return None;
     }
+    return Some((volume as f32) / (u8::max_value() as f32));
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////
 
 #[derive(Clone, Debug, PartialEq, PartialOrd, Eq, Ord)]
 pub enum ApuChannelDelta {
-    Pulse1(PulseDelta),
-    Pulse2(PulseDelta),
-    Noise(NoiseDelta),
-    Triangle(TriangleDelta),
-    Many(Vec<ApuChannelDelta>),
+  Pulse1(PulseDelta),
+  Pulse2(PulseDelta),
+  Noise(NoiseDelta),
+  Triangle(TriangleDelta),
+  Many(Vec<ApuChannelDelta>),
 }
 
 #[derive(Clone, Debug)]
 pub struct ApuChannelState {
-    pub pulse_1: PulseState,
-    pub pulse_2: PulseState,
-    pub triangle: TriangleState,
-    pub noise: NoiseState,
+  pub pulse_1: PulseState,
+  pub pulse_2: PulseState,
+  pub triangle: TriangleState,
+  pub noise: NoiseState,
 }
 
 impl Default for ApuChannelState {
-    fn default() -> Self {
-        ApuChannelState {
-            pulse_1: PulseState::default(),
-            pulse_2: PulseState::default(),
-            triangle: TriangleState::default(),
-            noise: NoiseState::default(),
-        }
+  fn default() -> Self {
+    ApuChannelState {
+      pulse_1: PulseState::default(),
+      pulse_2: PulseState::default(),
+      triangle: TriangleState::default(),
+      noise: NoiseState::default(),
     }
+  }
 }
 
 impl ChannelState for ApuChannelState {
-    type Delta = ApuChannelDelta;
+  type Delta = ApuChannelDelta;
 
-    fn transform(self: Self, delta: ApuChannelDelta) -> Self {
-        match delta {
-            ApuChannelDelta::Pulse1(d) => Self {
-                pulse_1: self.pulse_1.transform(d),
-                ..self
-            },
-            ApuChannelDelta::Pulse2(d) => Self {
-                pulse_2: self.pulse_2.transform(d),
-                ..self
-            },
-            ApuChannelDelta::Triangle(d) => Self {
-                triangle: self.triangle.transform(d),
-                ..self
-            },
-            ApuChannelDelta::Noise(d) => Self {
-                noise: self.noise.transform(d),
-                ..self
-            },
-            ApuChannelDelta::Many(deltas) => deltas
-                .into_iter()
-                .fold(self, |state, sub_delta| state.transform(sub_delta)),
-        }
+  fn transform(self: Self, delta: ApuChannelDelta) -> Self {
+    match delta {
+      ApuChannelDelta::Pulse1(d) => Self {
+        pulse_1: self.pulse_1.transform(d),
+        ..self
+      },
+      ApuChannelDelta::Pulse2(d) => Self {
+        pulse_2: self.pulse_2.transform(d),
+        ..self
+      },
+      ApuChannelDelta::Triangle(d) => Self {
+        triangle: self.triangle.transform(d),
+        ..self
+      },
+      ApuChannelDelta::Noise(d) => Self {
+        noise: self.noise.transform(d),
+        ..self
+      },
+      ApuChannelDelta::Many(deltas) => deltas
+        .into_iter()
+        .fold(self, |state, sub_delta| state.transform(sub_delta)),
     }
+  }
 
-    /// This is the total signal of all channels from the APU, and emulates
-    /// the NES mixers by using lookup algorithm defined [here][mixer].
-    ///
-    /// [mixer]: https://wiki.nesdev.com/w/index.php/APU_Mixer
-    fn signal_at(self: &Self, config: &ChannelTuning) -> f32 {
-        // Mixer look up tables as described in the wiki.
-        let pulse_table = |n| 95.52 / (8128.0 / n + 100.0);
-        let tnd_table = |n| 163.67 / (24329.0 / n + 100.0);
+  /// This is the total signal of all channels from the APU, and emulates
+  /// the NES mixers by using lookup algorithm defined [here][mixer].
+  ///
+  /// [mixer]: https://wiki.nesdev.com/w/index.php/APU_Mixer
+  fn signal_at(self: &Self, config: &ChannelTuning) -> f32 {
+    // Mixer look up tables as described in the wiki.
+    let pulse_table = |n| 95.52 / (8128.0 / n + 100.0);
+    let tnd_table = |n| 163.67 / (24329.0 / n + 100.0);
 
-        // Signals as produced by the seperate channels.
-        let pulse_1 = self.pulse_1.signal_at(&config);
-        let pulse_2 = self.pulse_2.signal_at(&config);
-        let triangle = self.triangle.signal_at(&config);
-        let dmc = 0.0;
-        let noise = self.noise.signal_at(&config);
+    // Signals as produced by the seperate channels.
+    let pulse_1 = self.pulse_1.signal_at(&config);
+    let pulse_2 = self.pulse_2.signal_at(&config);
+    let triangle = self.triangle.signal_at(&config);
+    let dmc = 0.0;
+    let noise = self.noise.signal_at(&config);
 
-        let pulse_mix = pulse_table(pulse_1 + pulse_2);
-        let tnd_mix = tnd_table(3.0 * triangle + 2.0 * noise + dmc);
+    let pulse_mix = pulse_table(pulse_1 + pulse_2);
+    let tnd_mix = tnd_table(3.0 * triangle + 2.0 * noise + dmc);
 
-        return pulse_mix + tnd_mix;
-    }
+    return pulse_mix + tnd_mix;
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////
 
 pub enum WhichPulse {
-    P1,
-    P2,
+  P1,
+  P2,
 }
 
 const FREQ_CHUNK: f32 = 0.125;
@@ -211,95 +211,95 @@ const FREQ_CHUNK: f32 = 0.125;
 /// [here]: https://wiki.nesdev.com/w/index.php/APU_Pulse
 #[derive(Copy, Clone, Debug, PartialEq, PartialOrd, Eq, Ord)]
 pub enum PulseWidth {
-    /// Has a waveform like `0 1 0 0 0 0 0 0` where 12.5%
-    /// of the waveform positive.
-    Duty0,
-    /// Has a waveform like `0 1 1 0 0 0 0 0` where 25%
-    /// of the waveform positive.
-    Duty1,
-    /// Has a waveform like `0 1 1 1 1 0 0 0` where 50%
-    /// of the waveform positive.
-    Duty2,
-    /// Has a waveform like `0 1 1 1 1 0 0 0` where 75%
-    /// of the waveform positive.
-    Duty3,
+  /// Has a waveform like `0 1 0 0 0 0 0 0` where 12.5%
+  /// of the waveform positive.
+  Duty0,
+  /// Has a waveform like `0 1 1 0 0 0 0 0` where 25%
+  /// of the waveform positive.
+  Duty1,
+  /// Has a waveform like `0 1 1 1 1 0 0 0` where 50%
+  /// of the waveform positive.
+  Duty2,
+  /// Has a waveform like `0 1 1 1 1 0 0 0` where 75%
+  /// of the waveform positive.
+  Duty3,
 }
 
 impl PulseWidth {
-    pub fn calculate(byte: u8) -> PulseWidth {
-        let masked = (byte & 0b11000000) >> 6;
-        if masked == 0 {
-            PulseWidth::Duty0
-        } else if masked == 1 {
-            PulseWidth::Duty1
-        } else if masked == 2 {
-            PulseWidth::Duty2
-        } else {
-            PulseWidth::Duty3
-        }
+  pub fn calculate(byte: u8) -> PulseWidth {
+    let masked = (byte & 0b11000000) >> 6;
+    if masked == 0 {
+      PulseWidth::Duty0
+    } else if masked == 1 {
+      PulseWidth::Duty1
+    } else if masked == 2 {
+      PulseWidth::Duty2
+    } else {
+      PulseWidth::Duty3
     }
+  }
 
-    fn pulse_sign(self: &Self, frequency_progress: f32) -> f32 {
-        if frequency_progress > 1.0 {
-            panic!("expected frequency >= 1");
-        }
-        return match self {
-            // wave: 0 1 0 0 0 0 0 0
-            PulseWidth::Duty0 => match frequency_progress {
-                f if f < FREQ_CHUNK => -1.0,
-                f if f > FREQ_CHUNK * 2.0 => -1.0,
-                _ => 1.0,
-            },
-            // wave: 0 1 1 0 0 0 0 0
-            PulseWidth::Duty1 => match frequency_progress {
-                f if f < FREQ_CHUNK => -1.0,
-                f if f > FREQ_CHUNK * 3.0 => -1.0,
-                _ => 1.0,
-            },
-            // wave: 0 1 1 1 1 0 0 0
-            PulseWidth::Duty2 => match frequency_progress {
-                f if f < FREQ_CHUNK => -1.0,
-                f if f > FREQ_CHUNK * 5.0 => -1.0,
-                _ => 1.0,
-            },
-            // wave: 0 1 1 1 1 1 1 0
-            PulseWidth::Duty3 => match frequency_progress {
-                f if f < FREQ_CHUNK => -1.0,
-                f if f > FREQ_CHUNK * 7.0 => -1.0,
-                _ => 1.0,
-            },
-        };
+  fn pulse_sign(self: &Self, frequency_progress: f32) -> f32 {
+    if frequency_progress > 1.0 {
+      panic!("expected frequency >= 1");
     }
+    return match self {
+      // wave: 0 1 0 0 0 0 0 0
+      PulseWidth::Duty0 => match frequency_progress {
+        f if f < FREQ_CHUNK => -1.0,
+        f if f > FREQ_CHUNK * 2.0 => -1.0,
+        _ => 1.0,
+      },
+      // wave: 0 1 1 0 0 0 0 0
+      PulseWidth::Duty1 => match frequency_progress {
+        f if f < FREQ_CHUNK => -1.0,
+        f if f > FREQ_CHUNK * 3.0 => -1.0,
+        _ => 1.0,
+      },
+      // wave: 0 1 1 1 1 0 0 0
+      PulseWidth::Duty2 => match frequency_progress {
+        f if f < FREQ_CHUNK => -1.0,
+        f if f > FREQ_CHUNK * 5.0 => -1.0,
+        _ => 1.0,
+      },
+      // wave: 0 1 1 1 1 1 1 0
+      PulseWidth::Duty3 => match frequency_progress {
+        f if f < FREQ_CHUNK => -1.0,
+        f if f > FREQ_CHUNK * 7.0 => -1.0,
+        _ => 1.0,
+      },
+    };
+  }
 }
 
 #[derive(Clone, Debug)]
 pub struct PulseState {
-    frame_count: u64,
-    pulse_width: PulseWidth,
-    envelope: Envelope,
-    period: u16,
-    volume: u8,
+  frame_count: u64,
+  pulse_width: PulseWidth,
+  envelope: Envelope,
+  period: u16,
+  volume: u8,
 }
 
 #[derive(Clone, Debug, PartialEq, PartialOrd, Eq, Ord)]
 pub enum PulseDelta {
-    SetFrameCount(u64),
-    SetPulseWidth(PulseWidth),
-    SetVolume(u8),
-    SetEnvelope(Envelope),
-    SetPeriod(u16),
+  SetFrameCount(u64),
+  SetPulseWidth(PulseWidth),
+  SetVolume(u8),
+  SetEnvelope(Envelope),
+  SetPeriod(u16),
 }
 
 impl Default for PulseState {
-    fn default() -> Self {
-        PulseState {
-            frame_count: 0,
-            volume: 0,
-            period: 0,
-            pulse_width: PulseWidth::Duty0,
-            envelope: Envelope::Constant(0),
-        }
+  fn default() -> Self {
+    PulseState {
+      frame_count: 0,
+      volume: 0,
+      period: 0,
+      pulse_width: PulseWidth::Duty0,
+      envelope: Envelope::Constant(0),
     }
+  }
 }
 
 /// When the peroid is below `8` the pulse wave is silient.
@@ -307,151 +307,151 @@ impl Default for PulseState {
 ///
 /// [Pitch]: https://wiki.nesdev.com/w/index.php/APU#Pulse_.28.244000-4007.29
 impl ChannelFrequency for PulseState {
-    fn get_period(self: &Self) -> u16 {
-        self.period
-    }
-    fn get_period_min(self: &Self) -> u16 {
-        8
-    }
+  fn get_period(self: &Self) -> u16 {
+    self.period
+  }
+  fn get_period_min(self: &Self) -> u16 {
+    8
+  }
 }
 
 impl ChannelAmplitude for PulseState {
-    fn get_volume(self: &Self) -> u8 {
-        self.volume
-    }
+  fn get_volume(self: &Self) -> u8 {
+    self.volume
+  }
 }
 
 impl ChannelState for PulseState {
-    type Delta = PulseDelta;
+  type Delta = PulseDelta;
 
-    fn transform(self: Self, delta: PulseDelta) -> Self {
-        match delta {
-            PulseDelta::SetPeriod(p) => Self { period: p, ..self },
-            PulseDelta::SetVolume(v) => Self { volume: v, ..self },
-            PulseDelta::SetFrameCount(f) => Self {
-                frame_count: f,
-                ..self
-            },
-            PulseDelta::SetPulseWidth(w) => Self {
-                pulse_width: w,
-                ..self
-            },
-            PulseDelta::SetEnvelope(e) => Self {
-                envelope: e,
-                ..self
-            },
-        }
+  fn transform(self: Self, delta: PulseDelta) -> Self {
+    match delta {
+      PulseDelta::SetPeriod(p) => Self { period: p, ..self },
+      PulseDelta::SetVolume(v) => Self { volume: v, ..self },
+      PulseDelta::SetFrameCount(f) => Self {
+        frame_count: f,
+        ..self
+      },
+      PulseDelta::SetPulseWidth(w) => Self {
+        pulse_width: w,
+        ..self
+      },
+      PulseDelta::SetEnvelope(e) => Self {
+        envelope: e,
+        ..self
+      },
     }
+  }
 
-    fn signal_at(self: &Self, config: &ChannelTuning) -> f32 {
-        let amplitude = self.get_amplitude();
-        let frequency = self.get_frequency();
-        let with_both = amplitude.and_then(|a| frequency.map(|f| (a, f)));
+  fn signal_at(self: &Self, config: &ChannelTuning) -> f32 {
+    let amplitude = self.get_amplitude();
+    let frequency = self.get_frequency();
+    let with_both = amplitude.and_then(|a| frequency.map(|f| (a, f)));
 
-        return with_both.map_or(0.0, |(amplitude, frequency)| {
-            let sample_offset = config.sample * (config.sample_rate as u64);
-            let sample_mod = (sample_offset % frequency as u64) as f32;
-            let frequent_percent = sample_mod / frequency;
-            return amplitude * self.pulse_width.pulse_sign(frequent_percent);
-        });
-    }
+    return with_both.map_or(0.0, |(amplitude, frequency)| {
+      let sample_offset = config.sample * (config.sample_rate as u64);
+      let sample_mod = (sample_offset % frequency as u64) as f32;
+      let frequent_percent = sample_mod / frequency;
+      return amplitude * self.pulse_width.pulse_sign(frequent_percent);
+    });
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////
 
 #[derive(Copy, Clone, Debug)]
 pub struct TriangleState {
-    period: u16,
-    control_flag: bool,
+  period: u16,
+  control_flag: bool,
 }
 
 #[derive(Clone, Debug, PartialEq, PartialOrd, Eq, Ord)]
 pub enum TriangleDelta {
-    SetPeriod(u16),
-    SetControlFlag(bool),
+  SetPeriod(u16),
+  SetControlFlag(bool),
 }
 
 impl Default for TriangleState {
-    fn default() -> Self {
-        TriangleState {
-            period: 0,
-            control_flag: false,
-        }
+  fn default() -> Self {
+    TriangleState {
+      period: 0,
+      control_flag: false,
     }
+  }
 }
 
 impl ChannelFrequency for TriangleState {
-    fn get_period(self: &Self) -> u16 {
-        self.period
-    }
-    fn get_period_min(self: &Self) -> u16 {
-        1
-    }
+  fn get_period(self: &Self) -> u16 {
+    self.period
+  }
+  fn get_period_min(self: &Self) -> u16 {
+    1
+  }
 }
 
 impl ChannelState for TriangleState {
-    type Delta = TriangleDelta;
+  type Delta = TriangleDelta;
 
-    fn transform(self: Self, delta: TriangleDelta) -> Self {
-        match delta {
-            TriangleDelta::SetPeriod(p) => Self { period: p, ..self },
-            TriangleDelta::SetControlFlag(c) => Self {
-                control_flag: c,
-                ..self
-            },
-        }
+  fn transform(self: Self, delta: TriangleDelta) -> Self {
+    match delta {
+      TriangleDelta::SetPeriod(p) => Self { period: p, ..self },
+      TriangleDelta::SetControlFlag(c) => Self {
+        control_flag: c,
+        ..self
+      },
+    }
+  }
+
+  fn signal_at(self: &Self, config: &ChannelTuning) -> f32 {
+    if !self.control_flag {
+      return 0.0;
     }
 
-    fn signal_at(self: &Self, config: &ChannelTuning) -> f32 {
-        if !self.control_flag {
-            return 0.0;
-        }
-
-        return self.get_frequency().map_or(0.0, |frequency| {
-            let sample_offset = config.sample * (config.sample_rate as u64);
-            let period_offset = (sample_offset % frequency as u64) as f32 / frequency;
-            return (0.25 - (period_offset - 0.5).abs()) * 4.0;
-        });
-    }
+    return self.get_frequency().map_or(0.0, |frequency| {
+      let sample_offset = config.sample * (config.sample_rate as u64);
+      let period_offset = (sample_offset % frequency as u64) as f32 / frequency;
+      return (0.25 - (period_offset - 0.5).abs()) * 4.0;
+    });
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////
 
 #[derive(Copy, Clone, Debug)]
 pub struct NoiseState {
-    volume: u8,
+  volume: u8,
 }
 
 #[derive(Clone, Debug, PartialEq, PartialOrd, Eq, Ord)]
 pub enum NoiseDelta {
-    SetVolume(u8),
+  SetVolume(u8),
 }
 
 impl ChannelAmplitude for NoiseState {
-    fn get_volume(self: &Self) -> u8 {
-        return self.volume;
-    }
+  fn get_volume(self: &Self) -> u8 {
+    return self.volume;
+  }
 }
 
 impl Default for NoiseState {
-    fn default() -> Self {
-        NoiseState { volume: 0 }
-    }
+  fn default() -> Self {
+    NoiseState { volume: 0 }
+  }
 }
 
 impl ChannelState for NoiseState {
-    type Delta = NoiseDelta;
+  type Delta = NoiseDelta;
 
-    fn transform(self: Self, delta: NoiseDelta) -> Self {
-        match delta {
-            NoiseDelta::SetVolume(v) => Self { volume: v, ..self },
-        }
+  fn transform(self: Self, delta: NoiseDelta) -> Self {
+    match delta {
+      NoiseDelta::SetVolume(v) => Self { volume: v, ..self },
     }
+  }
 
-    fn signal_at(self: &Self, _config: &ChannelTuning) -> f32 {
-        return self.get_amplitude().map_or(0.0, |max_amplitude| {
-            let mut random = thread_rng();
-            random.gen_range(-max_amplitude, max_amplitude)
-        });
-    }
+  fn signal_at(self: &Self, _config: &ChannelTuning) -> f32 {
+    return self.get_amplitude().map_or(0.0, |max_amplitude| {
+      let mut random = thread_rng();
+      random.gen_range(-max_amplitude, max_amplitude)
+    });
+  }
 }

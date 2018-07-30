@@ -5,12 +5,12 @@ use std::convert::From;
 #[cfg(test)]
 #[macro_export]
 macro_rules! nes_asm {
-    ($e:expr) => {{
-        let mut buf = vec![];
-        // We push a newline into the bytes array because of a known issue in asm6502
-        $crate::asm6502::assemble(format!("{}\n", $e).as_bytes(), &mut buf).unwrap();
-        buf
-    }};
+  ($e:expr) => {{
+    let mut buf = vec![];
+    // We push a newline into the bytes array because of a known issue in asm6502
+    $crate::asm6502::assemble(format!("{}\n", $e).as_bytes(), &mut buf).unwrap();
+    buf
+  }};
 }
 
 mod and;
@@ -52,81 +52,81 @@ macro_rules! instruction_match {
 }
 
 trait Execute {
-    const OPCODE: u8;
-    const CYCLES: usize;
-    const PAGE_BOUNDARY_EXTRA_CYCLES: bool = false;
+  const OPCODE: u8;
+  const CYCLES: usize;
+  const PAGE_BOUNDARY_EXTRA_CYCLES: bool = false;
 
-    fn exec<T: ReadAddr + WriteAddr>(core: &mut Core, memory: &mut T);
+  fn exec<T: ReadAddr + WriteAddr>(core: &mut Core, memory: &mut T);
 
-    #[inline(always)]
-    fn to_instruction() -> Instruction {
-        Instruction {
-            opcode: Self::OPCODE,
-            cycles: Self::CYCLES,
-            page_boundary_extra_cycle: Self::PAGE_BOUNDARY_EXTRA_CYCLES,
-        }
+  #[inline(always)]
+  fn to_instruction() -> Instruction {
+    Instruction {
+      opcode: Self::OPCODE,
+      cycles: Self::CYCLES,
+      page_boundary_extra_cycle: Self::PAGE_BOUNDARY_EXTRA_CYCLES,
     }
+  }
 }
 
 pub struct Instruction {
-    opcode: u8,
-    cycles: usize,
-    page_boundary_extra_cycle: bool,
+  opcode: u8,
+  cycles: usize,
+  page_boundary_extra_cycle: bool,
 }
 
 impl Instruction {
-    #[inline(always)]
-    pub fn opcode(&self) -> u8 {
-        self.opcode
+  #[inline(always)]
+  pub fn opcode(&self) -> u8 {
+    self.opcode
+  }
+
+  #[inline(always)]
+  pub fn base_cycles(&self) -> usize {
+    self.cycles
+  }
+
+  // TODO: test.
+  pub fn cycles<T: ReadAddr>(&self, core: &Core, memory: &T) -> usize {
+    if !self.page_boundary_extra_cycle {
+      return self.cycles;
     }
 
-    #[inline(always)]
-    pub fn base_cycles(&self) -> usize {
-        self.cycles
-    }
+    let lo = u16::from(memory.read_addr(core.reg.pc));
+    let hi = u16::from(memory.read_addr(core.reg.pc + 1));
+    let addr = lo | hi << 8;
 
-    // TODO: test.
-    pub fn cycles<T: ReadAddr>(&self, core: &Core, memory: &T) -> usize {
-        if !self.page_boundary_extra_cycle {
-            return self.cycles;
-        }
+    self.cycles + is_upper_page_boundary(addr) as usize
+  }
 
-        let lo = u16::from(memory.read_addr(core.reg.pc));
-        let hi = u16::from(memory.read_addr(core.reg.pc + 1));
-        let addr = lo | hi << 8;
+  // TODO: test.
+  pub fn execute<T: ReadAddr + WriteAddr>(&self, core: &mut Core, memory: &mut T) {
+    core.reg.pc += 1;
 
-        self.cycles + is_upper_page_boundary(addr) as usize
-    }
-
-    // TODO: test.
-    pub fn execute<T: ReadAddr + WriteAddr>(&self, core: &mut Core, memory: &mut T) {
-        core.reg.pc += 1;
-
-        let opcode = self.opcode;
-        instruction_match!(opcode, exec, core, memory)
-    }
+    let opcode = self.opcode;
+    instruction_match!(opcode, exec, core, memory)
+  }
 }
 
 impl From<u8> for Instruction {
-    fn from(opcode: u8) -> Self {
-        instruction_match!(opcode, to_instruction)
-    }
+  fn from(opcode: u8) -> Self {
+    instruction_match!(opcode, to_instruction)
+  }
 }
 
 #[inline(always)]
 pub fn is_upper_page_boundary(addr: u16) -> bool {
-    addr & 0x00ff == 0x00ff
+  addr & 0x00ff == 0x00ff
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+  use super::*;
 
-    #[test]
-    fn page_boundary() {
-        assert!(is_upper_page_boundary(0x30ff));
+  #[test]
+  fn page_boundary() {
+    assert!(is_upper_page_boundary(0x30ff));
 
-        assert!(!is_upper_page_boundary(0x30fe));
-        assert!(!is_upper_page_boundary(0x3100));
-    }
+    assert!(!is_upper_page_boundary(0x30fe));
+    assert!(!is_upper_page_boundary(0x3100));
+  }
 }
