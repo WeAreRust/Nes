@@ -3,7 +3,8 @@ use cpu::{instruction::Instruction, pipeline::Pipeline, register::Registers};
 use memory::{ReadAddr, WriteAddr};
 use std::u8;
 
-mod instruction;
+pub mod instruction;
+pub mod operation;
 mod pipeline;
 mod register;
 

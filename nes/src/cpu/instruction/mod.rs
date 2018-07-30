@@ -1,3 +1,4 @@
+use cpu::operation::Operation;
 use cpu::Core;
 use memory::{ReadAddr, WriteAddr};
 use std::convert::From;
@@ -14,64 +15,31 @@ macro_rules! nes_asm {
 }
 
 mod and;
-mod jmp;
-mod lda;
-mod nop;
 
-#[macro_export]
-macro_rules! instruction_match {
-    ($op:ident, $fn:ident, $($a:ident),*) => {
-        match $op {
-            <and::Immediate as Execute>::OPCODE => <and::Immediate as Execute>::$fn($($a),*),
-            <and::ZeroPage as Execute>::OPCODE => <and::ZeroPage as Execute>::$fn($($a),*),
-            <and::ZeroPageX as Execute>::OPCODE => <and::ZeroPageX as Execute>::$fn($($a),*),
-            <and::Absolute as Execute>::OPCODE => <and::Absolute as Execute>::$fn($($a),*),
-            <and::AbsoluteX as Execute>::OPCODE => <and::AbsoluteX as Execute>::$fn($($a),*),
-            <and::AbsoluteY as Execute>::OPCODE => <and::AbsoluteY as Execute>::$fn($($a),*),
-            <and::IndirectX as Execute>::OPCODE => <and::IndirectX as Execute>::$fn($($a),*),
-            <and::IndirectY as Execute>::OPCODE => <and::IndirectY as Execute>::$fn($($a),*),
+// TODO(benjaminjt): Generate this with a macro, e.g. instruction_set![and::immediate, ...]
+fn get_instruction(opcode: u8) -> Instruction {
+    const AND_IMMEDIATE_CODE: u8 = and::IMMEDIATE.opcode;
+    const AND_ABSOLUTE_CODE: u8 = and::ABSOLUTE.opcode;
 
-            <jmp::Absolute as Execute>::OPCODE => <jmp::Absolute as Execute>::$fn($($a),*),
-            <jmp::Indirect as Execute>::OPCODE => <jmp::Indirect as Execute>::$fn($($a),*),
-
-            <lda::Immediate as Execute>::OPCODE => <lda::Immediate as Execute>::$fn($($a),*),
-            <lda::ZeroPage as Execute>::OPCODE => <lda::ZeroPage as Execute>::$fn($($a),*),
-            <lda::ZeroPageX as Execute>::OPCODE => <lda::ZeroPageX as Execute>::$fn($($a),*),
-            <lda::Absolute as Execute>::OPCODE => <lda::Absolute as Execute>::$fn($($a),*),
-            <lda::AbsoluteX as Execute>::OPCODE => <lda::AbsoluteX as Execute>::$fn($($a),*),
-            <lda::AbsoluteY as Execute>::OPCODE => <lda::AbsoluteY as Execute>::$fn($($a),*),
-            <lda::IndirectX as Execute>::OPCODE => <lda::IndirectX as Execute>::$fn($($a),*),
-            <lda::IndirectY as Execute>::OPCODE => <lda::IndirectY as Execute>::$fn($($a),*),
-
-            <nop::Implicit as Execute>::OPCODE => <nop::Implicit as Execute>::$fn($($a),*),
-
-            _ => panic!("instruction not implemented: 0x{:02X}", $op),
-        }
-    };
-    ($op:ident, $fn:ident) => (instruction_match!($op, $fn,))
-}
-
-trait Execute {
-  const OPCODE: u8;
-  const CYCLES: usize;
-  const PAGE_BOUNDARY_EXTRA_CYCLES: bool = false;
-
-  fn exec<T: ReadAddr + WriteAddr>(core: &mut Core, memory: &mut T);
-
-  #[inline(always)]
-  fn to_instruction() -> Instruction {
-    Instruction {
-      opcode: Self::OPCODE,
-      cycles: Self::CYCLES,
-      page_boundary_extra_cycle: Self::PAGE_BOUNDARY_EXTRA_CYCLES,
+    match opcode {
+        AND_IMMEDIATE_CODE => and::IMMEDIATE,
+        AND_ABSOLUTE_CODE => and::ABSOLUTE,
+        _ => panic!("instruction not implemented: 0x{:02X}", opcode),
     }
   }
 }
 
 pub struct Instruction {
-  opcode: u8,
-  cycles: usize,
-  page_boundary_extra_cycle: bool,
+    opcode: u8,
+    cycles: usize,
+    page_boundary_extra_cycle: bool,
+    operation: Operation,
+}
+
+impl From<u8> for Instruction {
+    fn from(opcode: u8) -> Self {
+        get_instruction(opcode)
+    }
 }
 
 impl Instruction {
@@ -102,15 +70,83 @@ impl Instruction {
   pub fn execute<T: ReadAddr + WriteAddr>(&self, core: &mut Core, memory: &mut T) {
     core.reg.pc += 1;
 
-    let opcode = self.opcode;
-    instruction_match!(opcode, exec, core, memory)
-  }
-}
+    pub fn execute<T: ReadAddr + WriteAddr>(&self, core: &mut Core, memory: &mut T) {
+        core.reg.pc += 1;
 
-impl From<u8> for Instruction {
-  fn from(opcode: u8) -> Self {
-    instruction_match!(opcode, to_instruction)
-  }
+        match self.operation {
+            Operation::Implied(op) => op(core),
+
+            Operation::Accumulator(op) => {
+                let operand = core.reg.acc;
+                op(core, operand);
+            }
+
+            Operation::Absolute(op) => {
+                let addr = core.absolute_addr(memory);
+                let operand = memory.read_addr(addr);
+                op(core, operand);
+            }
+
+            Operation::AbsoluteX(op) => {
+                let addr = core.absolute_addr_x(memory);
+                let operand = memory.read_addr(addr);
+                op(core, operand);
+            }
+
+            Operation::AbsoluteY(op) => {
+                let addr = core.absolute_addr_y(memory);
+                let operand = memory.read_addr(addr);
+                op(core, operand);
+            }
+
+            Operation::Immediate(op) => {
+                let operand = core.immediate_addr(memory);
+                op(core, operand);
+            }
+
+            Operation::IndirectX(op) => {
+                let addr = core.idx_indirect(memory);
+                let operand = memory.read_addr(addr);
+                op(core, operand);
+            }
+
+            Operation::IndirectY(op) => {
+                let addr = core.indirect_idx(memory);
+                let operand = memory.read_addr(addr);
+                op(core, operand);
+            }
+
+            Operation::Relative(op) => {
+                let addr = core.relative_addr(memory);
+                let operand = memory.read_addr(addr);
+                op(core, operand);
+            }
+
+            Operation::Zeropage(op) => {
+                let addr = core.zero_page_addr(memory);
+                let operand = memory.read_addr(addr);
+                op(core, operand);
+            }
+
+            Operation::ZeropageX(op) => {
+                let addr = core.zero_page_addr_x(memory);
+                let operand = memory.read_addr(addr);
+                op(core, operand);
+            }
+
+            Operation::ZeropageY(op) => {
+                let addr = core.zero_page_addr_y(memory);
+                let operand = memory.read_addr(addr);
+                op(core, operand);
+            }
+
+            Operation::Indirect(op) => {
+                // TODO: Fix this (and figure out where lo_addr comes from...)
+                // op(core, memory.read_addr(core.indirect_addr(memory, lo_addr)));
+                unimplemented!();
+            }
+        };
+    }
 }
 
 #[inline(always)]
