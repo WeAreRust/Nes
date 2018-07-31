@@ -22,8 +22,7 @@ fn main() {
   let device = audio_subsystem
     .open_playback(None, &desired_spec, |spec| {
       NesAudioProcess::new(recv, spec.freq as u32)
-    })
-    .unwrap();
+    }).unwrap();
 
   device.resume();
   _arp(&send);
