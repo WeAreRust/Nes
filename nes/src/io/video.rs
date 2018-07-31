@@ -81,7 +81,8 @@ impl<'a> VideoOutput for SdlVideoOutput<'a> {
             buffer[offset + 2] = c.2;
           }
         }
-      }).unwrap();
+      })
+      .unwrap();
 
     self.canvas.clear();
     self
