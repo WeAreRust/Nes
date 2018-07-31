@@ -4,55 +4,55 @@
 /// program counter, the stack pointer, and the status register. Unlike many CPU families, members
 /// do not have generic groups of registers like say, R0 through R7.
 pub struct Registers {
-    /// Accumulator register (A)
-    pub acc: u8,
+  /// Accumulator register (A)
+  pub acc: u8,
 
-    /// Index register (X)
-    ///
-    /// It can be set to a value retrieved from memory and can be used to get or set the value of
-    /// the stack pointer.
-    pub x_idx: u8,
+  /// Index register (X)
+  ///
+  /// It can be set to a value retrieved from memory and can be used to get or set the value of
+  /// the stack pointer.
+  pub x_idx: u8,
 
-    /// Index register (Y)
-    ///
-    /// It can be set to a value retrieved from memory but cannot be used to get or set the value
-    /// of the stack pointer.
-    pub y_idx: u8,
+  /// Index register (Y)
+  ///
+  /// It can be set to a value retrieved from memory but cannot be used to get or set the value
+  /// of the stack pointer.
+  pub y_idx: u8,
 
-    /// Program counter (PC)
-    pub pc: u16,
+  /// Program counter (PC)
+  pub pc: u16,
 
-    /// Stack pointer (SP)
-    pub stack: u8,
+  /// Stack pointer (SP)
+  pub stack: u8,
 
-    /// Status register (P)
-    pub status: StatusFlags,
+  /// Status register (P)
+  pub status: StatusFlags,
 }
 
 impl Registers {
-    pub fn empty() -> Self {
-        Registers {
-            acc: 0,
-            x_idx: 0,
-            y_idx: 0,
-            pc: 0,
-            stack: 0,
-            status: StatusFlags::empty(),
-        }
+  pub fn empty() -> Self {
+    Registers {
+      acc: 0,
+      x_idx: 0,
+      y_idx: 0,
+      pc: 0,
+      stack: 0,
+      status: StatusFlags::empty(),
     }
+  }
 }
 
 impl Default for Registers {
-    fn default() -> Self {
-        Registers {
-            acc: 0,
-            x_idx: 0,
-            y_idx: 0,
-            pc: 0xc00,
-            stack: 0x24,
-            status: StatusFlags::default(),
-        }
+  fn default() -> Self {
+    Registers {
+      acc: 0,
+      x_idx: 0,
+      y_idx: 0,
+      pc: 0xc00,
+      stack: 0x24,
+      status: StatusFlags::default(),
     }
+  }
 }
 
 bitflags! {
@@ -86,64 +86,64 @@ bitflags! {
 }
 
 impl StatusFlags {
-    /// Zero flag is set if the result of the last operation as was zero
-    pub fn set_zero(&mut self, result: u8) {
-        self.set(Self::Z_FLAG, result == 0)
-    }
+  /// Zero flag is set if the result of the last operation as was zero
+  pub fn set_zero(&mut self, result: u8) {
+    self.set(Self::Z_FLAG, result == 0)
+  }
 
-    /// Negative flag is set if the result of the last operation had bit 7 set to 1
-    ///
-    /// TODO: Explain why it's the 7th flag (2's compliment).
-    pub fn set_negative(&mut self, result: u8) {
-        self.set(Self::N_FLAG, (result >> 7) == 1);
-    }
+  /// Negative flag is set if the result of the last operation had bit 7 set to 1
+  ///
+  /// TODO: Explain why it's the 7th flag (2's compliment).
+  pub fn set_negative(&mut self, result: u8) {
+    self.set(Self::N_FLAG, (result >> 7) == 1);
+  }
 }
 
 impl Default for StatusFlags {
-    fn default() -> Self {
-        Self::DX_FLAG
-    }
+  fn default() -> Self {
+    Self::DX_FLAG
+  }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+  use super::*;
 
-    #[test]
-    fn default_status_flags() {
-        assert_eq!(StatusFlags::default().bits, 0b00101000);
-    }
+  #[test]
+  fn default_status_flags() {
+    assert_eq!(StatusFlags::default().bits, 0b00101000);
+  }
 
-    #[test]
-    fn zero_flag_hi() {
-        let mut flags = StatusFlags::empty();
-        flags.set_zero(0);
+  #[test]
+  fn zero_flag_hi() {
+    let mut flags = StatusFlags::empty();
+    flags.set_zero(0);
 
-        assert!(flags.contains(StatusFlags::Z_FLAG));
-    }
+    assert!(flags.contains(StatusFlags::Z_FLAG));
+  }
 
-    #[test]
-    fn zero_flag_lo() {
-        let mut flags = StatusFlags::empty();
-        flags.set_zero(1);
+  #[test]
+  fn zero_flag_lo() {
+    let mut flags = StatusFlags::empty();
+    flags.set_zero(1);
 
-        assert!(!flags.contains(StatusFlags::Z_FLAG));
-    }
+    assert!(!flags.contains(StatusFlags::Z_FLAG));
+  }
 
-    #[test]
-    fn negative_flag_hi() {
-        let mut flags = StatusFlags::empty();
-        flags.set_negative(0b10011000);
+  #[test]
+  fn negative_flag_hi() {
+    let mut flags = StatusFlags::empty();
+    flags.set_negative(0b10011000);
 
-        assert!(flags.contains(StatusFlags::N_FLAG));
-    }
+    assert!(flags.contains(StatusFlags::N_FLAG));
+  }
 
-    #[test]
-    fn negative_flag_lo() {
-        let mut flags = StatusFlags::empty();
-        flags.set_negative(0);
+  #[test]
+  fn negative_flag_lo() {
+    let mut flags = StatusFlags::empty();
+    flags.set_negative(0);
 
-        assert!(!flags.contains(StatusFlags::N_FLAG));
-    }
+    assert!(!flags.contains(StatusFlags::N_FLAG));
+  }
 
 }
