@@ -1,6 +1,6 @@
 use cpu::operation::Operation;
 use cpu::Core;
-use memory::{ReadAddr, WriteAddr};
+use memory::ReadAddr;
 use std::convert::From;
 
 #[cfg(test)]
@@ -17,29 +17,33 @@ macro_rules! nes_asm {
 mod and;
 
 // TODO(benjaminjt): Generate this with a macro, e.g. instruction_set![and::immediate, ...]
-fn get_instruction(opcode: u8) -> Instruction {
-    const AND_IMMEDIATE_CODE: u8 = and::IMMEDIATE.opcode;
-    const AND_ABSOLUTE_CODE: u8 = and::ABSOLUTE.opcode;
+mod instruction_set {
+  use super::and;
+  use super::Instruction;
 
+  const AND_IMMEDIATE_CODE: u8 = and::IMMEDIATE.opcode;
+  const AND_ABSOLUTE_CODE: u8 = and::ABSOLUTE.opcode;
+
+  pub fn get(opcode: u8) -> Instruction {
     match opcode {
-        AND_IMMEDIATE_CODE => and::IMMEDIATE,
-        AND_ABSOLUTE_CODE => and::ABSOLUTE,
-        _ => panic!("instruction not implemented: 0x{:02X}", opcode),
+      AND_IMMEDIATE_CODE => and::IMMEDIATE,
+      AND_ABSOLUTE_CODE => and::ABSOLUTE,
+      _ => panic!("instruction not implemented: 0x{:02X}", opcode),
     }
   }
 }
 
 pub struct Instruction {
-    opcode: u8,
-    cycles: usize,
-    page_boundary_extra_cycle: bool,
-    operation: Operation,
+  opcode: u8,
+  cycles: usize,
+  page_boundary_extra_cycle: bool,
+  operation: Operation,
 }
 
 impl From<u8> for Instruction {
-    fn from(opcode: u8) -> Self {
-        get_instruction(opcode)
-    }
+  fn from(opcode: u8) -> Self {
+    instruction_set::get(opcode)
+  }
 }
 
 impl Instruction {
@@ -67,86 +71,83 @@ impl Instruction {
   }
 
   // TODO: test.
-  pub fn execute<T: ReadAddr + WriteAddr>(&self, core: &mut Core, memory: &mut T) {
+  pub fn execute<T: ReadAddr>(&self, core: &mut Core, memory: &mut T) {
     core.reg.pc += 1;
 
-    pub fn execute<T: ReadAddr + WriteAddr>(&self, core: &mut Core, memory: &mut T) {
-        core.reg.pc += 1;
+    match self.operation {
+      Operation::Implied(op) => op(core),
 
-        match self.operation {
-            Operation::Implied(op) => op(core),
+      Operation::Accumulator(op) => {
+        let operand = core.reg.acc;
+        op(core, operand);
+      }
 
-            Operation::Accumulator(op) => {
-                let operand = core.reg.acc;
-                op(core, operand);
-            }
+      Operation::Absolute(op) => {
+        let addr = core.absolute_addr(memory);
+        let operand = memory.read_addr(addr);
+        op(core, operand);
+      }
 
-            Operation::Absolute(op) => {
-                let addr = core.absolute_addr(memory);
-                let operand = memory.read_addr(addr);
-                op(core, operand);
-            }
+      Operation::AbsoluteX(op) => {
+        let addr = core.absolute_addr_x(memory);
+        let operand = memory.read_addr(addr);
+        op(core, operand);
+      }
 
-            Operation::AbsoluteX(op) => {
-                let addr = core.absolute_addr_x(memory);
-                let operand = memory.read_addr(addr);
-                op(core, operand);
-            }
+      Operation::AbsoluteY(op) => {
+        let addr = core.absolute_addr_y(memory);
+        let operand = memory.read_addr(addr);
+        op(core, operand);
+      }
 
-            Operation::AbsoluteY(op) => {
-                let addr = core.absolute_addr_y(memory);
-                let operand = memory.read_addr(addr);
-                op(core, operand);
-            }
+      Operation::Immediate(op) => {
+        let operand = core.immediate_addr(memory);
+        op(core, operand);
+      }
 
-            Operation::Immediate(op) => {
-                let operand = core.immediate_addr(memory);
-                op(core, operand);
-            }
+      Operation::IndirectX(op) => {
+        let addr = core.idx_indirect(memory);
+        let operand = memory.read_addr(addr);
+        op(core, operand);
+      }
 
-            Operation::IndirectX(op) => {
-                let addr = core.idx_indirect(memory);
-                let operand = memory.read_addr(addr);
-                op(core, operand);
-            }
+      Operation::IndirectY(op) => {
+        let addr = core.indirect_idx(memory);
+        let operand = memory.read_addr(addr);
+        op(core, operand);
+      }
 
-            Operation::IndirectY(op) => {
-                let addr = core.indirect_idx(memory);
-                let operand = memory.read_addr(addr);
-                op(core, operand);
-            }
+      Operation::Relative(op) => {
+        let addr = core.relative_addr(memory);
+        let operand = memory.read_addr(addr);
+        op(core, operand);
+      }
 
-            Operation::Relative(op) => {
-                let addr = core.relative_addr(memory);
-                let operand = memory.read_addr(addr);
-                op(core, operand);
-            }
+      Operation::Zeropage(op) => {
+        let addr = core.zero_page_addr(memory);
+        let operand = memory.read_addr(addr);
+        op(core, operand);
+      }
 
-            Operation::Zeropage(op) => {
-                let addr = core.zero_page_addr(memory);
-                let operand = memory.read_addr(addr);
-                op(core, operand);
-            }
+      Operation::ZeropageX(op) => {
+        let addr = core.zero_page_addr_x(memory);
+        let operand = memory.read_addr(addr);
+        op(core, operand);
+      }
 
-            Operation::ZeropageX(op) => {
-                let addr = core.zero_page_addr_x(memory);
-                let operand = memory.read_addr(addr);
-                op(core, operand);
-            }
+      Operation::ZeropageY(op) => {
+        let addr = core.zero_page_addr_y(memory);
+        let operand = memory.read_addr(addr);
+        op(core, operand);
+      }
 
-            Operation::ZeropageY(op) => {
-                let addr = core.zero_page_addr_y(memory);
-                let operand = memory.read_addr(addr);
-                op(core, operand);
-            }
-
-            Operation::Indirect(op) => {
-                // TODO: Fix this (and figure out where lo_addr comes from...)
-                // op(core, memory.read_addr(core.indirect_addr(memory, lo_addr)));
-                unimplemented!();
-            }
-        };
-    }
+      Operation::Indirect(_) => {
+        // TODO: Fix this (and figure out where lo_addr comes from...)
+        // op(core, memory.read_addr(core.indirect_addr(memory, lo_addr)));
+        unimplemented!();
+      }
+    };
+  }
 }
 
 #[inline(always)]
