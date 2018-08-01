@@ -1,5 +1,3 @@
-extern crate sdl2;
-
 use std::sync::mpsc;
 use std::thread;
 use std::time;
