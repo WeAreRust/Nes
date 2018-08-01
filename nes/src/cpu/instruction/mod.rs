@@ -1,3 +1,4 @@
+use cpu::operation::Operation;
 use cpu::Core;
 use memory::{ReadAddr, WriteAddr};
 use std::convert::From;
@@ -18,52 +19,32 @@ mod jmp;
 mod lda;
 mod nop;
 
-#[macro_export]
-macro_rules! instruction_match {
-    ($op:ident, $fn:ident, $($a:ident),*) => {
-        match $op {
-            <and::Immediate as Execute>::OPCODE => <and::Immediate as Execute>::$fn($($a),*),
-            <and::ZeroPage as Execute>::OPCODE => <and::ZeroPage as Execute>::$fn($($a),*),
-            <and::ZeroPageX as Execute>::OPCODE => <and::ZeroPageX as Execute>::$fn($($a),*),
-            <and::Absolute as Execute>::OPCODE => <and::Absolute as Execute>::$fn($($a),*),
-            <and::AbsoluteX as Execute>::OPCODE => <and::AbsoluteX as Execute>::$fn($($a),*),
-            <and::AbsoluteY as Execute>::OPCODE => <and::AbsoluteY as Execute>::$fn($($a),*),
-            <and::IndirectX as Execute>::OPCODE => <and::IndirectX as Execute>::$fn($($a),*),
-            <and::IndirectY as Execute>::OPCODE => <and::IndirectY as Execute>::$fn($($a),*),
+// TODO(benjaminjt): Generate this with a macro, e.g. instruction_set![and::immediate, ...]
+mod instruction_set {
+  use super::*;
 
-            <jmp::Absolute as Execute>::OPCODE => <jmp::Absolute as Execute>::$fn($($a),*),
-            <jmp::Indirect as Execute>::OPCODE => <jmp::Indirect as Execute>::$fn($($a),*),
-
-            <lda::Immediate as Execute>::OPCODE => <lda::Immediate as Execute>::$fn($($a),*),
-            <lda::ZeroPage as Execute>::OPCODE => <lda::ZeroPage as Execute>::$fn($($a),*),
-            <lda::ZeroPageX as Execute>::OPCODE => <lda::ZeroPageX as Execute>::$fn($($a),*),
-            <lda::Absolute as Execute>::OPCODE => <lda::Absolute as Execute>::$fn($($a),*),
-            <lda::AbsoluteX as Execute>::OPCODE => <lda::AbsoluteX as Execute>::$fn($($a),*),
-            <lda::AbsoluteY as Execute>::OPCODE => <lda::AbsoluteY as Execute>::$fn($($a),*),
-            <lda::IndirectX as Execute>::OPCODE => <lda::IndirectX as Execute>::$fn($($a),*),
-            <lda::IndirectY as Execute>::OPCODE => <lda::IndirectY as Execute>::$fn($($a),*),
-
-            <nop::Implicit as Execute>::OPCODE => <nop::Implicit as Execute>::$fn($($a),*),
-
-            _ => panic!("instruction not implemented: 0x{:02X}", $op),
-        }
-    };
-    ($op:ident, $fn:ident) => (instruction_match!($op, $fn,))
-}
-
-trait Execute {
-  const OPCODE: u8;
-  const CYCLES: usize;
-  const PAGE_BOUNDARY_EXTRA_CYCLES: bool = false;
-
-  fn exec<T: ReadAddr + WriteAddr>(core: &mut Core, memory: &mut T);
-
-  #[inline(always)]
-  fn to_instruction() -> Instruction {
-    Instruction {
-      opcode: Self::OPCODE,
-      cycles: Self::CYCLES,
-      page_boundary_extra_cycle: Self::PAGE_BOUNDARY_EXTRA_CYCLES,
+  pub fn get(opcode: u8) -> Instruction {
+    match opcode {
+      o if o == and::IMMEDIATE.opcode => and::IMMEDIATE,
+      o if o == and::ZERO_PAGE.opcode => and::ZERO_PAGE,
+      o if o == and::ZERO_PAGE_X.opcode => and::ZERO_PAGE_X,
+      o if o == and::ABSOLUTE.opcode => and::ABSOLUTE,
+      o if o == and::ABSOLUTE_X.opcode => and::ABSOLUTE_X,
+      o if o == and::ABSOLUTE_Y.opcode => and::ABSOLUTE_Y,
+      o if o == and::INDIRECT_X.opcode => and::INDIRECT_X,
+      o if o == and::INDIRECT_Y.opcode => and::INDIRECT_Y,
+      o if o == jmp::ABSOLUTE.opcode => jmp::ABSOLUTE,
+      o if o == jmp::INDIRECT.opcode => jmp::INDIRECT,
+      o if o == lda::IMMEDIATE.opcode => lda::IMMEDIATE,
+      o if o == lda::ZERO_PAGE.opcode => lda::ZERO_PAGE,
+      o if o == lda::ZERO_PAGE_X.opcode => lda::ZERO_PAGE_X,
+      o if o == lda::ABSOLUTE.opcode => lda::ABSOLUTE,
+      o if o == lda::ABSOLUTE_X.opcode => lda::ABSOLUTE_X,
+      o if o == lda::ABSOLUTE_Y.opcode => lda::ABSOLUTE_Y,
+      o if o == lda::INDIRECT_X.opcode => lda::INDIRECT_X,
+      o if o == lda::INDIRECT_Y.opcode => lda::INDIRECT_Y,
+      o if o == nop::IMPLIED.opcode => nop::IMPLIED,
+      _ => panic!("instruction not implemented: 0x{:02X}", opcode),
     }
   }
 }
@@ -72,6 +53,13 @@ pub struct Instruction {
   opcode: u8,
   cycles: usize,
   page_boundary_extra_cycle: bool,
+  operation: Operation,
+}
+
+impl From<u8> for Instruction {
+  fn from(opcode: u8) -> Self {
+    instruction_set::get(opcode)
+  }
 }
 
 impl Instruction {
@@ -86,7 +74,7 @@ impl Instruction {
   }
 
   // TODO: test.
-  pub fn cycles<T: ReadAddr>(&self, core: &Core, memory: &T) -> usize {
+  pub fn cycles(&self, core: &Core, memory: &ReadAddr) -> usize {
     if !self.page_boundary_extra_cycle {
       return self.cycles;
     }
@@ -99,17 +87,9 @@ impl Instruction {
   }
 
   // TODO: test.
-  pub fn execute<T: ReadAddr + WriteAddr>(&self, core: &mut Core, memory: &mut T) {
+  pub fn execute<M: ReadAddr + WriteAddr>(&self, core: &mut Core, memory: &mut M) {
     core.reg.pc += 1;
-
-    let opcode = self.opcode;
-    instruction_match!(opcode, exec, core, memory)
-  }
-}
-
-impl From<u8> for Instruction {
-  fn from(opcode: u8) -> Self {
-    instruction_match!(opcode, to_instruction)
+    self.operation.call(core, memory);
   }
 }
 

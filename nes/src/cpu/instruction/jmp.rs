@@ -1,18 +1,26 @@
-use cpu::{instruction::Execute, Core};
-use memory::ReadAddr;
+use cpu::{
+  instruction::Instruction,
+  operation::{Function, Operation},
+  Core,
+};
+
+/// Jump to address
+///
+/// Flags affected: None
+#[inline(always)]
+fn jump(core: &mut Core, address: u16) {
+  core.reg.pc = address;
+}
 
 /// Jump absolute
 ///
 /// Flags affected: None
-#[derive(Execute)]
-#[opcode = 0x4c]
-#[cycles = 3]
-pub struct Absolute;
-
-#[inline(always)]
-fn absolute<T: ReadAddr>(core: &mut Core, memory: &mut T) {
-  core.reg.pc = core.absolute_addr(memory);
-}
+pub const ABSOLUTE: Instruction = Instruction {
+  opcode: 0x4c,
+  cycles: 3,
+  page_boundary_extra_cycle: false,
+  operation: Operation::Absolute(Function::Address(&jump)),
+};
 
 /// Jump indirect
 ///
@@ -21,48 +29,29 @@ fn absolute<T: ReadAddr>(core: &mut Core, memory: &mut T) {
 /// An indirect jump must never use a vector beginning on the last byte of a page. If this
 /// occurs then the low byte should be as expected, and the high byte should wrap to the start
 /// of the page. See http://www.6502.org/tutorials/6502opcodes.html#JMP for details.
-#[derive(Execute)]
-#[opcode = 0x6c]
-#[cycles = 5]
-pub struct Indirect;
-
-#[inline(always)]
-fn indirect<T: ReadAddr>(core: &mut Core, memory: &mut T) {
-  let arg_addr = core.absolute_addr(memory);
-  core.reg.pc = core.indirect_addr(memory, arg_addr);
-}
+pub const INDIRECT: Instruction = Instruction {
+  opcode: 0x6c,
+  cycles: 5,
+  page_boundary_extra_cycle: false,
+  operation: Operation::Indirect(Function::Address(&jump)),
+};
 
 #[cfg(test)]
 mod tests {
   use super::*;
-
-  use cpu::{instruction::Instruction, register::Registers};
-  use memory::{block::BlockMemory, ReadAddr};
+  use cpu::Registers;
 
   #[test]
-  fn jump_absolute() {
-    let mut memory = BlockMemory::with_bytes(nes_asm!("JMP $5597"));
+  fn jump_impl() {
     let mut core = Core::new(Registers::empty());
-
-    let opcode = memory.read_addr(0);
-    assert_eq!(opcode, <Absolute as Execute>::OPCODE);
-
-    Instruction::from(opcode).execute(&mut core, &mut memory);
-    assert_eq!(core.reg.pc, 0x5597);
+    core.reg.pc = 0x0001;
+    jump(&mut core, 0x000F);
+    assert_eq!(core.reg.pc, 0x000F);
   }
 
   #[test]
-  fn jump_indirect() {
-    let mut bytes = nes_asm!("JMP ($0004)");
-    bytes.extend(vec![0xff, 0x97, 0x55]);
-
-    let mut memory = BlockMemory::with_bytes(bytes);
-    let mut core = Core::new(Registers::empty());
-
-    let opcode = memory.read_addr(0);
-    assert_eq!(opcode, <Indirect as Execute>::OPCODE);
-
-    Instruction::from(opcode).execute(&mut core, &mut memory);
-    assert_eq!(core.reg.pc, 0x5597);
+  fn opcode() {
+    assert_eq!(nes_asm!("JMP $0001")[0], ABSOLUTE.opcode);
+    assert_eq!(nes_asm!("JMP ($0001)")[0], INDIRECT.opcode);
   }
 }
