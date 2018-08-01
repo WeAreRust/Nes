@@ -1,6 +1,6 @@
 use cpu::operation::Operation;
 use cpu::Core;
-use memory::ReadAddr;
+use memory::{ReadAddr, WriteAddr};
 use std::convert::From;
 
 #[cfg(test)]
@@ -15,19 +15,35 @@ macro_rules! nes_asm {
 }
 
 mod and;
+mod jmp;
+mod lda;
+mod nop;
 
 // TODO(benjaminjt): Generate this with a macro, e.g. instruction_set![and::immediate, ...]
 mod instruction_set {
-  use super::and;
-  use super::Instruction;
-
-  const AND_IMMEDIATE_CODE: u8 = and::IMMEDIATE.opcode;
-  const AND_ABSOLUTE_CODE: u8 = and::ABSOLUTE.opcode;
+  use super::*;
 
   pub fn get(opcode: u8) -> Instruction {
     match opcode {
-      AND_IMMEDIATE_CODE => and::IMMEDIATE,
-      AND_ABSOLUTE_CODE => and::ABSOLUTE,
+      o if o == and::IMMEDIATE.opcode => and::IMMEDIATE,
+      o if o == and::ZERO_PAGE.opcode => and::ZERO_PAGE,
+      o if o == and::ZERO_PAGE_X.opcode => and::ZERO_PAGE_X,
+      o if o == and::ABSOLUTE.opcode => and::ABSOLUTE,
+      o if o == and::ABSOLUTE_X.opcode => and::ABSOLUTE_X,
+      o if o == and::ABSOLUTE_Y.opcode => and::ABSOLUTE_Y,
+      o if o == and::INDIRECT_X.opcode => and::INDIRECT_X,
+      o if o == and::INDIRECT_Y.opcode => and::INDIRECT_Y,
+      o if o == jmp::ABSOLUTE.opcode => jmp::ABSOLUTE,
+      o if o == jmp::INDIRECT.opcode => jmp::INDIRECT,
+      o if o == lda::IMMEDIATE.opcode => lda::IMMEDIATE,
+      o if o == lda::ZERO_PAGE.opcode => lda::ZERO_PAGE,
+      o if o == lda::ZERO_PAGE_X.opcode => lda::ZERO_PAGE_X,
+      o if o == lda::ABSOLUTE.opcode => lda::ABSOLUTE,
+      o if o == lda::ABSOLUTE_X.opcode => lda::ABSOLUTE_X,
+      o if o == lda::ABSOLUTE_Y.opcode => lda::ABSOLUTE_Y,
+      o if o == lda::INDIRECT_X.opcode => lda::INDIRECT_X,
+      o if o == lda::INDIRECT_Y.opcode => lda::INDIRECT_Y,
+      o if o == nop::IMPLIED.opcode => nop::IMPLIED,
       _ => panic!("instruction not implemented: 0x{:02X}", opcode),
     }
   }
@@ -58,7 +74,7 @@ impl Instruction {
   }
 
   // TODO: test.
-  pub fn cycles<T: ReadAddr>(&self, core: &Core, memory: &T) -> usize {
+  pub fn cycles(&self, core: &Core, memory: &ReadAddr) -> usize {
     if !self.page_boundary_extra_cycle {
       return self.cycles;
     }
@@ -71,82 +87,9 @@ impl Instruction {
   }
 
   // TODO: test.
-  pub fn execute<T: ReadAddr>(&self, core: &mut Core, memory: &mut T) {
+  pub fn execute<M: ReadAddr + WriteAddr>(&self, core: &mut Core, memory: &mut M) {
     core.reg.pc += 1;
-
-    match self.operation {
-      Operation::Implied(op) => op(core),
-
-      Operation::Accumulator(op) => {
-        let operand = core.reg.acc;
-        op(core, operand);
-      }
-
-      Operation::Absolute(op) => {
-        let addr = core.absolute_addr(memory);
-        let operand = memory.read_addr(addr);
-        op(core, operand);
-      }
-
-      Operation::AbsoluteX(op) => {
-        let addr = core.absolute_addr_x(memory);
-        let operand = memory.read_addr(addr);
-        op(core, operand);
-      }
-
-      Operation::AbsoluteY(op) => {
-        let addr = core.absolute_addr_y(memory);
-        let operand = memory.read_addr(addr);
-        op(core, operand);
-      }
-
-      Operation::Immediate(op) => {
-        let operand = core.immediate_addr(memory);
-        op(core, operand);
-      }
-
-      Operation::IndirectX(op) => {
-        let addr = core.idx_indirect(memory);
-        let operand = memory.read_addr(addr);
-        op(core, operand);
-      }
-
-      Operation::IndirectY(op) => {
-        let addr = core.indirect_idx(memory);
-        let operand = memory.read_addr(addr);
-        op(core, operand);
-      }
-
-      Operation::Relative(op) => {
-        let addr = core.relative_addr(memory);
-        let operand = memory.read_addr(addr);
-        op(core, operand);
-      }
-
-      Operation::Zeropage(op) => {
-        let addr = core.zero_page_addr(memory);
-        let operand = memory.read_addr(addr);
-        op(core, operand);
-      }
-
-      Operation::ZeropageX(op) => {
-        let addr = core.zero_page_addr_x(memory);
-        let operand = memory.read_addr(addr);
-        op(core, operand);
-      }
-
-      Operation::ZeropageY(op) => {
-        let addr = core.zero_page_addr_y(memory);
-        let operand = memory.read_addr(addr);
-        op(core, operand);
-      }
-
-      Operation::Indirect(_) => {
-        // TODO: Fix this (and figure out where lo_addr comes from...)
-        // op(core, memory.read_addr(core.indirect_addr(memory, lo_addr)));
-        unimplemented!();
-      }
-    };
+    self.operation.call(core, memory);
   }
 }
 

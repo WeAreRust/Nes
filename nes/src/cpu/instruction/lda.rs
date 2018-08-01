@@ -1,281 +1,118 @@
-use cpu::{instruction::Execute, Core};
-use memory::ReadAddr;
+use cpu::{
+  instruction::Instruction,
+  operation::{Function, Operation},
+  Core,
+};
+
+/// Load operand into accumulator
+///
+/// Flags affected: N, Z
+fn lda(core: &mut Core, operand: u8) {
+  core.reg.acc = operand;
+}
 
 /// Load accumulator immediate
 ///
 /// Flags affected: N, Z
-#[derive(Execute)]
-#[opcode = 0xa9]
-#[cycles = 2]
-pub struct Immediate;
-
-#[inline(always)]
-fn immediate<T: ReadAddr>(core: &mut Core, memory: &mut T) {
-  let value = core.immediate_addr(memory);
-  core.reg.acc = value;
-  update_flags(core);
-}
+pub const IMMEDIATE: Instruction = Instruction {
+  opcode: 0xa9,
+  cycles: 2,
+  page_boundary_extra_cycle: false,
+  operation: Operation::Immediate(&lda),
+};
 
 /// Load accumulator zero page
 ///
 /// Flags affected: N, Z
-#[derive(Execute)]
-#[opcode = 0xa5]
-#[cycles = 3]
-pub struct ZeroPage;
-
-#[inline(always)]
-fn zero_page<T: ReadAddr>(core: &mut Core, memory: &mut T) {
-  let addr = core.zero_page_addr(memory);
-  core.reg.acc = memory.read_addr(addr);
-  update_flags(core);
-}
+pub const ZERO_PAGE: Instruction = Instruction {
+  opcode: 0xa5,
+  cycles: 3,
+  page_boundary_extra_cycle: false,
+  operation: Operation::Zeropage(Function::Value(&lda)),
+};
 
 /// Load accumulator zero page X
 ///
 /// Flags affected: N, Z
-#[derive(Execute)]
-#[opcode = 0xb5]
-#[cycles = 2]
-pub struct ZeroPageX;
-
-#[inline(always)]
-fn zero_page_x<T: ReadAddr>(core: &mut Core, memory: &mut T) {
-  let addr = core.zero_page_addr_x(memory);
-  core.reg.acc = memory.read_addr(addr);
-  update_flags(core);
-}
+pub const ZERO_PAGE_X: Instruction = Instruction {
+  opcode: 0xb5,
+  cycles: 2,
+  page_boundary_extra_cycle: false,
+  operation: Operation::ZeropageX(Function::Value(&lda)),
+};
 
 /// Load accumulator absolute
 ///
 /// Flags affected: N, Z
-#[derive(Execute)]
-#[opcode = 0xad]
-#[cycles = 4]
-pub struct Absolute;
-
-#[inline(always)]
-fn absolute<T: ReadAddr>(core: &mut Core, memory: &mut T) {
-  let addr = core.absolute_addr(memory);
-  core.reg.acc = memory.read_addr(addr);
-  update_flags(core);
-}
+pub const ABSOLUTE: Instruction = Instruction {
+  opcode: 0xad,
+  cycles: 4,
+  page_boundary_extra_cycle: false,
+  operation: Operation::Absolute(Function::Value(&lda)),
+};
 
 /// Load accumulator absolute X
 ///
 /// Flags affected: N, Z
-#[derive(Execute)]
-#[opcode = 0xbd]
-#[cycles = 4]
-#[page_boundary_extra_cycle]
-pub struct AbsoluteX;
-
-#[inline(always)]
-fn absolute_x<T: ReadAddr>(core: &mut Core, memory: &mut T) {
-  let addr = core.absolute_addr_x(memory);
-  core.reg.acc = memory.read_addr(addr);
-  update_flags(core);
-}
+pub const ABSOLUTE_X: Instruction = Instruction {
+  opcode: 0xbd,
+  cycles: 4,
+  page_boundary_extra_cycle: true,
+  operation: Operation::AbsoluteX(Function::Value(&lda)),
+};
 
 /// Load accumulator absolute Y
 ///
 /// Flags affected: N, Z
-#[derive(Execute)]
-#[opcode = 0xb9]
-#[cycles = 4]
-#[page_boundary_extra_cycle]
-pub struct AbsoluteY;
-
-#[inline(always)]
-fn absolute_y<T: ReadAddr>(core: &mut Core, memory: &mut T) {
-  let addr = core.absolute_addr_y(memory);
-  core.reg.acc = memory.read_addr(addr);
-  update_flags(core);
-}
+pub const ABSOLUTE_Y: Instruction = Instruction {
+  opcode: 0xb9,
+  cycles: 4,
+  page_boundary_extra_cycle: true,
+  operation: Operation::AbsoluteY(Function::Value(&lda)),
+};
 
 /// Load accumulator indirect X
 ///
 /// Flags affected: N, Z
-#[derive(Execute)]
-#[opcode = 0xa1]
-#[cycles = 6]
-pub struct IndirectX;
-
-#[inline(always)]
-fn indirect_x<T: ReadAddr>(core: &mut Core, memory: &mut T) {
-  let addr = core.idx_indirect(memory);
-  core.reg.acc = memory.read_addr(addr);
-  update_flags(core);
-}
+pub const INDIRECT_X: Instruction = Instruction {
+  opcode: 0xa1,
+  cycles: 6,
+  page_boundary_extra_cycle: false,
+  operation: Operation::IndirectX(Function::Value(&lda)),
+};
 
 /// Load accumulator indirect Y
 ///
 /// Flags affected: N, Z
-#[derive(Execute)]
-#[opcode = 0xb1]
-#[cycles = 2]
-#[page_boundary_extra_cycle]
-pub struct IndirectY;
-
-#[inline(always)]
-fn indirect_y<T: ReadAddr>(core: &mut Core, memory: &mut T) {
-  let addr = core.indirect_idx(memory);
-  core.reg.acc = memory.read_addr(addr);
-  update_flags(core);
-}
-
-#[inline(always)]
-fn update_flags(core: &mut Core) {
-  core.reg.status.set_negative(core.reg.acc);
-  core.reg.status.set_zero(core.reg.acc);
-}
+pub const INDIRECT_Y: Instruction = Instruction {
+  opcode: 0xb1,
+  cycles: 2,
+  page_boundary_extra_cycle: true,
+  operation: Operation::IndirectY(Function::Value(&lda)),
+};
 
 #[cfg(test)]
 mod tests {
   use super::*;
-
-  use cpu::{
-    instruction::Instruction,
-    register::{Registers, StatusFlags},
-  };
-  use memory::{block::BlockMemory, ReadAddr};
+  use cpu::Registers;
 
   #[test]
-  fn load_accumulator_immediate() {
-    let mut memory = BlockMemory::with_bytes(nes_asm!("LDA #$5f"));
+  fn lda_impl() {
     let mut core = Core::new(Registers::empty());
-
-    let opcode = memory.read_addr(0);
-    assert_eq!(opcode, <Immediate as Execute>::OPCODE);
-
-    Instruction::from(opcode).execute(&mut core, &mut memory);
-    assert_eq!(core.reg.acc, 0x5f);
-    assert_eq!(core.reg.status, StatusFlags::empty());
+    core.reg.acc = 0x00;
+    lda(&mut core, 0x0F);
+    assert_eq!(core.reg.acc, 0x0F);
   }
 
   #[test]
-  fn load_accumulator_zero_page() {
-    let mut bytes = nes_asm!("LDA $03");
-    bytes.extend(vec![0xff, 0x44]);
-
-    let mut memory = BlockMemory::with_bytes(bytes);
-    let mut core = Core::new(Registers::empty());
-
-    let opcode = memory.read_addr(0);
-    assert_eq!(opcode, <ZeroPage as Execute>::OPCODE);
-
-    Instruction::from(opcode).execute(&mut core, &mut memory);
-    assert_eq!(core.reg.acc, 0x44);
-    assert_eq!(core.reg.status, StatusFlags::empty());
-  }
-
-  #[test]
-  fn load_accumulator_absolute() {
-    let mut bytes = nes_asm!("LDA $0004");
-    bytes.extend(vec![0xff, 0x44]);
-
-    let mut memory = BlockMemory::with_bytes(bytes);
-    let mut core = Core::new(Registers::empty());
-
-    let opcode = memory.read_addr(0);
-    assert_eq!(opcode, <Absolute as Execute>::OPCODE);
-
-    Instruction::from(opcode).execute(&mut core, &mut memory);
-    assert_eq!(core.reg.acc, 0x44);
-    assert_eq!(core.reg.status, StatusFlags::empty());
-  }
-
-  #[test]
-  fn load_accumulator_absolute_x() {
-    let mut bytes = nes_asm!("LDA $0004,X");
-    bytes.extend(vec![0xff, 0xff, 0x44]);
-
-    let mut memory = BlockMemory::with_bytes(bytes);
-    let mut core = Core::new(Registers::empty());
-    core.reg.x_idx = 0x01;
-
-    let opcode = memory.read_addr(0);
-    assert_eq!(opcode, <AbsoluteX as Execute>::OPCODE);
-
-    Instruction::from(opcode).execute(&mut core, &mut memory);
-    assert_eq!(core.reg.acc, 0x44);
-    assert_eq!(core.reg.status, StatusFlags::empty());
-  }
-
-  #[test]
-  fn load_accumulator_absolute_y() {
-    let mut bytes = nes_asm!("LDA $0004,Y");
-    bytes.extend(vec![0xff, 0xff, 0x44]);
-
-    let mut memory = BlockMemory::with_bytes(bytes);
-    let mut core = Core::new(Registers::empty());
-    core.reg.y_idx = 0x01;
-
-    let opcode = memory.read_addr(0);
-    assert_eq!(opcode, <AbsoluteY as Execute>::OPCODE);
-
-    Instruction::from(opcode).execute(&mut core, &mut memory);
-    assert_eq!(core.reg.acc, 0x44);
-    assert_eq!(core.reg.status, StatusFlags::empty());
-  }
-
-  #[test]
-  fn load_accumulator_indirect_x() {
-    let mut bytes = nes_asm!("LDA ($03,X)");
-    bytes.extend(vec![0xff, 0xff, 0x06, 0x00, 0x44, 0x00]);
-
-    let mut memory = BlockMemory::with_bytes(bytes);
-    let mut core = Core::new(Registers::empty());
-    core.reg.x_idx = 0x01;
-
-    let opcode = memory.read_addr(0);
-    assert_eq!(opcode, <IndirectX as Execute>::OPCODE);
-
-    Instruction::from(opcode).execute(&mut core, &mut memory);
-    assert_eq!(core.reg.acc, 0x44);
-    assert_eq!(core.reg.status, StatusFlags::empty());
-  }
-
-  #[test]
-  fn load_accumulator_indirect_y() {
-    let mut bytes = nes_asm!("LDA ($03),Y");
-    bytes.extend(vec![0xff, 0x05, 0x00, 0xff, 0xff, 0x44, 0x00]);
-
-    let mut memory = BlockMemory::with_bytes(bytes);
-    let mut core = Core::new(Registers::empty());
-    core.reg.y_idx = 0x02;
-
-    let opcode = memory.read_addr(0);
-    assert_eq!(opcode, <IndirectY as Execute>::OPCODE);
-
-    Instruction::from(opcode).execute(&mut core, &mut memory);
-    assert_eq!(core.reg.acc, 0x44);
-    assert_eq!(core.reg.status, StatusFlags::empty());
-  }
-
-  #[test]
-  fn load_accumulator_zero_flag() {
-    let mut memory = BlockMemory::with_bytes(nes_asm!("LDA #$00"));
-    let mut core = Core::new(Registers::empty());
-
-    let opcode = memory.read_addr(0);
-    assert_eq!(opcode, <Immediate as Execute>::OPCODE);
-
-    Instruction::from(opcode).execute(&mut core, &mut memory);
-    assert_eq!(core.reg.acc, 0x00);
-    assert_eq!(core.reg.status, StatusFlags::Z_FLAG);
-  }
-
-  #[test]
-  fn load_accumulator_negative_flag() {
-    let mut memory = BlockMemory::with_bytes(nes_asm!("LDA #$98"));
-    let mut core = Core::new(Registers::empty());
-
-    let opcode = memory.read_addr(0);
-    assert_eq!(opcode, <Immediate as Execute>::OPCODE);
-
-    Instruction::from(opcode).execute(&mut core, &mut memory);
-    assert_eq!(core.reg.acc, 0b10011000);
-    assert_eq!(core.reg.status, StatusFlags::N_FLAG);
+  fn opcodes() {
+    assert_eq!(nes_asm!("LDA #$00")[0], IMMEDIATE.opcode);
+    assert_eq!(nes_asm!("LDA $00")[0], ZERO_PAGE.opcode);
+    assert_eq!(nes_asm!("LDA $00,X")[0], ZERO_PAGE_X.opcode);
+    assert_eq!(nes_asm!("LDA $0000")[0], ABSOLUTE.opcode);
+    assert_eq!(nes_asm!("LDA $0000,X")[0], ABSOLUTE_X.opcode);
+    assert_eq!(nes_asm!("LDA $0000,Y")[0], ABSOLUTE_Y.opcode);
+    assert_eq!(nes_asm!("LDA ($00,X)")[0], INDIRECT_X.opcode);
+    assert_eq!(nes_asm!("LDA ($00),Y")[0], INDIRECT_Y.opcode);
   }
 }
