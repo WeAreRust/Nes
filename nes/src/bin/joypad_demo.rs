@@ -5,7 +5,7 @@ use std::sync::mpsc;
 use std::thread;
 use std::time;
 
-use nes::joypad;
+use nes::controller::joypad;
 use sdl2::keyboard::Keycode;
 
 fn controller1_keymap(keycode: Keycode) -> u8 {
