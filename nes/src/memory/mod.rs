@@ -1,7 +1,7 @@
 pub mod block;
 
 pub trait ReadAddr {
-  fn read_addr(&self, addr: u16) -> u8;
+  fn read_addr(&mut self, addr: u16) -> u8;
 }
 
 pub trait WriteAddr {

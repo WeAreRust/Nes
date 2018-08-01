@@ -74,7 +74,7 @@ impl Instruction {
   }
 
   // TODO: test.
-  pub fn cycles(&self, core: &Core, memory: &ReadAddr) -> usize {
+  pub fn cycles(&self, core: &Core, memory: &mut ReadAddr) -> usize {
     if !self.page_boundary_extra_cycle {
       return self.cycles;
     }

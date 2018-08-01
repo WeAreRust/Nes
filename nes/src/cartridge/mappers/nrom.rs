@@ -25,7 +25,7 @@ impl NROM {
 impl Mapper for NROM {}
 
 impl ReadAddr for NROM {
-  fn read_addr(&self, r_addr: u16) -> u8 {
+  fn read_addr(&mut self, r_addr: u16) -> u8 {
     match r_addr {
       // $8000-$FFFF is PRG-ROM data.
       // $8000-$BFFF is the first bank of PRG-ROM data.
@@ -52,7 +52,7 @@ mod tests {
   #[test]
   fn nrom_read_addr_prg() {
     let prg_rom = vec![0x01, 0x4c, 0xb8, 0xe3, 0x94, 0x00, 0xed, 0xdf];
-    let nrom = NROM::new(prg_rom, 1);
+    let mut nrom = NROM::new(prg_rom, 1);
 
     let byte_read = nrom.read_addr(0x8003);
 
@@ -62,7 +62,7 @@ mod tests {
   #[test]
   fn nrom_read_mirrored() {
     let prg_rom = vec![0x01, 0x4c, 0xb8, 0xe3, 0x94, 0x00, 0xed, 0xdf];
-    let nrom = NROM::new(prg_rom, 1);
+    let mut nrom = NROM::new(prg_rom, 1);
 
     let byte_read = nrom.read_addr(0xC000 + 0x0004);
 

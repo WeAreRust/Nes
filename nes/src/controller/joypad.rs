@@ -1,6 +1,8 @@
-use std::sync::mpsc;
+use std::sync::{mpsc, Arc, Mutex};
 use std::thread;
 use std::time;
+
+use memory::{ReadAddr, WriteAddr};
 
 // Loop 100 times a second.
 const LOOP_SLEEP: time::Duration = time::Duration::from_millis(10);
@@ -21,55 +23,180 @@ pub enum ControllerEvent {
 }
 
 pub struct Joypad {
-  button_state: u8,
-  rx: mpsc::Receiver<u8>,
+  button_state: Arc<Mutex<u8>>,
+  strobe_state: State,
+}
+
+enum State {
+  Init,
+  Strobe,
+  ReportA,
+  ReportB,
+  ReportSelect,
+  ReportStart,
+  ReportUp,
+  ReportDown,
+  ReportLeft,
+  ReportRight,
 }
 
 impl Joypad {
   // Each Joypad controller takes a channel receiver which will be sent button events
   // as they are mapped by the caller.
   pub fn new(event_rx: mpsc::Receiver<ControllerEvent>) -> Self {
-    let (tx, rx) = mpsc::channel();
+    let state = Arc::new(Mutex::new(0x00));
 
+    let thread_state = state.clone();
     thread::spawn(move || {
       println!("Starting controller...");
 
-      let mut button_state = 0u8;
       loop {
-        let mut new_state = button_state;
-
         match event_rx.recv().unwrap() {
-          ControllerEvent::ButtonDown { button, .. } => new_state |= button,
-          ControllerEvent::ButtonUp { button, .. } => new_state ^= button,
+          ControllerEvent::ButtonDown { button, .. } => {
+            let mut new_state = thread_state.lock().unwrap();
+            *new_state |= button
+          }
+          ControllerEvent::ButtonUp { button, .. } => {
+            let mut new_state = thread_state.lock().unwrap();
+            *new_state ^= button
+          }
         };
 
-        if new_state != button_state {
-          tx.send(new_state).unwrap();
-          button_state = new_state;
-        }
         thread::sleep(LOOP_SLEEP);
       }
     });
 
     Self {
-      button_state: 0u8,
-      rx: rx,
+      button_state: state,
+      strobe_state: State::Init,
     }
   }
 
-  pub fn cycle(&mut self) {
-    match self.rx.try_recv() {
-      Ok(state) => {
-        self.button_state = state;
-        // Consume all messages off the channel
-        self.cycle();
-      }
-      Err(mpsc::TryRecvError::Empty) => (),
-      Err(mpsc::TryRecvError::Disconnected) => panic!("Joypad disconnected."),
-    };
+  pub fn pressed(&self, button: u8) -> bool {
+    let state = self.button_state.lock().unwrap();
+    *state & button > 0
   }
 
-  pub fn pressed(&self, button: u8) -> bool {
-    self.button_state & button > 0
+  fn strobe(&mut self) {
+    match self.strobe_state {
+      State::Init => self.strobe_state = State::Strobe,
+      _ => (),
+    }
+  }
+
+  fn strobe_end(&mut self) {
+    match self.strobe_state {
+      State::Strobe => self.strobe_state = State::ReportA,
+      _ => (),
+    }
+  }
+
+  fn read_next(&mut self) -> u8 {
+    let map_pressed = |is_pressed: bool| {
+      if is_pressed {
+        0x01
+      } else {
+        0x00
+      }
+    };
+
+    match self.strobe_state {
+      State::Init => 0x00,
+      State::Strobe | State::ReportA => map_pressed(self.pressed(BUTTON_A)),
+      State::ReportB => map_pressed(self.pressed(BUTTON_B)),
+      State::ReportSelect => map_pressed(self.pressed(BUTTON_SELECT)),
+      State::ReportStart => map_pressed(self.pressed(BUTTON_START)),
+      State::ReportUp => map_pressed(self.pressed(BUTTON_UP)),
+      State::ReportDown => map_pressed(self.pressed(BUTTON_DOWN)),
+      State::ReportLeft => map_pressed(self.pressed(BUTTON_LEFT)),
+      State::ReportRight => map_pressed(self.pressed(BUTTON_RIGHT)),
+    }
+  }
+
+  fn next_state(current: State, strobe: bool) -> State {
+    match strobe {
+      true => State::Strobe,
+      false => match current {
+        State::Init => State::Init,
+        State::Strobe => State::ReportA,
+        State::ReportA => State::ReportB,
+        State::ReportB => State::ReportSelect,
+        State::ReportSelect => State::ReportStart,
+        State::ReportStart => State::ReportUp,
+        State::ReportUp => State::ReportDown,
+        State::ReportDown => State::ReportLeft,
+        State::ReportLeft => State::ReportRight,
+        State::ReportRight => State::Init,
+      },
+    }
+  }
+}
+
+impl ReadAddr for Joypad {
+  fn read_addr(&mut self, _addr: u16) -> u8 {
+    // A controller only has a single address ($4016 for Player 1 and $4017 for Player 2) so ignore.
+    self.read_next()
+  }
+}
+
+impl WriteAddr for Joypad {
+  fn write_addr(&mut self, _addr: u16, value: u8) -> u8 {
+    // A controller only has a single address ($4016 for Player 1 and $4017 for Player 2) so ignore.
+    match value & 0x01 == 0x01 {
+      true => self.strobe(),
+      false => self.strobe_end(), // Ignore any other writes
+    }
+
+    // TODO(toby): I think this is supposed to be self.pressed(BUTTON_A) if we are strobing.
+    0x00
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn read_cycle() {
+    let (tx, rx) = mpsc::channel();
+    let mut joypad = Joypad::new(rx);
+
+    // Send buttons A, Select and Right
+    tx.send(ControllerEvent::ButtonDown { button: BUTTON_A })
+      .unwrap();
+    tx.send(ControllerEvent::ButtonDown {
+      button: BUTTON_SELECT,
+    }).unwrap();
+    tx.send(ControllerEvent::ButtonDown {
+      button: BUTTON_RIGHT,
+    }).unwrap();
+
+    // Starts in init state so read should be 0x00
+    assert_eq!(joypad.read_addr(0x4016), 0x00);
+
+    // Strobe
+    joypad.write_addr(0x4016, 0x01);
+    joypad.write_addr(0x4016, 0x00);
+
+    // First read should be Button A
+    assert_eq!(joypad.read_addr(0x4016), 0x01);
+
+    // Next read is B
+    assert_eq!(joypad.read_addr(0x4016), 0x00);
+    // Next read is Select
+    assert_eq!(joypad.read_addr(0x4016), 0x01);
+    // Next read is Start
+    assert_eq!(joypad.read_addr(0x4016), 0x00);
+    // Next read is Up
+    assert_eq!(joypad.read_addr(0x4016), 0x00);
+    // Next read is Down
+    assert_eq!(joypad.read_addr(0x4016), 0x00);
+    // Next read is Left
+    assert_eq!(joypad.read_addr(0x4016), 0x00);
+    // Next read is Right
+    assert_eq!(joypad.read_addr(0x4016), 0x01);
+
+    // Finally, we should be back to init state so 0x00
+    assert_eq!(joypad.read_addr(0x4016), 0x00);
   }
 }

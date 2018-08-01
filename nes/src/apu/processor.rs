@@ -58,7 +58,7 @@ impl Default for RegisterSnapshot {
 }
 
 impl RegisterSnapshot {
-  fn create_from_memory<M: ReadAddr>(memory: &M) -> Self {
+  fn create_from_memory<M: ReadAddr>(memory: &mut M) -> Self {
     let mut registers: SnapshotRepr = [0; APU_REGISTER_RANGE];
     for offset in 0..APU_REGISTER_RANGE {
       let read_index = (APU_REGISTER_START + offset) as u16;
@@ -133,7 +133,7 @@ mod tests {
   use memory::ReadAddr;
 
   impl ReadAddr for Vec<u8> {
-    fn read_addr(self: &Self, addr: u16) -> u8 {
+    fn read_addr(&mut self, addr: u16) -> u8 {
       self[addr as usize]
     }
   }

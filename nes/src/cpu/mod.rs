@@ -50,7 +50,7 @@ impl Core {
   /// program counter from the memory vector locations FFFC and
   /// FFFD. This is the start location for program control.
   /// Reference: http://archive.6502.org/datasheets/mos_6500_mpu_nov_1985.pdf
-  pub fn reset<T: ReadAddr>(&mut self, memory: &T) {
+  pub fn reset<T: ReadAddr>(&mut self, memory: &mut T) {
     let a: u8 = memory.read_addr(0xFFFC);
     let b: u8 = memory.read_addr(0xFFFD);
 
@@ -264,11 +264,11 @@ mod tests {
     let mut v = vec![0x00u8; 0xffff];
     v[0xfffc] = 0xaa;
     v[0xfffd] = 0xbb;
-    let memory = BlockMemory::with_bytes(v);
+    let mut memory = BlockMemory::with_bytes(v);
     let mut core = Core::new(Registers::empty());
     core.reg.pc = 1;
 
-    core.reset(&memory);
+    core.reset(&mut memory);
 
     assert_eq!(core.reg.pc, 0xbbaa);
   }

@@ -11,7 +11,7 @@ pub enum Function {
 }
 
 impl Function {
-  pub fn call(&self, core: &mut Core, memory: &ReadAddr, address: u16) {
+  pub fn call(&self, core: &mut Core, memory: &mut ReadAddr, address: u16) {
     match self {
       Function::Value(func) => func(core, memory.read_addr(address)),
       Function::Address(func) => func(core, address),
