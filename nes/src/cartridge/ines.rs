@@ -155,6 +155,7 @@ fn has_four_screen_mirroring(data: &[u8]) -> bool {
 
 fn detect_mapper(data: &[u8]) -> Result<MapperType, ParseErrorReason> {
   let mapper_num = (data[IDX_CB1] & CB1_MASK_MAPPER) >> 4 | (data[IDX_CB2] & CB2_MASK_MAPPER);
+
   // Find all known mapper numbers at https://wiki.nesdev.com/w/index.php/Mapper
   match mapper_num {
     MAPPER_NROM => Ok(MapperType::NROM),
@@ -166,33 +167,28 @@ fn detect_mapper(data: &[u8]) -> Result<MapperType, ParseErrorReason> {
 }
 
 fn prg_rom_start(data: &[u8]) -> usize {
-  let prg_start = if has_trainer(data) {
+  if has_trainer(data) {
     LEN_HEADER + LEN_TRAINER
   } else {
     LEN_HEADER
-  };
-
-  prg_start as usize
+  }
 }
 
 fn extract_prg_rom_data(data: &[u8]) -> Vec<u8> {
   let prg_start = prg_rom_start(data);
-
-  let len_prg: usize = count_prg_rom_banks(data) as usize * SIZE_PRG_ROM_BANK;
-
+  let len_prg = usize::from(count_prg_rom_banks(data)) * SIZE_PRG_ROM_BANK;
   data[prg_start..prg_start + len_prg].to_vec()
 }
 
 fn chr_rom_start(data: &[u8]) -> usize {
   let prg_start = prg_rom_start(data);
-  let len_prg = count_prg_rom_banks(data) as usize * SIZE_PRG_ROM_BANK;
+  let len_prg = usize::from(count_prg_rom_banks(data)) * SIZE_PRG_ROM_BANK;
   prg_start + len_prg
 }
 
 fn extract_chr_rom_data(data: &[u8]) -> Vec<u8> {
   let chr_start = chr_rom_start(data);
-  let len_chr: usize = count_chr_rom_banks(data) as usize * SIZE_CHR_ROM_BANK;
-
+  let len_chr = usize::from(count_chr_rom_banks(data)) * SIZE_CHR_ROM_BANK;
   data[chr_start..chr_start + len_chr].to_vec()
 }
 

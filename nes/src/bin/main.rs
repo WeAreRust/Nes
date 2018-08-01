@@ -3,7 +3,6 @@ extern crate nes;
 use std::env;
 use std::fs::File;
 use std::io::Read;
-use std::time::Instant;
 
 use nes::console::Console;
 

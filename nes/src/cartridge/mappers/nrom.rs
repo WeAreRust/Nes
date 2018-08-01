@@ -64,7 +64,7 @@ mod tests {
     let prg_rom = vec![0x01, 0x4c, 0xb8, 0xe3, 0x94, 0x00, 0xed, 0xdf];
     let nrom = NROM::new(prg_rom, 1);
 
-    let byte_read = nrom.read_addr(0xC004); // 0xC000 + 0x0004
+    let byte_read = nrom.read_addr(0xC000 + 0x0004);
 
     assert_eq!(byte_read, 0x94);
   }
