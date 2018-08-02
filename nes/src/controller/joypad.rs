@@ -2,6 +2,7 @@ use std::sync::{mpsc, Arc, Mutex};
 use std::thread;
 use std::time;
 
+use controller::Controller;
 use memory::{ReadAddr, WriteAddr};
 
 // Loop 100 times a second.
@@ -100,7 +101,7 @@ impl Joypad {
       }
     };
 
-    match self.strobe_state {
+    let result = match self.strobe_state {
       State::Init => 0x00,
       State::Strobe | State::ReportA => map_pressed(self.pressed(BUTTON_A)),
       State::ReportB => map_pressed(self.pressed(BUTTON_B)),
@@ -110,10 +111,12 @@ impl Joypad {
       State::ReportDown => map_pressed(self.pressed(BUTTON_DOWN)),
       State::ReportLeft => map_pressed(self.pressed(BUTTON_LEFT)),
       State::ReportRight => map_pressed(self.pressed(BUTTON_RIGHT)),
-    }
+    };
+    self.strobe_state = Self::next_state(&self.strobe_state, false);
+    result
   }
 
-  fn next_state(current: State, strobe: bool) -> State {
+  fn next_state(current: &State, strobe: bool) -> State {
     match strobe {
       true => State::Strobe,
       false => match current {
@@ -131,6 +134,8 @@ impl Joypad {
     }
   }
 }
+
+impl Controller for Joypad {}
 
 impl ReadAddr for Joypad {
   fn read_addr(&mut self, _addr: u16) -> u8 {
