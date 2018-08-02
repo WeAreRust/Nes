@@ -13,6 +13,7 @@ pub const IMPLIED: Instruction = Instruction {
   opcode: 0xea,
   cycles: 2,
   page_boundary_extra_cycle: false,
+  page_branch_extra_cycles: false,
   operation: Operation::Implied(&nop),
 };
 

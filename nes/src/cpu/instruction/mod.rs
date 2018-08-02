@@ -14,7 +14,29 @@ macro_rules! nes_asm {
   }};
 }
 
+mod adc;
 mod and;
+mod asl;
+mod bcc;
+mod bcs;
+mod beq;
+mod bit;
+mod bmi;
+mod bne;
+mod bpl;
+mod brk;
+mod bvc;
+mod bvs;
+mod clc;
+mod cld;
+mod cli;
+mod clv;
+mod cmp;
+mod cpx;
+mod cpy;
+mod dec;
+mod dex;
+mod dey;
 mod jmp;
 mod lda;
 mod nop;
@@ -25,6 +47,14 @@ mod instruction_set {
 
   pub fn get(opcode: u8) -> Instruction {
     match opcode {
+      o if o == adc::IMMEDIATE.opcode => adc::IMMEDIATE,
+      o if o == adc::ZERO_PAGE.opcode => adc::ZERO_PAGE,
+      o if o == adc::ZERO_PAGE_X.opcode => adc::ZERO_PAGE_X,
+      o if o == adc::ABSOLUTE.opcode => adc::ABSOLUTE,
+      o if o == adc::ABSOLUTE_X.opcode => adc::ABSOLUTE_X,
+      o if o == adc::ABSOLUTE_Y.opcode => adc::ABSOLUTE_Y,
+      o if o == adc::INDIRECT_X.opcode => adc::INDIRECT_X,
+      o if o == adc::INDIRECT_Y.opcode => adc::INDIRECT_Y,
       o if o == and::IMMEDIATE.opcode => and::IMMEDIATE,
       o if o == and::ZERO_PAGE.opcode => and::ZERO_PAGE,
       o if o == and::ZERO_PAGE_X.opcode => and::ZERO_PAGE_X,
@@ -33,6 +63,46 @@ mod instruction_set {
       o if o == and::ABSOLUTE_Y.opcode => and::ABSOLUTE_Y,
       o if o == and::INDIRECT_X.opcode => and::INDIRECT_X,
       o if o == and::INDIRECT_Y.opcode => and::INDIRECT_Y,
+      o if o == asl::ACCUMULATOR.opcode => asl::ACCUMULATOR,
+      o if o == asl::ZERO_PAGE.opcode => asl::ZERO_PAGE,
+      o if o == asl::ZERO_PAGE_X.opcode => asl::ZERO_PAGE_X,
+      o if o == asl::ABSOLUTE.opcode => asl::ABSOLUTE,
+      o if o == asl::ABSOLUTE_X.opcode => asl::ABSOLUTE_X,
+      o if o == bcc::RELATIVE.opcode => bcc::RELATIVE,
+      o if o == bcs::RELATIVE.opcode => bcs::RELATIVE,
+      o if o == beq::RELATIVE.opcode => beq::RELATIVE,
+      o if o == bit::ZERO_PAGE.opcode => bit::ZERO_PAGE,
+      o if o == bit::ABSOLUTE.opcode => bit::ABSOLUTE,
+      o if o == bmi::RELATIVE.opcode => bmi::RELATIVE,
+      o if o == bne::RELATIVE.opcode => bne::RELATIVE,
+      o if o == bpl::RELATIVE.opcode => bpl::RELATIVE,
+      o if o == brk::IMPLIED.opcode => brk::IMPLIED,
+      o if o == bvc::RELATIVE.opcode => bvc::RELATIVE,
+      o if o == bvs::RELATIVE.opcode => bvs::RELATIVE,
+      o if o == clc::IMPLIED.opcode => clc::IMPLIED,
+      o if o == cld::IMPLIED.opcode => cld::IMPLIED,
+      o if o == cli::IMPLIED.opcode => cli::IMPLIED,
+      o if o == clv::IMPLIED.opcode => clv::IMPLIED,
+      o if o == cmp::IMMEDIATE.opcode => cmp::IMMEDIATE,
+      o if o == cmp::ZERO_PAGE.opcode => cmp::ZERO_PAGE,
+      o if o == cmp::ZERO_PAGE_X.opcode => cmp::ZERO_PAGE_X,
+      o if o == cmp::ABSOLUTE.opcode => cmp::ABSOLUTE,
+      o if o == cmp::ABSOLUTE_X.opcode => cmp::ABSOLUTE_X,
+      o if o == cmp::ABSOLUTE_Y.opcode => cmp::ABSOLUTE_Y,
+      o if o == cmp::INDIRECT_X.opcode => cmp::INDIRECT_X,
+      o if o == cmp::INDIRECT_Y.opcode => cmp::INDIRECT_Y,
+      o if o == cpx::IMMEDIATE.opcode => cpx::IMMEDIATE,
+      o if o == cpx::ZERO_PAGE.opcode => cpx::ZERO_PAGE,
+      o if o == cpx::ABSOLUTE.opcode => cpx::ABSOLUTE,
+      o if o == cpy::IMMEDIATE.opcode => cpy::IMMEDIATE,
+      o if o == cpy::ZERO_PAGE.opcode => cpy::ZERO_PAGE,
+      o if o == cpy::ABSOLUTE.opcode => cpy::ABSOLUTE,
+      o if o == dec::ZERO_PAGE.opcode => dec::ZERO_PAGE,
+      o if o == dec::ZERO_PAGE_X.opcode => dec::ZERO_PAGE_X,
+      o if o == dec::ABSOLUTE.opcode => dec::ABSOLUTE,
+      o if o == dec::ABSOLUTE_X.opcode => dec::ABSOLUTE_X,
+      o if o == dex::IMPLIED.opcode => dex::IMPLIED,
+      o if o == dey::IMPLIED.opcode => dey::IMPLIED,
       o if o == jmp::ABSOLUTE.opcode => jmp::ABSOLUTE,
       o if o == jmp::INDIRECT.opcode => jmp::INDIRECT,
       o if o == lda::IMMEDIATE.opcode => lda::IMMEDIATE,
@@ -52,7 +122,14 @@ mod instruction_set {
 pub struct Instruction {
   opcode: u8,
   cycles: usize,
+
+  /// add 1 to cycles if page boundery is crossed
   page_boundary_extra_cycle: bool,
+
+  /// add 1 to cycles if branch occurs on same page
+  /// add 2 to cycles if branch occurs to different page
+  page_branch_extra_cycles: bool,
+
   operation: Operation,
 }
 

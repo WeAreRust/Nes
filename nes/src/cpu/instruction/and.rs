@@ -21,6 +21,7 @@ pub const IMMEDIATE: Instruction = Instruction {
   opcode: 0x29,
   cycles: 2,
   page_boundary_extra_cycle: false,
+  page_branch_extra_cycles: false,
   operation: Operation::Immediate(&and),
 };
 
@@ -31,6 +32,7 @@ pub const ZERO_PAGE: Instruction = Instruction {
   opcode: 0x25,
   cycles: 3,
   page_boundary_extra_cycle: false,
+  page_branch_extra_cycles: false,
   operation: Operation::Zeropage(Function::Value(&and)),
 };
 
@@ -41,6 +43,7 @@ pub const ZERO_PAGE_X: Instruction = Instruction {
   opcode: 0x35,
   cycles: 4,
   page_boundary_extra_cycle: false,
+  page_branch_extra_cycles: false,
   operation: Operation::ZeropageX(Function::Value(&and)),
 };
 
@@ -51,6 +54,7 @@ pub const ABSOLUTE: Instruction = Instruction {
   opcode: 0x2d,
   cycles: 4,
   page_boundary_extra_cycle: false,
+  page_branch_extra_cycles: false,
   operation: Operation::Absolute(Function::Value(&and)),
 };
 
@@ -61,6 +65,7 @@ pub const ABSOLUTE_X: Instruction = Instruction {
   opcode: 0x3d,
   cycles: 4,
   page_boundary_extra_cycle: true,
+  page_branch_extra_cycles: false,
   operation: Operation::AbsoluteX(Function::Value(&and)),
 };
 
@@ -71,6 +76,7 @@ pub const ABSOLUTE_Y: Instruction = Instruction {
   opcode: 0x39,
   cycles: 4,
   page_boundary_extra_cycle: true,
+  page_branch_extra_cycles: false,
   operation: Operation::AbsoluteY(Function::Value(&and)),
 };
 
@@ -81,6 +87,7 @@ pub const INDIRECT_X: Instruction = Instruction {
   opcode: 0x21,
   cycles: 6,
   page_boundary_extra_cycle: false,
+  page_branch_extra_cycles: false,
   operation: Operation::IndirectX(Function::Value(&and)),
 };
 
@@ -91,6 +98,7 @@ pub const INDIRECT_Y: Instruction = Instruction {
   opcode: 0x31,
   cycles: 5,
   page_boundary_extra_cycle: true,
+  page_branch_extra_cycles: false,
   operation: Operation::IndirectY(Function::Value(&and)),
 };
 
