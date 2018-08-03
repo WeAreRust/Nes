@@ -27,7 +27,7 @@ fn main() {
   let video_subsystem = sdl_context.video().unwrap();
   let mut event_pump = sdl_context.event_pump().unwrap();
 
-  let window = video_subsystem
+  let _window = video_subsystem
     .window("WeAreRust Nes", 256, 240)
     .position_centered()
     .opengl()
@@ -35,7 +35,7 @@ fn main() {
     .unwrap();
 
   let (event_tx, event_rx) = mpsc::channel();
-  let mut controller = joypad::Joypad::new(event_rx);
+  let controller = joypad::Joypad::new(event_rx);
 
   'running: loop {
     for event in event_pump.poll_iter() {

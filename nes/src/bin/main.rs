@@ -5,8 +5,6 @@ use std::env;
 use std::fs::File;
 use std::io::Read;
 use std::sync::mpsc;
-use std::thread;
-use std::time;
 
 use nes::console::Console;
 use nes::controller::joypad;
@@ -44,7 +42,7 @@ fn main() {
   let video_subsystem = sdl_context.video().unwrap();
   let mut event_pump = sdl_context.event_pump().unwrap();
 
-  let window = video_subsystem
+  let _window = video_subsystem
     .window("WeAreRust Nes", 256, 240)
     .position_centered()
     .opengl()
@@ -53,6 +51,9 @@ fn main() {
 
   let (event_tx, event_rx) = mpsc::channel();
   let mut controller = joypad::Joypad::new(event_rx);
+
+  let mut console = Console::new(&mut cartridge, &mut controller);
+  console.reset();
 
   // Run the controller loop
   'running: loop {
@@ -87,51 +88,8 @@ fn main() {
       };
     }
 
-    let mut printed = false;
-    if controller.pressed(joypad::BUTTON_A) {
-      print!("A ");
-      printed = true;
-    }
-    if controller.pressed(joypad::BUTTON_B) {
-      print!("B ");
-      printed = true;
-    }
-    if controller.pressed(joypad::BUTTON_START) {
-      print!("START ");
-      printed = true;
-    }
-    if controller.pressed(joypad::BUTTON_SELECT) {
-      print!("SELECT ");
-      printed = true;
-    }
-    if controller.pressed(joypad::BUTTON_UP) {
-      print!("UP ");
-      printed = true;
-    }
-    if controller.pressed(joypad::BUTTON_DOWN) {
-      print!("DOWN ");
-      printed = true;
-    }
-    if controller.pressed(joypad::BUTTON_LEFT) {
-      print!("LEFT ");
-      printed = true;
-    }
-    if controller.pressed(joypad::BUTTON_RIGHT) {
-      print!("RIGHT ");
-      printed = true;
-    }
-    if printed {
-      println!();
-    }
-
-    thread::sleep(time::Duration::from_millis(25));
+    console.tick();
   }
-
-  let mut console = Console {
-    cartridge: &mut cartridge,
-    controller1: &mut controller,
-  };
-  console.run();
 }
 
 fn controller1_keymap(keycode: Keycode) -> u8 {

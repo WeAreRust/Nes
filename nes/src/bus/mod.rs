@@ -5,16 +5,12 @@ use memory::{ReadAddr, WriteAddr};
 
 pub struct Bus<'a, C1: 'a + Controller> {
   cartridge: &'a mut Cartridge,
-  ram: &'a mut BlockMemory,
+  ram: Box<BlockMemory>,
   controller1: &'a mut C1,
 }
 
 impl<'a, C1: Controller> Bus<'a, C1> {
-  pub fn new(
-    cartridge: &'a mut Cartridge,
-    ram: &'a mut BlockMemory,
-    controller1: &'a mut C1,
-  ) -> Self {
+  pub fn new(cartridge: &'a mut Cartridge, ram: Box<BlockMemory>, controller1: &'a mut C1) -> Self {
     Bus {
       cartridge: cartridge,
       ram: ram,

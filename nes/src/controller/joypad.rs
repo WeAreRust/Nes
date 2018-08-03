@@ -51,15 +51,19 @@ impl Joypad {
     thread::spawn(move || {
       println!("Starting controller...");
 
-      loop {
-        match event_rx.recv().unwrap() {
-          ControllerEvent::ButtonDown { button, .. } => {
+      'running: loop {
+        match event_rx.recv() {
+          Ok(ControllerEvent::ButtonDown { button, .. }) => {
             let mut new_state = thread_state.lock().unwrap();
             *new_state |= button
           }
-          ControllerEvent::ButtonUp { button, .. } => {
+          Ok(ControllerEvent::ButtonUp { button, .. }) => {
             let mut new_state = thread_state.lock().unwrap();
             *new_state ^= button
+          }
+          Err(mpsc::RecvError) => {
+            println!("Controller channel disconnected. Ending loop.");
+            break 'running;
           }
         };
       }
