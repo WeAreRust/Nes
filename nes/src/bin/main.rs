@@ -74,16 +74,14 @@ fn main() {
         } => event_tx
           .send(ControllerEvent::ButtonDown {
             button: controller1_keymap(keycode),
-          })
-          .unwrap(),
+          }).unwrap(),
         Event::KeyUp {
           keycode: Some(keycode),
           ..
         } => event_tx
           .send(ControllerEvent::ButtonUp {
             button: controller1_keymap(keycode),
-          })
-          .unwrap(),
+          }).unwrap(),
         _ => {}
       };
     }
