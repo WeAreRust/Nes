@@ -10,8 +10,8 @@ const LOOP_SLEEP: time::Duration = time::Duration::from_millis(10);
 
 pub const BUTTON_A: u8 = 1u8;
 pub const BUTTON_B: u8 = 2u8;
-pub const BUTTON_START: u8 = 4u8;
-pub const BUTTON_SELECT: u8 = 8u8;
+pub const BUTTON_SELECT: u8 = 4u8;
+pub const BUTTON_START: u8 = 8u8;
 pub const BUTTON_UP: u8 = 16u8;
 pub const BUTTON_DOWN: u8 = 32u8;
 pub const BUTTON_LEFT: u8 = 64u8;
@@ -62,8 +62,6 @@ impl Joypad {
             *new_state ^= button
           }
         };
-
-        thread::sleep(LOOP_SLEEP);
       }
     });
 
@@ -175,6 +173,10 @@ mod tests {
     tx.send(ControllerEvent::ButtonDown {
       button: BUTTON_RIGHT,
     }).unwrap();
+
+    // An annoying hack to avoid a race condition
+    // with event handling vs following reads.
+    thread::sleep(time::Duration::from_millis(1));
 
     // Starts in init state so read should be 0x00
     assert_eq!(joypad.read_addr(0x4016), 0x00);

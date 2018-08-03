@@ -78,12 +78,12 @@ fn main() {
       print!("B ");
       printed = true;
     }
-    if controller.pressed(joypad::BUTTON_START) {
-      print!("START ");
-      printed = true;
-    }
     if controller.pressed(joypad::BUTTON_SELECT) {
       print!("SELECT ");
+      printed = true;
+    }
+    if controller.pressed(joypad::BUTTON_START) {
+      print!("START ");
       printed = true;
     }
     if controller.pressed(joypad::BUTTON_UP) {
