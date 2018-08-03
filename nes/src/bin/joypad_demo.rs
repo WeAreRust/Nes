@@ -62,8 +62,7 @@ fn main() {
         } => event_tx
           .send(ControllerEvent::ButtonUp {
             button: controller1_keymap(keycode),
-          })
-          .unwrap(),
+          }).unwrap(),
         _ => {}
       };
     }
