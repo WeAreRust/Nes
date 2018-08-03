@@ -19,7 +19,7 @@ impl BlockMemory {
 }
 
 impl ReadAddr for BlockMemory {
-  fn read_addr(&self, addr: u16) -> u8 {
+  fn read_addr(&mut self, addr: u16) -> u8 {
     self.bytes[usize::from(addr)]
   }
 }
@@ -39,7 +39,7 @@ mod tests {
   #[test]
   fn read_addr() {
     let bytes = BytesMut::from(vec![123]);
-    let memory = BlockMemory { bytes };
+    let mut memory = BlockMemory { bytes };
 
     assert_eq!(memory.read_addr(0), 123);
   }

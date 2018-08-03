@@ -20,6 +20,7 @@ pub mod bus;
 pub mod cartridge;
 pub mod clock;
 pub mod console;
+pub mod controller;
 pub mod cpu;
 pub mod io;
 pub mod memory;

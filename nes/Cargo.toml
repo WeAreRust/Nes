@@ -24,3 +24,7 @@ path = "src/bin/apu_demo.rs"
 [[bin]]
 name = "sdl-video-demo"
 path = "src/bin/sdl_video_demo.rs"
+
+[[bin]]
+name = "joypad-demo"
+path = "src/bin/joypad_demo.rs"
