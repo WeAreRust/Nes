@@ -4,20 +4,20 @@ use cpu::{
   Core,
 };
 
-/// No Operation
+/// Increment index x by one
 ///
-/// Flags affected: None
+/// Flags affected: N, Z
 #[inline(always)]
-fn nop(_core: &mut Core) {}
+fn inx(_core: &mut Core) {}
 
-/// No Operation
+/// Increment index x by one
 ///
-/// Flags affected: None
+/// Flags affected: N, Z
 pub const IMPLIED: Instruction = Instruction {
-  opcode: 0xea,
+  opcode: 0xe8,
   cycles: 2,
   extra_cycle: ExtraCycle::None,
-  operation: Operation::Implied(&nop),
+  operation: Operation::Implied(&inx),
 };
 
 #[cfg(test)]
@@ -26,6 +26,6 @@ mod tests {
 
   #[test]
   fn opcode() {
-    assert_eq!(nes_asm!("NOP")[0], IMPLIED.opcode);
+    assert_eq!(nes_asm!("INX")[0], IMPLIED.opcode);
   }
 }

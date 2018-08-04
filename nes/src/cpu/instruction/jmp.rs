@@ -1,5 +1,5 @@
 use cpu::{
-  instruction::Instruction,
+  instruction::{ExtraCycle, Instruction},
   operation::{Function, Operation},
   Core,
 };
@@ -18,8 +18,7 @@ fn jump(core: &mut Core, address: u16) {
 pub const ABSOLUTE: Instruction = Instruction {
   opcode: 0x4c,
   cycles: 3,
-  page_boundary_extra_cycle: false,
-  page_branch_extra_cycles: false,
+  extra_cycle: ExtraCycle::None,
   operation: Operation::Absolute(Function::Address(&jump)),
 };
 
@@ -33,8 +32,7 @@ pub const ABSOLUTE: Instruction = Instruction {
 pub const INDIRECT: Instruction = Instruction {
   opcode: 0x6c,
   cycles: 5,
-  page_boundary_extra_cycle: false,
-  page_branch_extra_cycles: false,
+  extra_cycle: ExtraCycle::None,
   operation: Operation::Indirect(Function::Address(&jump)),
 };
 

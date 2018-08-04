@@ -1,5 +1,5 @@
 use cpu::{
-  instruction::Instruction,
+  instruction::{ExtraCycle, Instruction},
   operation::{Function, Operation},
   Core,
 };
@@ -18,8 +18,7 @@ fn cpy(core: &mut Core, operand: u8) {
 pub const IMMEDIATE: Instruction = Instruction {
   opcode: 0xc0,
   cycles: 2,
-  page_boundary_extra_cycle: false,
-  page_branch_extra_cycles: false,
+  extra_cycle: ExtraCycle::None,
   operation: Operation::Immediate(&cpy),
 };
 
@@ -29,8 +28,7 @@ pub const IMMEDIATE: Instruction = Instruction {
 pub const ZERO_PAGE: Instruction = Instruction {
   opcode: 0xc4,
   cycles: 3,
-  page_boundary_extra_cycle: false,
-  page_branch_extra_cycles: false,
+  extra_cycle: ExtraCycle::None,
   operation: Operation::Zeropage(Function::Value(&cpy)),
 };
 
@@ -40,8 +38,7 @@ pub const ZERO_PAGE: Instruction = Instruction {
 pub const ABSOLUTE: Instruction = Instruction {
   opcode: 0xcc,
   cycles: 4,
-  page_boundary_extra_cycle: false,
-  page_branch_extra_cycles: false,
+  extra_cycle: ExtraCycle::None,
   operation: Operation::Absolute(Function::Value(&cpy)),
 };
 

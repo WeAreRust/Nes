@@ -4,22 +4,22 @@ use cpu::{
   Core,
 };
 
-/// Force break
+/// Transfer index y to accumulator
 ///
-/// Flags affected: I
+/// Flags affected: N, Z
 #[inline(always)]
-fn brk(core: &mut Core) {
+fn tya(core: &mut Core) {
   // TODO: implementation
 }
 
-/// Force break
+/// Transfer index y to accumulator
 ///
-/// Flags affected: I
+/// Flags affected: N, Z
 pub const IMPLIED: Instruction = Instruction {
-  opcode: 0x00,
-  cycles: 7,
+  opcode: 0x98,
+  cycles: 2,
   extra_cycle: ExtraCycle::None,
-  operation: Operation::Implied(&brk),
+  operation: Operation::Implied(&tya),
 };
 
 #[cfg(test)]
@@ -28,13 +28,13 @@ mod tests {
   use cpu::Registers;
 
   #[test]
-  fn brk_impl() {
+  fn tya_impl() {
     let mut core = Core::new(Registers::empty());
     // TODO: test
   }
 
   #[test]
-  fn opcodes() {
-    assert_eq!(nes_asm!("BRK")[0], IMPLIED.opcode);
+  fn opcode() {
+    assert_eq!(nes_asm!("TYA")[0], IMPLIED.opcode);
   }
 }

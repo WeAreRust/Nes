@@ -1,5 +1,5 @@
 use cpu::{
-  instruction::Instruction,
+  instruction::{ExtraCycle, Instruction},
   operation::{Function, Operation},
   Core,
 };
@@ -19,8 +19,7 @@ fn bvs(core: &mut Core, address: u16) {
 pub const RELATIVE: Instruction = Instruction {
   opcode: 0x70,
   cycles: 2,
-  page_boundary_extra_cycle: false,
-  page_branch_extra_cycles: true,
+  extra_cycle: ExtraCycle::Branch,
   operation: Operation::Relative(Function::Address(&bvs)),
 };
 

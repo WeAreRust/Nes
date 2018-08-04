@@ -1,5 +1,5 @@
 use cpu::{
-  instruction::Instruction,
+  instruction::{ExtraCycle, Instruction},
   operation::{Function, Operation},
   Core,
 };
@@ -18,8 +18,7 @@ fn dec(core: &mut Core, address: u16) {
 pub const ZERO_PAGE: Instruction = Instruction {
   opcode: 0xc6,
   cycles: 5,
-  page_boundary_extra_cycle: false,
-  page_branch_extra_cycles: false,
+  extra_cycle: ExtraCycle::None,
   operation: Operation::Zeropage(Function::Address(&dec)),
 };
 
@@ -29,8 +28,7 @@ pub const ZERO_PAGE: Instruction = Instruction {
 pub const ZERO_PAGE_X: Instruction = Instruction {
   opcode: 0xd6,
   cycles: 6,
-  page_boundary_extra_cycle: false,
-  page_branch_extra_cycles: false,
+  extra_cycle: ExtraCycle::None,
   operation: Operation::ZeropageX(Function::Address(&dec)),
 };
 
@@ -40,8 +38,7 @@ pub const ZERO_PAGE_X: Instruction = Instruction {
 pub const ABSOLUTE: Instruction = Instruction {
   opcode: 0xce,
   cycles: 3,
-  page_boundary_extra_cycle: false,
-  page_branch_extra_cycles: false,
+  extra_cycle: ExtraCycle::None,
   operation: Operation::Absolute(Function::Address(&dec)),
 };
 
@@ -51,8 +48,7 @@ pub const ABSOLUTE: Instruction = Instruction {
 pub const ABSOLUTE_X: Instruction = Instruction {
   opcode: 0xde,
   cycles: 7,
-  page_boundary_extra_cycle: true,
-  page_branch_extra_cycles: false,
+  extra_cycle: ExtraCycle::Boundary,
   operation: Operation::AbsoluteX(Function::Address(&dec)),
 };
 

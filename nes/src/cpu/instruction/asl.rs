@@ -1,5 +1,5 @@
 use cpu::{
-  instruction::Instruction,
+  instruction::{ExtraCycle, Instruction},
   operation::{Function, Operation},
   Core,
 };
@@ -18,8 +18,7 @@ fn asl(core: &mut Core, operand: u8) {
 pub const ACCUMULATOR: Instruction = Instruction {
   opcode: 0x0a,
   cycles: 2,
-  page_boundary_extra_cycle: false,
-  page_branch_extra_cycles: false,
+  extra_cycle: ExtraCycle::None,
   operation: Operation::Accumulator(&asl),
 };
 
@@ -29,8 +28,7 @@ pub const ACCUMULATOR: Instruction = Instruction {
 pub const ZERO_PAGE: Instruction = Instruction {
   opcode: 0x06,
   cycles: 5,
-  page_boundary_extra_cycle: false,
-  page_branch_extra_cycles: false,
+  extra_cycle: ExtraCycle::None,
   operation: Operation::Zeropage(Function::Value(&asl)),
 };
 
@@ -40,8 +38,7 @@ pub const ZERO_PAGE: Instruction = Instruction {
 pub const ZERO_PAGE_X: Instruction = Instruction {
   opcode: 0x16,
   cycles: 6,
-  page_boundary_extra_cycle: false,
-  page_branch_extra_cycles: false,
+  extra_cycle: ExtraCycle::None,
   operation: Operation::ZeropageX(Function::Value(&asl)),
 };
 
@@ -51,8 +48,7 @@ pub const ZERO_PAGE_X: Instruction = Instruction {
 pub const ABSOLUTE: Instruction = Instruction {
   opcode: 0x0e,
   cycles: 6,
-  page_boundary_extra_cycle: false,
-  page_branch_extra_cycles: false,
+  extra_cycle: ExtraCycle::None,
   operation: Operation::Absolute(Function::Value(&asl)),
 };
 
@@ -62,8 +58,7 @@ pub const ABSOLUTE: Instruction = Instruction {
 pub const ABSOLUTE_X: Instruction = Instruction {
   opcode: 0x1e,
   cycles: 7,
-  page_boundary_extra_cycle: false,
-  page_branch_extra_cycles: false,
+  extra_cycle: ExtraCycle::None,
   operation: Operation::AbsoluteX(Function::Value(&asl)),
 };
 

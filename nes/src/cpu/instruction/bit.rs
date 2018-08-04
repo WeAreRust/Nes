@@ -1,5 +1,5 @@
 use cpu::{
-  instruction::Instruction,
+  instruction::{ExtraCycle, Instruction},
   operation::{Function, Operation},
   Core,
 };
@@ -19,8 +19,7 @@ fn bit(core: &mut Core, operand: u8) {
 pub const ZERO_PAGE: Instruction = Instruction {
   opcode: 0x24,
   cycles: 3,
-  page_boundary_extra_cycle: false,
-  page_branch_extra_cycles: false,
+  extra_cycle: ExtraCycle::None,
   operation: Operation::Zeropage(Function::Value(&bit)),
 };
 
@@ -30,8 +29,7 @@ pub const ZERO_PAGE: Instruction = Instruction {
 pub const ABSOLUTE: Instruction = Instruction {
   opcode: 0x2C,
   cycles: 4,
-  page_boundary_extra_cycle: false,
-  page_branch_extra_cycles: false,
+  extra_cycle: ExtraCycle::None,
   operation: Operation::Absolute(Function::Value(&bit)),
 };
 

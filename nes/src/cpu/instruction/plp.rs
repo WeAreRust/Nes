@@ -4,22 +4,22 @@ use cpu::{
   Core,
 };
 
-/// Force break
+/// Pull processor status from stack
 ///
-/// Flags affected: I
+/// Flags affected: All
 #[inline(always)]
-fn brk(core: &mut Core) {
+fn plp(core: &mut Core) {
   // TODO: implementation
 }
 
-/// Force break
+/// Pull processor status from stack
 ///
-/// Flags affected: I
+/// Flags affected: All
 pub const IMPLIED: Instruction = Instruction {
-  opcode: 0x00,
-  cycles: 7,
+  opcode: 0x28,
+  cycles: 4,
   extra_cycle: ExtraCycle::None,
-  operation: Operation::Implied(&brk),
+  operation: Operation::Implied(&plp),
 };
 
 #[cfg(test)]
@@ -28,13 +28,13 @@ mod tests {
   use cpu::Registers;
 
   #[test]
-  fn brk_impl() {
+  fn plp_impl() {
     let mut core = Core::new(Registers::empty());
     // TODO: test
   }
 
   #[test]
-  fn opcodes() {
-    assert_eq!(nes_asm!("BRK")[0], IMPLIED.opcode);
+  fn opcode() {
+    assert_eq!(nes_asm!("PLP")[0], IMPLIED.opcode);
   }
 }

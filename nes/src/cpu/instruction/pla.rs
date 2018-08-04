@@ -4,22 +4,22 @@ use cpu::{
   Core,
 };
 
-/// Force break
+/// Pull accumulator from stack
 ///
-/// Flags affected: I
+/// Flags affected: N, Z
 #[inline(always)]
-fn brk(core: &mut Core) {
+fn pla(core: &mut Core) {
   // TODO: implementation
 }
 
-/// Force break
+/// Pull accumulator from stack
 ///
-/// Flags affected: I
+/// Flags affected: N, Z
 pub const IMPLIED: Instruction = Instruction {
-  opcode: 0x00,
-  cycles: 7,
+  opcode: 0x68,
+  cycles: 4,
   extra_cycle: ExtraCycle::None,
-  operation: Operation::Implied(&brk),
+  operation: Operation::Implied(&pla),
 };
 
 #[cfg(test)]
@@ -28,13 +28,13 @@ mod tests {
   use cpu::Registers;
 
   #[test]
-  fn brk_impl() {
+  fn pla_impl() {
     let mut core = Core::new(Registers::empty());
     // TODO: test
   }
 
   #[test]
-  fn opcodes() {
-    assert_eq!(nes_asm!("BRK")[0], IMPLIED.opcode);
+  fn opcode() {
+    assert_eq!(nes_asm!("PLA")[0], IMPLIED.opcode);
   }
 }

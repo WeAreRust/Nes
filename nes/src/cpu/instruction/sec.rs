@@ -4,22 +4,22 @@ use cpu::{
   Core,
 };
 
-/// Force break
+/// Set carry flag
 ///
-/// Flags affected: I
+/// Flags affected: C
 #[inline(always)]
-fn brk(core: &mut Core) {
+fn sec(core: &mut Core) {
   // TODO: implementation
 }
 
-/// Force break
+/// Set carry flag
 ///
-/// Flags affected: I
+/// Flags affected: C
 pub const IMPLIED: Instruction = Instruction {
-  opcode: 0x00,
-  cycles: 7,
+  opcode: 0x38,
+  cycles: 2,
   extra_cycle: ExtraCycle::None,
-  operation: Operation::Implied(&brk),
+  operation: Operation::Implied(&sec),
 };
 
 #[cfg(test)]
@@ -28,13 +28,13 @@ mod tests {
   use cpu::Registers;
 
   #[test]
-  fn brk_impl() {
+  fn sec_impl() {
     let mut core = Core::new(Registers::empty());
     // TODO: test
   }
 
   #[test]
-  fn opcodes() {
-    assert_eq!(nes_asm!("BRK")[0], IMPLIED.opcode);
+  fn opcode() {
+    assert_eq!(nes_asm!("SEC")[0], IMPLIED.opcode);
   }
 }

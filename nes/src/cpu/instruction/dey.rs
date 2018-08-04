@@ -1,6 +1,6 @@
 use cpu::{
-  instruction::Instruction,
-  operation::{Function, Operation},
+  instruction::{ExtraCycle, Instruction},
+  operation::Operation,
   Core,
 };
 
@@ -18,8 +18,7 @@ fn dey(core: &mut Core) {
 pub const IMPLIED: Instruction = Instruction {
   opcode: 0x88,
   cycles: 2,
-  page_boundary_extra_cycle: false,
-  page_branch_extra_cycles: false,
+  extra_cycle: ExtraCycle::None,
   operation: Operation::Implied(&dey),
 };
 

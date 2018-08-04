@@ -1,5 +1,5 @@
 use cpu::{
-  instruction::Instruction,
+  instruction::{ExtraCycle, Instruction},
   operation::{Function, Operation},
   Core,
 };
@@ -18,8 +18,7 @@ fn cmp(core: &mut Core, operand: u8) {
 pub const IMMEDIATE: Instruction = Instruction {
   opcode: 0xc9,
   cycles: 2,
-  page_boundary_extra_cycle: false,
-  page_branch_extra_cycles: false,
+  extra_cycle: ExtraCycle::None,
   operation: Operation::Immediate(&cmp),
 };
 
@@ -29,8 +28,7 @@ pub const IMMEDIATE: Instruction = Instruction {
 pub const ZERO_PAGE: Instruction = Instruction {
   opcode: 0xc5,
   cycles: 3,
-  page_boundary_extra_cycle: false,
-  page_branch_extra_cycles: false,
+  extra_cycle: ExtraCycle::None,
   operation: Operation::Zeropage(Function::Value(&cmp)),
 };
 
@@ -40,8 +38,7 @@ pub const ZERO_PAGE: Instruction = Instruction {
 pub const ZERO_PAGE_X: Instruction = Instruction {
   opcode: 0xd5,
   cycles: 4,
-  page_boundary_extra_cycle: false,
-  page_branch_extra_cycles: false,
+  extra_cycle: ExtraCycle::None,
   operation: Operation::ZeropageX(Function::Value(&cmp)),
 };
 
@@ -51,8 +48,7 @@ pub const ZERO_PAGE_X: Instruction = Instruction {
 pub const ABSOLUTE: Instruction = Instruction {
   opcode: 0xcd,
   cycles: 4,
-  page_boundary_extra_cycle: false,
-  page_branch_extra_cycles: false,
+  extra_cycle: ExtraCycle::None,
   operation: Operation::Absolute(Function::Value(&cmp)),
 };
 
@@ -62,8 +58,7 @@ pub const ABSOLUTE: Instruction = Instruction {
 pub const ABSOLUTE_X: Instruction = Instruction {
   opcode: 0xdd,
   cycles: 4,
-  page_boundary_extra_cycle: true,
-  page_branch_extra_cycles: false,
+  extra_cycle: ExtraCycle::Boundary,
   operation: Operation::AbsoluteX(Function::Value(&cmp)),
 };
 
@@ -73,8 +68,7 @@ pub const ABSOLUTE_X: Instruction = Instruction {
 pub const ABSOLUTE_Y: Instruction = Instruction {
   opcode: 0xd9,
   cycles: 4,
-  page_boundary_extra_cycle: true,
-  page_branch_extra_cycles: false,
+  extra_cycle: ExtraCycle::Boundary,
   operation: Operation::AbsoluteY(Function::Value(&cmp)),
 };
 
@@ -84,8 +78,7 @@ pub const ABSOLUTE_Y: Instruction = Instruction {
 pub const INDIRECT_X: Instruction = Instruction {
   opcode: 0xc1,
   cycles: 6,
-  page_boundary_extra_cycle: false,
-  page_branch_extra_cycles: false,
+  extra_cycle: ExtraCycle::None,
   operation: Operation::IndirectX(Function::Value(&cmp)),
 };
 
@@ -95,8 +88,7 @@ pub const INDIRECT_X: Instruction = Instruction {
 pub const INDIRECT_Y: Instruction = Instruction {
   opcode: 0xd1,
   cycles: 5,
-  page_boundary_extra_cycle: true,
-  page_branch_extra_cycles: false,
+  extra_cycle: ExtraCycle::Boundary,
   operation: Operation::IndirectY(Function::Value(&cmp)),
 };
 
