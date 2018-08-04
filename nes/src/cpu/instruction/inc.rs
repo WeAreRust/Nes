@@ -4,7 +4,7 @@ use cpu::{
   Core,
 };
 
-/// Inrement memory by one
+/// Increment memory by one
 ///
 /// Flags affected: N, Z
 #[inline(always)]
@@ -12,7 +12,7 @@ fn inc(core: &mut Core, address: u16) {
   // TODO: implementation
 }
 
-/// Inrement memory by one
+/// Increment memory by one
 ///
 /// Flags affected: N, Z
 pub const ZERO_PAGE: Instruction = Instruction {
@@ -22,7 +22,7 @@ pub const ZERO_PAGE: Instruction = Instruction {
   operation: Operation::Zeropage(Function::Address(&inc)),
 };
 
-/// Inrement memory by one
+/// Increment memory by one
 ///
 /// Flags affected: N, Z
 pub const ZERO_PAGE_X: Instruction = Instruction {
@@ -32,7 +32,7 @@ pub const ZERO_PAGE_X: Instruction = Instruction {
   operation: Operation::ZeropageX(Function::Address(&inc)),
 };
 
-/// Inrement memory by one
+/// Increment memory by one
 ///
 /// Flags affected: N, Z
 pub const ABSOLUTE: Instruction = Instruction {
@@ -42,7 +42,7 @@ pub const ABSOLUTE: Instruction = Instruction {
   operation: Operation::Absolute(Function::Address(&inc)),
 };
 
-/// Inrement memory by one
+/// Increment memory by one
 ///
 /// Flags affected: N, Z
 pub const ABSOLUTE_X: Instruction = Instruction {
