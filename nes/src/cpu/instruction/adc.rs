@@ -4,7 +4,7 @@ use cpu::{
   Core,
 };
 
-/// ADC operand to accumulator with carry
+/// Add operand to accumulator with carry
 ///
 /// Flags affected: N, Z, C, V
 #[inline(always)]
@@ -12,7 +12,7 @@ fn adc(core: &mut Core, operand: u8) {
   // TODO: implementation
 }
 
-/// ADC memory to accumulator with carry immediate
+/// Add memory to accumulator with carry immediate
 ///
 /// Flags affected: N, Z, C, V
 pub const IMMEDIATE: Instruction = Instruction {
@@ -22,7 +22,7 @@ pub const IMMEDIATE: Instruction = Instruction {
   operation: Operation::Immediate(&adc),
 };
 
-/// ADC memory to accumulator with carry zero page
+/// Add memory to accumulator with carry zero page
 ///
 /// Flags affected: N, Z, C, V
 pub const ZERO_PAGE: Instruction = Instruction {
@@ -32,7 +32,7 @@ pub const ZERO_PAGE: Instruction = Instruction {
   operation: Operation::Zeropage(Function::Value(&adc)),
 };
 
-/// ADC memory to accumulator with carry zero page X
+/// Add memory to accumulator with carry zero page X
 ///
 /// Flags affected: N, Z, C, V
 pub const ZERO_PAGE_X: Instruction = Instruction {
@@ -42,7 +42,7 @@ pub const ZERO_PAGE_X: Instruction = Instruction {
   operation: Operation::ZeropageX(Function::Value(&adc)),
 };
 
-/// ADC memory to accumulator with carry absolute
+/// Add memory to accumulator with carry absolute
 ///
 /// Flags affected: N, Z, C, V
 pub const ABSOLUTE: Instruction = Instruction {
@@ -52,7 +52,7 @@ pub const ABSOLUTE: Instruction = Instruction {
   operation: Operation::Absolute(Function::Value(&adc)),
 };
 
-/// ADC memory to accumulator with carry absolute X
+/// Add memory to accumulator with carry absolute X
 ///
 /// Flags affected: N, Z, C, V
 pub const ABSOLUTE_X: Instruction = Instruction {
@@ -62,7 +62,7 @@ pub const ABSOLUTE_X: Instruction = Instruction {
   operation: Operation::AbsoluteX(Function::Value(&adc)),
 };
 
-/// ADC memory to accumulator with carry absolute Y
+/// Add memory to accumulator with carry absolute Y
 ///
 /// Flags affected: N, Z, C, V
 pub const ABSOLUTE_Y: Instruction = Instruction {
@@ -72,7 +72,7 @@ pub const ABSOLUTE_Y: Instruction = Instruction {
   operation: Operation::AbsoluteY(Function::Value(&adc)),
 };
 
-/// ADC memory to accumulator with carry indirect X
+/// Add memory to accumulator with carry indirect X
 ///
 /// Flags affected: N, Z, C, V
 pub const INDIRECT_X: Instruction = Instruction {
@@ -82,7 +82,7 @@ pub const INDIRECT_X: Instruction = Instruction {
   operation: Operation::IndirectX(Function::Value(&adc)),
 };
 
-/// ADC memory to accumulator with carry indirect Y
+/// Add memory to accumulator with carry indirect Y
 ///
 /// Flags affected: N, Z, C, V
 pub const INDIRECT_Y: Instruction = Instruction {
