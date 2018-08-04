@@ -14,6 +14,8 @@ macro_rules! nes_asm {
   }};
 }
 
+mod def;
+
 mod and;
 mod jmp;
 mod lda;

@@ -1,9 +1,9 @@
 use cpu::Core;
 use memory::{ReadAddr, WriteAddr};
 
-type ImpliedFunction = &'static Fn(&mut Core);
-type AddressFunction = &'static Fn(&mut Core, u16);
-type ValueFunction = &'static Fn(&mut Core, u8);
+pub type ImpliedFunction = &'static Fn(&mut Core);
+pub type AddressFunction = &'static Fn(&mut Core, u16);
+pub type ValueFunction = &'static Fn(&mut Core, u8);
 
 pub enum Function {
   Address(AddressFunction),
