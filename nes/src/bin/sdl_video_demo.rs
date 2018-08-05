@@ -9,6 +9,32 @@ use sdl2::pixels::PixelFormatEnum;
 use sdl2::rect::Rect;
 use std::thread;
 
+fn test_picture_shader(x: u8, y: u8) -> Color {
+  match (x, y) {
+    (x, y) if y < 180 && x < 36 => Color(255, 255, 255),
+    (x, y) if y < 180 && x < 72 => Color(255, 255, 0),
+    (x, y) if y < 180 && x < 108 => Color(0, 255, 255),
+    (x, y) if y < 180 && x < 144 => Color(0, 255, 0),
+    (x, y) if y < 180 && x < 180 => Color(255, 0, 255),
+    (x, y) if y < 180 && x < 216 => Color(255, 0, 0),
+    (x, y) if y < 180 && x < 255 => Color(0, 0, 255),
+
+    (x, y) if y < 200 && x < 36 => Color(0, 0, 255),
+    (x, y) if y < 200 && x < 72 => Color(0, 0, 0),
+    (x, y) if y < 200 && x < 108 => Color(255, 0, 255),
+    (x, y) if y < 200 && x < 144 => Color(0, 0, 0),
+    (x, y) if y < 200 && x < 180 => Color(0, 255, 255),
+    (x, y) if y < 200 && x < 216 => Color(0, 0, 0),
+    (x, y) if y < 200 && x < 255 => Color(255, 255, 255),
+
+    (x, y) if y < 220 => Color(x, x, x),
+    (x, _) => {
+      let v = (x / 20) * 20;
+      Color(v, v, v)
+    }
+  }
+}
+
 fn main() {
   let sdl_context = sdl2::init().unwrap();
   let video_subsystem = sdl_context.video().unwrap();
@@ -31,19 +57,14 @@ fn main() {
   let (mut video_output, receiver) = ChannelVideoOutput::new();
 
   // TODO: Start the PPU in this thread
-  thread::spawn(move || {
-    let mut blue: u8 = 0;
-    loop {
-      // Draw pixels one by one...
-      blue = (blue + 1) % 255;
-      for y in 0..240 {
-        for x in 0..255 {
-          video_output.output_pixel(Color(x, y, blue));
-        }
-        video_output.horizontal_sync();
+  thread::spawn(move || loop {
+    for y in 0..240 {
+      for x in 0..255 {
+        video_output.output_pixel(test_picture_shader(x, y));
       }
-      video_output.vertical_sync();
+      video_output.horizontal_sync();
     }
+    video_output.vertical_sync();
   });
 
   'running: loop {

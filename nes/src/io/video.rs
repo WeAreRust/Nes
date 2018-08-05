@@ -25,12 +25,32 @@ impl VideoFrame {
   /// Write a video frame to a flat array of RGB values (eg,
   /// to raw texture data)
   pub fn write_to_buffer(&self, buf: &mut [u8], pitch: usize) {
+    let mut prev_color;
     for (y, line) in self.frame_data.iter().enumerate() {
+      prev_color = None;
       for (x, color) in line.iter().enumerate() {
         let offset: usize = (y * pitch) + x * 3;
-        buf[offset] = color.0;
-        buf[offset + 1] = color.1;
-        buf[offset + 2] = color.2;
+        let Color(mut r, mut g, mut b) = color.clone();
+
+        // Add scanline effect
+        if y % 2 == 0 {
+          r = r / 10 * 9;
+          g = g / 10 * 9;
+          b = b / 10 * 9;
+        }
+
+        // Blur colours between pixels
+        if let Some(Color(pr, pg, pb)) = prev_color {
+          r = (r / 2) + (pr / 2) + (r & pr & 1);
+          g = (g / 2) + (pg / 2) + (g & pg & 1);
+          b = (b / 2) + (pb / 2) + (b & pb & 1);
+        }
+
+        buf[offset] = r;
+        buf[offset + 1] = g;
+        buf[offset + 2] = b;
+
+        prev_color = Some(Color(r, g, b));
       }
     }
   }
