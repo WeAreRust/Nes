@@ -83,11 +83,15 @@ impl<'a> VideoOutput for SdlVideoOutput<'a> {
         }
       }).unwrap();
 
+    let (width, height) = self.canvas.output_size().unwrap();
     self.canvas.clear();
     self
       .canvas
-      .copy(&self.texture, None, Some(Rect::new(0, 0, 256, 240)))
-      .unwrap();
+      .copy(
+        &self.texture,
+        Some(Rect::new(0, 0, 255, 240)),
+        Some(Rect::new(0, 0, width, height)),
+      ).unwrap();
     self.canvas.present();
   }
 }
