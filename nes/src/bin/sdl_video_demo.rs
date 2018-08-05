@@ -13,7 +13,7 @@ fn main() {
   let mut event_pump = sdl_context.event_pump().unwrap();
 
   let window = video_subsystem
-    .window("WeAreRust Nes", 256, 240)
+    .window("WeAreRust Nes", 512, 480)
     .position_centered()
     .opengl()
     .build()
@@ -39,8 +39,8 @@ fn main() {
 
     // Draw pixels one by one...
     blue = (blue + 1) % 255;
-    for x in 0..255 {
-      for y in 0..240 {
+    for y in 0..240 {
+      for x in 0..255 {
         video_output.output_pixel(Color(x, y, blue));
       }
       video_output.horizontal_sync();
