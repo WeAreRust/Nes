@@ -16,11 +16,7 @@ macro_rules! nes_asm {
 
 #[cfg(test)]
 pub fn into_byte(num: i8) -> u8 {
-  extern crate bitreader;
-
-  let b: &[u8] = &[num as u8];
-  let mut reader = bitreader::BitReader::new(b);
-  reader.read_u8(8).unwrap()
+  num as u8
 }
 
 mod adc;
