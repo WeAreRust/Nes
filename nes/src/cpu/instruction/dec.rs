@@ -60,7 +60,7 @@ pub const ABSOLUTE_X: Instruction = Instruction {
 #[cfg(test)]
 mod tests {
   use super::*;
-  use cpu::Registers;
+  use cpu::{register::StatusFlags, Registers};
   use memory::{block::BlockMemory, ReadAddr};
 
   #[test]
@@ -77,6 +77,24 @@ mod tests {
     let mut core = Core::new(Registers::empty());
     dec(&mut core, &mut memory, 0x01);
     assert_eq!(memory.read_addr(0x01), 0xff);
+  }
+
+  #[test]
+  fn dec_impl_zero_flag() {
+    let mut memory: BlockMemory = BlockMemory::with_bytes(vec![0x01]);
+    let mut core = Core::new(Registers::empty());
+    dec(&mut core, &mut memory, 0x00);
+    assert_eq!(memory.read_addr(0x00), 0);
+    assert!(core.reg.status.contains(StatusFlags::Z_FLAG));
+  }
+
+  #[test]
+  fn dec_impl_negative_flag() {
+    let mut memory: BlockMemory = BlockMemory::with_bytes(vec![129]);
+    let mut core = Core::new(Registers::empty());
+    dec(&mut core, &mut memory, 0x00);
+    assert_eq!(memory.read_addr(0x00), 128);
+    assert!(core.reg.status.contains(StatusFlags::N_FLAG));
   }
 
   #[test]
