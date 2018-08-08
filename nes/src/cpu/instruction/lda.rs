@@ -97,14 +97,29 @@ pub const INDIRECT_Y: Instruction = Instruction {
 #[cfg(test)]
 mod tests {
   use super::*;
-  use cpu::Registers;
+  use cpu::{register::StatusFlags, Registers};
 
   #[test]
   fn lda_impl() {
     let mut core = Core::new(Registers::empty());
-    core.reg.acc = 0x00;
     lda(&mut core, 0x0F);
     assert_eq!(core.reg.acc, 0x0F);
+  }
+
+  #[test]
+  fn lda_impl_zero_flag() {
+    let mut core = Core::new(Registers::empty());
+    lda(&mut core, 0x00);
+    assert_eq!(core.reg.acc, 0x00);
+    assert!(core.reg.status.contains(StatusFlags::Z_FLAG));
+  }
+
+  #[test]
+  fn lda_impl_negative_flag() {
+    let mut core = Core::new(Registers::empty());
+    lda(&mut core, 128);
+    assert_eq!(core.reg.acc, 128);
+    assert!(core.reg.status.contains(StatusFlags::N_FLAG));
   }
 
   #[test]
