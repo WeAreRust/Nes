@@ -15,7 +15,7 @@ pub const CPU_PERIOD: u8 = 12;
 /// NTSC PPU divisor
 ///
 /// Used to calculate the frequency of the PPU = `MASTER_FREQUENCY / PPU_PERIOD`.
-pub const PPU_FREQUENCY: u8 = 4;
+pub const PPU_PERIOD: u8 = 4;
 
 // We want a value that will not be noticable to the human eye (> 24/sec),
 // will not round down to zero in sleep (< 1000/sec),

@@ -1,27 +1,35 @@
 use cartridge::Cartridge;
 use clock;
 use clock::{Clock, Processor};
+use io::video::VideoOutput;
 
 use bus::Bus;
 use controller::Controller;
-use cpu::Core;
+use cpu;
 use memory::block::BlockMemory;
+use ppu;
 
 pub struct Console<'a, C1: 'a + Controller> {
   clock: Clock,
-  cpu: Core,
+  cpu: cpu::Core,
+  ppu: ppu::Core,
   bus: Bus<'a, C1>,
   cpu_interval: u8,
   ppu_interval: u8,
 }
 
 impl<'a, C1: 'a + Controller> Console<'a, C1> {
-  pub fn new(cartridge: &'a mut Cartridge, controller1: &'a mut C1) -> Self {
+  pub fn new(
+    cartridge: &'a mut Cartridge,
+    controller1: &'a mut C1,
+    video_output: impl VideoOutput + 'static,
+  ) -> Self {
     let ram: Box<BlockMemory> = Box::new(BlockMemory::with_size(0x0800));
 
     Self {
       clock: Clock::new(),
-      cpu: Core::default(),
+      cpu: cpu::Core::default(),
+      ppu: ppu::Core::new(Box::new(video_output)),
       bus: Bus::new(cartridge, ram, controller1),
       cpu_interval: 0,
       ppu_interval: 0,
@@ -43,9 +51,9 @@ impl<'a, C1: 'a + Controller> Console<'a, C1> {
       self.cpu.cycle(&mut self.bus);
     }
 
-    if self.ppu_interval == clock::PPU_FREQUENCY {
+    if self.ppu_interval == clock::PPU_PERIOD {
       self.ppu_interval = 0;
-      // TODO: ppu.cycle()
+      self.ppu.cycle(&mut self.bus);
     }
   }
 }

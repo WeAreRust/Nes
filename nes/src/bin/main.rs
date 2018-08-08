@@ -8,6 +8,7 @@ use std::sync::mpsc;
 
 use nes::console::Console;
 use nes::controller::joypad;
+use nes::io::video;
 use sdl2::keyboard::Keycode;
 
 fn main() {
@@ -51,8 +52,9 @@ fn main() {
 
   let (event_tx, event_rx) = mpsc::channel();
   let mut controller = joypad::Joypad::new(event_rx);
+  let (video_output, _receiver) = video::ChannelVideoOutput::new();
 
-  let mut console = Console::new(&mut cartridge, &mut controller);
+  let mut console = Console::new(&mut cartridge, &mut controller, video_output);
   console.reset();
 
   // Run the controller loop
