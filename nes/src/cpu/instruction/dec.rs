@@ -10,7 +10,11 @@ use memory::WriteAddr;
 /// Flags affected: N, Z
 #[inline(always)]
 fn dec(core: &mut Core, memory: &mut WriteAddr, address: u16) {
-  // TODO: implementation
+  let value = u8::wrapping_sub(memory.read_addr(address), 1);
+  memory.write_addr(address, value);
+
+  core.reg.status.set_zero(value);
+  core.reg.status.set_negative(value);
 }
 
 /// Decrement memory by one zero page
@@ -57,11 +61,22 @@ pub const ABSOLUTE_X: Instruction = Instruction {
 mod tests {
   use super::*;
   use cpu::Registers;
+  use memory::{block::BlockMemory, ReadAddr};
 
   #[test]
   fn dec_impl() {
+    let mut memory: BlockMemory = BlockMemory::with_bytes(vec![0x00, 0xff]);
     let mut core = Core::new(Registers::empty());
-    // TODO: test
+    dec(&mut core, &mut memory, 0x01);
+    assert_eq!(memory.read_addr(0x01), 0xfe);
+  }
+
+  #[test]
+  fn dec_impl_overflow() {
+    let mut memory: BlockMemory = BlockMemory::with_bytes(vec![0x00, 0x00]);
+    let mut core = Core::new(Registers::empty());
+    dec(&mut core, &mut memory, 0x01);
+    assert_eq!(memory.read_addr(0x01), 0xff);
   }
 
   #[test]
