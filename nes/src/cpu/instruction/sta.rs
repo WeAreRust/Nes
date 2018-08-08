@@ -20,7 +20,7 @@ pub const ZERO_PAGE: Instruction = Instruction {
   opcode: 0x85,
   cycles: 3,
   extra_cycle: ExtraCycle::None,
-  operation: Operation::Zeropage(Function::Address(&sta)),
+  operation: Operation::ZeroPage(Function::Address(&sta)),
 };
 
 /// Store accumulator in memory
@@ -30,7 +30,7 @@ pub const ZERO_PAGE_X: Instruction = Instruction {
   opcode: 0x95,
   cycles: 4,
   extra_cycle: ExtraCycle::None,
-  operation: Operation::ZeropageX(Function::Address(&sta)),
+  operation: Operation::ZeroPageX(Function::Address(&sta)),
 };
 
 /// Store accumulator in memory

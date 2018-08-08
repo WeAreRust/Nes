@@ -37,7 +37,7 @@ pub const ZERO_PAGE: Instruction = Instruction {
   opcode: 0x65,
   cycles: 3,
   extra_cycle: ExtraCycle::None,
-  operation: Operation::Zeropage(Function::Value(&adc)),
+  operation: Operation::ZeroPage(Function::Value(&adc)),
 };
 
 /// Add memory to accumulator with carry zero page X
@@ -47,7 +47,7 @@ pub const ZERO_PAGE_X: Instruction = Instruction {
   opcode: 0x75,
   cycles: 4,
   extra_cycle: ExtraCycle::None,
-  operation: Operation::ZeropageX(Function::Value(&adc)),
+  operation: Operation::ZeroPageX(Function::Value(&adc)),
 };
 
 /// Add memory to accumulator with carry absolute

@@ -38,7 +38,7 @@ pub const ZERO_PAGE: Instruction = Instruction {
   opcode: 0x26,
   cycles: 5,
   extra_cycle: ExtraCycle::None,
-  operation: Operation::Zeropage(Function::Address(&rol_memory)),
+  operation: Operation::ZeroPage(Function::Address(&rol_memory)),
 };
 
 /// Rotate memory one bit left
@@ -48,7 +48,7 @@ pub const ZERO_PAGE_X: Instruction = Instruction {
   opcode: 0x36,
   cycles: 6,
   extra_cycle: ExtraCycle::None,
-  operation: Operation::ZeropageX(Function::Address(&rol_memory)),
+  operation: Operation::ZeroPageX(Function::Address(&rol_memory)),
 };
 
 /// Rotate memory one bit left

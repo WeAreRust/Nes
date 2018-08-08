@@ -29,7 +29,7 @@ pub const ZERO_PAGE: Instruction = Instruction {
   opcode: 0xa6,
   cycles: 3,
   extra_cycle: ExtraCycle::None,
-  operation: Operation::Zeropage(Function::Value(&ldx)),
+  operation: Operation::ZeroPage(Function::Value(&ldx)),
 };
 
 /// Load index x with memory
@@ -39,7 +39,7 @@ pub const ZERO_PAGE_Y: Instruction = Instruction {
   opcode: 0xb6,
   cycles: 4,
   extra_cycle: ExtraCycle::None,
-  operation: Operation::ZeropageY(Function::Value(&ldx)),
+  operation: Operation::ZeroPageY(Function::Value(&ldx)),
 };
 
 /// Load index x with memory

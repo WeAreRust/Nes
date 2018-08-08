@@ -29,7 +29,7 @@ pub const ZERO_PAGE: Instruction = Instruction {
   opcode: 0x06,
   cycles: 5,
   extra_cycle: ExtraCycle::None,
-  operation: Operation::Zeropage(Function::Value(&asl)),
+  operation: Operation::ZeroPage(Function::Value(&asl)),
 };
 
 /// Shift memory left one bit zero page X
@@ -39,7 +39,7 @@ pub const ZERO_PAGE_X: Instruction = Instruction {
   opcode: 0x16,
   cycles: 6,
   extra_cycle: ExtraCycle::None,
-  operation: Operation::ZeropageX(Function::Value(&asl)),
+  operation: Operation::ZeroPageX(Function::Value(&asl)),
 };
 
 /// Shift memory left one bit absolute

@@ -20,7 +20,7 @@ pub const ZERO_PAGE: Instruction = Instruction {
   opcode: 0x86,
   cycles: 3,
   extra_cycle: ExtraCycle::None,
-  operation: Operation::Zeropage(Function::Address(&stx)),
+  operation: Operation::ZeroPage(Function::Address(&stx)),
 };
 
 /// Store index x in memory
@@ -30,7 +30,7 @@ pub const ZERO_PAGE_Y: Instruction = Instruction {
   opcode: 0x96,
   cycles: 4,
   extra_cycle: ExtraCycle::None,
-  operation: Operation::ZeropageY(Function::Address(&stx)),
+  operation: Operation::ZeroPageY(Function::Address(&stx)),
 };
 
 /// Store index x in memory

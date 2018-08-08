@@ -31,7 +31,7 @@ pub const ZERO_PAGE: Instruction = Instruction {
   opcode: 0xa5,
   cycles: 3,
   extra_cycle: ExtraCycle::None,
-  operation: Operation::Zeropage(Function::Value(&lda)),
+  operation: Operation::ZeroPage(Function::Value(&lda)),
 };
 
 /// Load accumulator zero page X
@@ -41,7 +41,7 @@ pub const ZERO_PAGE_X: Instruction = Instruction {
   opcode: 0xb5,
   cycles: 2,
   extra_cycle: ExtraCycle::None,
-  operation: Operation::ZeropageX(Function::Value(&lda)),
+  operation: Operation::ZeroPageX(Function::Value(&lda)),
 };
 
 /// Load accumulator absolute

@@ -24,7 +24,7 @@ pub const ZERO_PAGE: Instruction = Instruction {
   opcode: 0xe6,
   cycles: 5,
   extra_cycle: ExtraCycle::None,
-  operation: Operation::Zeropage(Function::Address(&inc)),
+  operation: Operation::ZeroPage(Function::Address(&inc)),
 };
 
 /// Increment memory by one
@@ -34,7 +34,7 @@ pub const ZERO_PAGE_X: Instruction = Instruction {
   opcode: 0xf6,
   cycles: 6,
   extra_cycle: ExtraCycle::None,
-  operation: Operation::ZeropageX(Function::Address(&inc)),
+  operation: Operation::ZeroPageX(Function::Address(&inc)),
 };
 
 /// Increment memory by one

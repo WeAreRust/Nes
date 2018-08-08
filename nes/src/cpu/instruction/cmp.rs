@@ -29,7 +29,7 @@ pub const ZERO_PAGE: Instruction = Instruction {
   opcode: 0xc5,
   cycles: 3,
   extra_cycle: ExtraCycle::None,
-  operation: Operation::Zeropage(Function::Value(&cmp)),
+  operation: Operation::ZeroPage(Function::Value(&cmp)),
 };
 
 /// Compare memory with accumulator zero page X
@@ -39,7 +39,7 @@ pub const ZERO_PAGE_X: Instruction = Instruction {
   opcode: 0xd5,
   cycles: 4,
   extra_cycle: ExtraCycle::None,
-  operation: Operation::ZeropageX(Function::Value(&cmp)),
+  operation: Operation::ZeroPageX(Function::Value(&cmp)),
 };
 
 /// Compare memory with accumulator absolute

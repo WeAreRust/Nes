@@ -24,7 +24,7 @@ pub const ZERO_PAGE: Instruction = Instruction {
   opcode: 0xc6,
   cycles: 5,
   extra_cycle: ExtraCycle::None,
-  operation: Operation::Zeropage(Function::Address(&dec)),
+  operation: Operation::ZeroPage(Function::Address(&dec)),
 };
 
 /// Decrement memory by one zero page X
@@ -34,7 +34,7 @@ pub const ZERO_PAGE_X: Instruction = Instruction {
   opcode: 0xd6,
   cycles: 6,
   extra_cycle: ExtraCycle::None,
-  operation: Operation::ZeropageX(Function::Address(&dec)),
+  operation: Operation::ZeroPageX(Function::Address(&dec)),
 };
 
 /// Decrement memory by one absolute

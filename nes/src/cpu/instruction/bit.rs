@@ -20,7 +20,7 @@ pub const ZERO_PAGE: Instruction = Instruction {
   opcode: 0x24,
   cycles: 3,
   extra_cycle: ExtraCycle::None,
-  operation: Operation::Zeropage(Function::Value(&bit)),
+  operation: Operation::ZeroPage(Function::Value(&bit)),
 };
 
 /// Test bits in memory with accumulator absolute

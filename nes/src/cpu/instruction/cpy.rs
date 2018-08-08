@@ -29,7 +29,7 @@ pub const ZERO_PAGE: Instruction = Instruction {
   opcode: 0xc4,
   cycles: 3,
   extra_cycle: ExtraCycle::None,
-  operation: Operation::Zeropage(Function::Value(&cpy)),
+  operation: Operation::ZeroPage(Function::Value(&cpy)),
 };
 
 /// Compare memory with index y absolute

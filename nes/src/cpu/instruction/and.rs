@@ -32,7 +32,7 @@ pub const ZERO_PAGE: Instruction = Instruction {
   opcode: 0x25,
   cycles: 3,
   extra_cycle: ExtraCycle::None,
-  operation: Operation::Zeropage(Function::Value(&and)),
+  operation: Operation::ZeroPage(Function::Value(&and)),
 };
 
 /// AND memory with accumulator zero page X
@@ -42,7 +42,7 @@ pub const ZERO_PAGE_X: Instruction = Instruction {
   opcode: 0x35,
   cycles: 4,
   extra_cycle: ExtraCycle::None,
-  operation: Operation::ZeropageX(Function::Value(&and)),
+  operation: Operation::ZeroPageX(Function::Value(&and)),
 };
 
 /// AND memory with accumulator absolute

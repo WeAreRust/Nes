@@ -29,7 +29,7 @@ pub const ZERO_PAGE: Instruction = Instruction {
   opcode: 0xe5,
   cycles: 3,
   extra_cycle: ExtraCycle::None,
-  operation: Operation::Zeropage(Function::Value(&sbc)),
+  operation: Operation::ZeroPage(Function::Value(&sbc)),
 };
 
 /// Subtract memory from accumulator with borrow
@@ -39,7 +39,7 @@ pub const ZERO_PAGE_X: Instruction = Instruction {
   opcode: 0xf5,
   cycles: 4,
   extra_cycle: ExtraCycle::None,
-  operation: Operation::ZeropageX(Function::Value(&sbc)),
+  operation: Operation::ZeroPageX(Function::Value(&sbc)),
 };
 
 /// Subtract memory from accumulator with borrow

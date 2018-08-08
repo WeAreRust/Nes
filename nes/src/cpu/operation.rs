@@ -90,26 +90,26 @@ pub enum Operation {
   /// branch target is PC + signed offset BB ***
   Relative(Function),
 
-  /// Zeropage (zpg)
+  /// ZeroPage (zpg)
   ///
   /// OPC $LL
   ///
   /// operand is zeropage address (hi-byte is zero, address = $00LL)
-  Zeropage(Function),
+  ZeroPage(Function),
 
-  /// Zeropage, X-indexed (zpg,X)
+  /// ZeroPage, X-indexed (zpg,X)
   ///
   /// OPC $LL,X
   ///
   /// operand is zeropage address; effective address is address incremented by X without carry **
-  ZeropageX(Function),
+  ZeroPageX(Function),
 
-  /// Zeropage, Y-indexed (zpg,Y)
+  /// ZeroPage, Y-indexed (zpg,Y)
   ///
   /// OPC $LL,Y
   ///
   /// operand is zeropage address; effective address is address incremented by Y without carry **
-  ZeropageY(Function),
+  ZeroPageY(Function),
 }
 
 impl Operation {
@@ -159,17 +159,17 @@ impl Operation {
         func.call(core, memory, addr);
       }
 
-      Operation::Zeropage(func) => {
+      Operation::ZeroPage(func) => {
         let addr = core.zero_page_addr(memory);
         func.call(core, memory, addr);
       }
 
-      Operation::ZeropageX(func) => {
+      Operation::ZeroPageX(func) => {
         let addr = core.zero_page_addr_x(memory);
         func.call(core, memory, addr);
       }
 
-      Operation::ZeropageY(func) => {
+      Operation::ZeroPageY(func) => {
         let addr = core.zero_page_addr_y(memory);
         func.call(core, memory, addr);
       }
