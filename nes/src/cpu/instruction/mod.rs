@@ -14,6 +14,15 @@ macro_rules! nes_asm {
   }};
 }
 
+#[cfg(test)]
+pub fn into_byte(num: i8) -> u8 {
+  extern crate bitreader;
+
+  let b: &[u8] = &[num as u8];
+  let mut reader = bitreader::BitReader::new(b);
+  reader.read_u8(8).unwrap()
+}
+
 mod adc;
 mod and;
 mod asl;
@@ -308,5 +317,12 @@ mod tests {
 
     assert!(!is_upper_page_boundary(0x30fe));
     assert!(!is_upper_page_boundary(0x3100));
+  }
+
+  #[test]
+  fn into_byte_test() {
+    assert_eq!(into_byte(0), 0b00000000);
+    assert_eq!(into_byte(3), 0b00000011);
+    assert_eq!(into_byte(-28), 0b11100100);
   }
 }
