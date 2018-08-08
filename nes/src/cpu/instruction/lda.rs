@@ -9,6 +9,9 @@ use cpu::{
 /// Flags affected: N, Z
 fn lda(core: &mut Core, operand: u8) {
   core.reg.acc = operand;
+
+  core.reg.status.set_negative(core.reg.acc);
+  core.reg.status.set_zero(core.reg.acc);
 }
 
 /// Load accumulator immediate

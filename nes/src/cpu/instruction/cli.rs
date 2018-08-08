@@ -1,6 +1,7 @@
 use cpu::{
   instruction::{ExtraCycle, Instruction},
   operation::Operation,
+  register::StatusFlags,
   Core,
 };
 
@@ -9,7 +10,7 @@ use cpu::{
 /// Flags affected: I
 #[inline(always)]
 fn cli(core: &mut Core) {
-  // TODO: implementation
+  core.reg.status.set(StatusFlags::I_FLAG, false)
 }
 
 /// Clear interrupt disable bit
@@ -30,7 +31,9 @@ mod tests {
   #[test]
   fn cli_impl() {
     let mut core = Core::new(Registers::empty());
-    // TODO: test
+    core.reg.status.set(StatusFlags::I_FLAG, true);
+    cli(&mut core);
+    assert!(!core.reg.status.contains(StatusFlags::I_FLAG));
   }
 
   #[test]

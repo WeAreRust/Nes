@@ -10,6 +10,7 @@ use cpu::{
 #[inline(always)]
 fn and(core: &mut Core, operand: u8) {
   core.reg.acc &= operand;
+
   core.reg.status.set_negative(core.reg.acc);
   core.reg.status.set_zero(core.reg.acc);
 }

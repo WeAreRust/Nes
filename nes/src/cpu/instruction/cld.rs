@@ -1,6 +1,7 @@
 use cpu::{
   instruction::{ExtraCycle, Instruction},
   operation::Operation,
+  register::StatusFlags,
   Core,
 };
 
@@ -9,7 +10,7 @@ use cpu::{
 /// Flags affected: D
 #[inline(always)]
 fn cld(core: &mut Core) {
-  // TODO: implementation
+  core.reg.status.set(StatusFlags::D_FLAG, false)
 }
 
 /// Clear decimal mode
@@ -30,7 +31,9 @@ mod tests {
   #[test]
   fn cld_impl() {
     let mut core = Core::new(Registers::empty());
-    // TODO: test
+    core.reg.status.set(StatusFlags::D_FLAG, true);
+    cld(&mut core);
+    assert!(!core.reg.status.contains(StatusFlags::D_FLAG));
   }
 
   #[test]

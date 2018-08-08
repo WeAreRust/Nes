@@ -1,6 +1,7 @@
 use cpu::{
   instruction::{ExtraCycle, Instruction},
   operation::Operation,
+  register::StatusFlags,
   Core,
 };
 
@@ -9,7 +10,7 @@ use cpu::{
 /// Flags affected: C
 #[inline(always)]
 fn clc(core: &mut Core) {
-  // TODO: implementation
+  core.reg.status.set(StatusFlags::C_FLAG, false)
 }
 
 /// Clear carry flag
@@ -30,7 +31,9 @@ mod tests {
   #[test]
   fn clc_impl() {
     let mut core = Core::new(Registers::empty());
-    // TODO: test
+    core.reg.status.set(StatusFlags::C_FLAG, true);
+    clc(&mut core);
+    assert!(!core.reg.status.contains(StatusFlags::C_FLAG));
   }
 
   #[test]
