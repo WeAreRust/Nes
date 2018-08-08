@@ -86,9 +86,25 @@ bitflags! {
 }
 
 impl StatusFlags {
+  /// Carry flag is... 9th bit of u16...
+  pub fn set_carry(&mut self, result: u16) {
+    self.set(Self::C_FLAG, ((result >> 8) & 1) == 1);
+  }
+
   /// Zero flag is set if the result of the last operation as was zero
   pub fn set_zero(&mut self, result: u8) {
     self.set(Self::Z_FLAG, result == 0)
+  }
+
+  /// Overflow flag is... out of range [-128, 127]...
+  ///
+  /// http://www.righto.com/2012/12/the-6502-overflow-flag-explained.html The definition of the
+  /// 6502 overflow flag is that it is set if the result of a signed addition or subtraction
+  /// doesn't fit into a signed byte. That is, overflow occurs if the result is > 127 or < -128.
+  /// The symptom of this is adding two positive numbers and getting a negative result or adding
+  /// two negative numbers and getting a positive result.
+  pub fn set_overflow(&mut self, result: u16) {
+    self.set(Self::V_FLAG, result > 127 || (result as i16) < -128);
   }
 
   /// Negative flag is set if the result of the last operation had bit 7 set to 1
@@ -115,6 +131,22 @@ mod tests {
   }
 
   #[test]
+  fn carry_flag_hi() {
+    let mut flags = StatusFlags::empty();
+    flags.set_carry(0b0000_0001_1111_1110);
+
+    assert!(flags.contains(StatusFlags::C_FLAG));
+  }
+
+  #[test]
+  fn carry_flag_lo() {
+    let mut flags = StatusFlags::empty();
+    flags.set_carry(0b0000_0000_1111_1110);
+
+    assert!(!flags.contains(StatusFlags::C_FLAG));
+  }
+
+  #[test]
   fn zero_flag_hi() {
     let mut flags = StatusFlags::empty();
     flags.set_zero(0);
@@ -128,6 +160,30 @@ mod tests {
     flags.set_zero(1);
 
     assert!(!flags.contains(StatusFlags::Z_FLAG));
+  }
+
+  #[test]
+  fn overflow_flag_hi_over() {
+    let mut flags = StatusFlags::empty();
+    flags.set_overflow(128);
+
+    assert!(flags.contains(StatusFlags::V_FLAG));
+  }
+
+  #[test]
+  fn overflow_flag_hi_under() {
+    let mut flags = StatusFlags::empty();
+    flags.set_overflow(-129i16 as u16);
+
+    assert!(flags.contains(StatusFlags::V_FLAG));
+  }
+
+  #[test]
+  fn overflow_flag_lo() {
+    let mut flags = StatusFlags::empty();
+    flags.set_overflow(1);
+
+    assert!(!flags.contains(StatusFlags::V_FLAG));
   }
 
   #[test]
