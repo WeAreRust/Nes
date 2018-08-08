@@ -1,8 +1,4 @@
 [workspace]
 members = [
     "nes",
-    "derives",
 ]
-
-[patch.crates-io]
-nes-derives = { path = "derives" }
