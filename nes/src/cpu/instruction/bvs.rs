@@ -3,12 +3,13 @@ use cpu::{
   operation::{Function, Operation},
   Core,
 };
+use memory::WriteAddr;
 
 /// Brank on overflow set
 ///
 /// Flags affected: none
 #[inline(always)]
-fn bvs(core: &mut Core, address: u16) {
+fn bvs(core: &mut Core, memory: &mut WriteAddr, address: u16) {
   // TODO: implementation
   unimplemented!();
 }

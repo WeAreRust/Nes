@@ -3,12 +3,13 @@ use cpu::{
   operation::{Function, Operation},
   Core,
 };
+use memory::WriteAddr;
 
 /// Jump to address
 ///
 /// Flags affected: None
 #[inline(always)]
-fn jump(core: &mut Core, address: u16) {
+fn jump(core: &mut Core, memory: &mut WriteAddr, address: u16) {
   core.reg.pc = address;
 }
 

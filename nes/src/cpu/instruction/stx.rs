@@ -3,12 +3,13 @@ use cpu::{
   operation::{Function, Operation},
   Core,
 };
+use memory::WriteAddr;
 
 /// Store index x in memory
 ///
 /// Flags affected: None
 #[inline(always)]
-fn stx(core: &mut Core, address: u16) {
+fn stx(core: &mut Core, memory: &mut WriteAddr, address: u16) {
   // TODO: implementation
 }
 

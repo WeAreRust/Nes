@@ -3,12 +3,13 @@ use cpu::{
   operation::{Function, Operation},
   Core,
 };
+use memory::WriteAddr;
 
 /// Decrement memory by one
 ///
 /// Flags affected: N, Z
 #[inline(always)]
-fn dec(core: &mut Core, address: u16) {
+fn dec(core: &mut Core, memory: &mut WriteAddr, address: u16) {
   // TODO: implementation
 }
 

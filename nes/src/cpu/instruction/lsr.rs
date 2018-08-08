@@ -3,6 +3,7 @@ use cpu::{
   operation::{Function, Operation},
   Core,
 };
+use memory::WriteAddr;
 
 /// Shift accumulator one bit right
 ///
@@ -16,7 +17,7 @@ fn lsr_acc(core: &mut Core, _operand: u8) {
 ///
 /// Flags affected: Z, C
 #[inline(always)]
-fn lsr_memory(core: &mut Core, address: u16) {
+fn lsr_memory(core: &mut Core, memory: &mut WriteAddr, address: u16) {
   // TODO: implementation
 }
 

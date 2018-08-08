@@ -3,12 +3,13 @@ use cpu::{
   operation::{Function, Operation},
   Core,
 };
+use memory::WriteAddr;
 
 /// Increment memory by one
 ///
 /// Flags affected: N, Z
 #[inline(always)]
-fn inc(core: &mut Core, address: u16) {
+fn inc(core: &mut Core, memory: &mut WriteAddr, address: u16) {
   // TODO: implementation
 }
 

@@ -3,12 +3,13 @@ use cpu::{
   operation::{Function, Operation},
   Core,
 };
+use memory::WriteAddr;
 
 /// Branch on result not negative
 ///
 /// Flags affected: none
 #[inline(always)]
-fn bpl(core: &mut Core, address: u16) {
+fn bpl(core: &mut Core, memory: &mut WriteAddr, address: u16) {
   // TODO: implementation
   unimplemented!();
 }

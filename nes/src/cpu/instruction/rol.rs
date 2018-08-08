@@ -3,6 +3,7 @@ use cpu::{
   operation::{Function, Operation},
   Core,
 };
+use memory::WriteAddr;
 
 /// Rotate accumulator one bit left
 ///
@@ -16,7 +17,7 @@ fn rol_acc(core: &mut Core, _operand: u8) {
 ///
 /// Flags affected: N, Z, C
 #[inline(always)]
-fn rol_memory(core: &mut Core, address: u16) {
+fn rol_memory(core: &mut Core, memory: &mut WriteAddr, address: u16) {
   // TODO: implementation
 }
 

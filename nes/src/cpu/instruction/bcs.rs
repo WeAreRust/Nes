@@ -3,12 +3,13 @@ use cpu::{
   operation::{Function, Operation},
   Core,
 };
+use memory::WriteAddr;
 
 /// Branch on carry set
 ///
 /// Flags affected: none
 #[inline(always)]
-fn bcs(core: &mut Core, address: u16) {
+fn bcs(core: &mut Core, memory: &mut WriteAddr, address: u16) {
   // TODO: implementation
   unimplemented!();
 }

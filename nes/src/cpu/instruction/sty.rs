@@ -3,12 +3,13 @@ use cpu::{
   operation::{Function, Operation},
   Core,
 };
+use memory::WriteAddr;
 
 /// Store index y in memory
 ///
 /// Flags affected: None
 #[inline(always)]
-fn sty(core: &mut Core, address: u16) {
+fn sty(core: &mut Core, memory: &mut WriteAddr, address: u16) {
   // TODO: implementation
 }
 

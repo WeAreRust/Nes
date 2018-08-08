@@ -3,12 +3,13 @@ use cpu::{
   operation::{Function, Operation},
   Core,
 };
+use memory::WriteAddr;
 
 /// Brank on overflow clear
 ///
 /// Flags affected: none
 #[inline(always)]
-fn bvc(core: &mut Core, address: u16) {
+fn bvc(core: &mut Core, memory: &mut WriteAddr, address: u16) {
   // TODO: implementation
   unimplemented!();
 }

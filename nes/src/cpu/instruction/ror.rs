@@ -3,6 +3,7 @@ use cpu::{
   operation::{Function, Operation},
   Core,
 };
+use memory::WriteAddr;
 
 /// Rotate accumulator one bit right
 ///
@@ -16,7 +17,7 @@ fn ror_acc(core: &mut Core, _operand: u8) {
 ///
 /// Flags affected: N, Z, C
 #[inline(always)]
-fn ror_memory(core: &mut Core, address: u16) {
+fn ror_memory(core: &mut Core, memory: &mut WriteAddr, address: u16) {
   // TODO: implementation
 }
 

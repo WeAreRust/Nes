@@ -2,7 +2,7 @@ use cpu::Core;
 use memory::{ReadAddr, WriteAddr};
 
 type ImpliedFunction = &'static Fn(&mut Core);
-type AddressFunction = &'static Fn(&mut Core, u16);
+type AddressFunction = &'static Fn(&mut Core, &mut WriteAddr, u16);
 type ValueFunction = &'static Fn(&mut Core, u8);
 
 pub enum Function {
@@ -11,10 +11,10 @@ pub enum Function {
 }
 
 impl Function {
-  pub fn call(&self, core: &mut Core, memory: &mut ReadAddr, address: u16) {
+  pub fn call(&self, core: &mut Core, memory: &mut WriteAddr, address: u16) {
     match self {
       Function::Value(func) => func(core, memory.read_addr(address)),
-      Function::Address(func) => func(core, address),
+      Function::Address(func) => func(core, memory, address),
     }
   }
 }

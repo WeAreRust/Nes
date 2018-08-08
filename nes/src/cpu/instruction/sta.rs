@@ -3,12 +3,13 @@ use cpu::{
   operation::{Function, Operation},
   Core,
 };
+use memory::WriteAddr;
 
 /// Store accumulator in memory
 ///
 /// Flags affected: None
 #[inline(always)]
-fn sta(core: &mut Core, address: u16) {
+fn sta(core: &mut Core, memory: &mut WriteAddr, address: u16) {
   // TODO: implementation
 }
 
