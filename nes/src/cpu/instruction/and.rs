@@ -1,5 +1,5 @@
 use cpu::{
-  instruction::Instruction,
+  instruction::{ExtraCycle, Instruction},
   operation::{Function, Operation},
   Core,
 };
@@ -20,7 +20,7 @@ fn and(core: &mut Core, operand: u8) {
 pub const IMMEDIATE: Instruction = Instruction {
   opcode: 0x29,
   cycles: 2,
-  page_boundary_extra_cycle: false,
+  extra_cycle: ExtraCycle::None,
   operation: Operation::Immediate(&and),
 };
 
@@ -30,7 +30,7 @@ pub const IMMEDIATE: Instruction = Instruction {
 pub const ZERO_PAGE: Instruction = Instruction {
   opcode: 0x25,
   cycles: 3,
-  page_boundary_extra_cycle: false,
+  extra_cycle: ExtraCycle::None,
   operation: Operation::Zeropage(Function::Value(&and)),
 };
 
@@ -40,7 +40,7 @@ pub const ZERO_PAGE: Instruction = Instruction {
 pub const ZERO_PAGE_X: Instruction = Instruction {
   opcode: 0x35,
   cycles: 4,
-  page_boundary_extra_cycle: false,
+  extra_cycle: ExtraCycle::None,
   operation: Operation::ZeropageX(Function::Value(&and)),
 };
 
@@ -50,7 +50,7 @@ pub const ZERO_PAGE_X: Instruction = Instruction {
 pub const ABSOLUTE: Instruction = Instruction {
   opcode: 0x2d,
   cycles: 4,
-  page_boundary_extra_cycle: false,
+  extra_cycle: ExtraCycle::None,
   operation: Operation::Absolute(Function::Value(&and)),
 };
 
@@ -60,7 +60,7 @@ pub const ABSOLUTE: Instruction = Instruction {
 pub const ABSOLUTE_X: Instruction = Instruction {
   opcode: 0x3d,
   cycles: 4,
-  page_boundary_extra_cycle: true,
+  extra_cycle: ExtraCycle::Boundary,
   operation: Operation::AbsoluteX(Function::Value(&and)),
 };
 
@@ -70,7 +70,7 @@ pub const ABSOLUTE_X: Instruction = Instruction {
 pub const ABSOLUTE_Y: Instruction = Instruction {
   opcode: 0x39,
   cycles: 4,
-  page_boundary_extra_cycle: true,
+  extra_cycle: ExtraCycle::Boundary,
   operation: Operation::AbsoluteY(Function::Value(&and)),
 };
 
@@ -80,7 +80,7 @@ pub const ABSOLUTE_Y: Instruction = Instruction {
 pub const INDIRECT_X: Instruction = Instruction {
   opcode: 0x21,
   cycles: 6,
-  page_boundary_extra_cycle: false,
+  extra_cycle: ExtraCycle::None,
   operation: Operation::IndirectX(Function::Value(&and)),
 };
 
@@ -90,7 +90,7 @@ pub const INDIRECT_X: Instruction = Instruction {
 pub const INDIRECT_Y: Instruction = Instruction {
   opcode: 0x31,
   cycles: 5,
-  page_boundary_extra_cycle: true,
+  extra_cycle: ExtraCycle::Boundary,
   operation: Operation::IndirectY(Function::Value(&and)),
 };
 
