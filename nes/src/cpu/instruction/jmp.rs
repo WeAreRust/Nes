@@ -41,12 +41,14 @@ pub const INDIRECT: Instruction = Instruction {
 mod tests {
   use super::*;
   use cpu::Registers;
+  use memory::block::BlockMemory;
 
   #[test]
   fn jump_impl() {
+    let mut memory: BlockMemory = BlockMemory::with_size(0);
     let mut core = Core::new(Registers::empty());
     core.reg.pc = 0x0001;
-    jump(&mut core, 0x000F);
+    jump(&mut core, &mut memory, 0x000F);
     assert_eq!(core.reg.pc, 0x000F);
   }
 
