@@ -1,6 +1,7 @@
 use cpu::{
   instruction::{ExtraCycle, Instruction},
   operation::Operation,
+  register::StatusFlags,
   Core,
 };
 
@@ -9,7 +10,7 @@ use cpu::{
 /// Flags affected: I
 #[inline(always)]
 fn sei(core: &mut Core) {
-  // TODO: implementation
+  core.reg.status.set(StatusFlags::I_FLAG, true)
 }
 
 /// Set interrupt disable status
@@ -30,7 +31,8 @@ mod tests {
   #[test]
   fn sei_impl() {
     let mut core = Core::new(Registers::empty());
-    // TODO: test
+    sei(&mut core);
+    assert!(core.reg.status.contains(StatusFlags::I_FLAG));
   }
 
   #[test]
