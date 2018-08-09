@@ -9,7 +9,10 @@ use cpu::{
 /// Flags affected: N, Z
 #[inline(always)]
 fn dey(core: &mut Core) {
-  // TODO: implementation
+  core.reg.y_idx = core.reg.y_idx.wrapping_sub(1);
+
+  core.reg.status.set_zero(core.reg.y_idx);
+  core.reg.status.set_negative(core.reg.y_idx);
 }
 
 /// Decrement indey y by one
@@ -25,12 +28,39 @@ pub const IMPLIED: Instruction = Instruction {
 #[cfg(test)]
 mod tests {
   use super::*;
-  use cpu::Registers;
+  use cpu::{register::StatusFlags, Registers};
 
   #[test]
   fn dey_impl() {
     let mut core = Core::new(Registers::empty());
-    // TODO: test
+    core.reg.y_idx = 0xff;
+    dey(&mut core);
+    assert_eq!(core.reg.y_idx, 0xfe);
+  }
+
+  #[test]
+  fn dey_impl_overflow() {
+    let mut core = Core::new(Registers::empty());
+    dey(&mut core);
+    assert_eq!(core.reg.y_idx, 0xff);
+  }
+
+  #[test]
+  fn dey_impl_zero_flag() {
+    let mut core = Core::new(Registers::empty());
+    core.reg.y_idx = 1;
+    dey(&mut core);
+    assert_eq!(core.reg.y_idx, 0);
+    assert!(core.reg.status.contains(StatusFlags::Z_FLAG));
+  }
+
+  #[test]
+  fn dey_impl_negative_flag() {
+    let mut core = Core::new(Registers::empty());
+    core.reg.y_idx = 129;
+    dey(&mut core);
+    assert_eq!(core.reg.y_idx, 128);
+    assert!(core.reg.status.contains(StatusFlags::N_FLAG));
   }
 
   #[test]
