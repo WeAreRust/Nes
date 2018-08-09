@@ -8,7 +8,12 @@ use cpu::{
 ///
 /// Flags affected: N, Z
 #[inline(always)]
-fn inx(_core: &mut Core) {}
+fn inx(core: &mut Core) {
+  core.reg.x_idx = core.reg.x_idx.wrapping_add(1);
+
+  core.reg.status.set_zero(core.reg.x_idx);
+  core.reg.status.set_negative(core.reg.x_idx);
+}
 
 /// Increment index x by one
 ///
@@ -23,6 +28,40 @@ pub const IMPLIED: Instruction = Instruction {
 #[cfg(test)]
 mod tests {
   use super::*;
+  use cpu::{register::StatusFlags, Registers};
+
+  #[test]
+  fn inx_impl() {
+    let mut core = Core::new(Registers::empty());
+    inx(&mut core);
+    assert_eq!(core.reg.x_idx, 1);
+  }
+
+  #[test]
+  fn inx_impl_overflow() {
+    let mut core = Core::new(Registers::empty());
+    core.reg.x_idx = 0xff;
+    inx(&mut core);
+    assert_eq!(core.reg.x_idx, 0);
+  }
+
+  #[test]
+  fn inx_impl_zero_flag() {
+    let mut core = Core::new(Registers::empty());
+    core.reg.x_idx = 0xff;
+    inx(&mut core);
+    assert_eq!(core.reg.x_idx, 0);
+    assert!(core.reg.status.contains(StatusFlags::Z_FLAG));
+  }
+
+  #[test]
+  fn inx_impl_negative_flag() {
+    let mut core = Core::new(Registers::empty());
+    core.reg.x_idx = 127;
+    inx(&mut core);
+    assert_eq!(core.reg.x_idx, 128);
+    assert!(core.reg.status.contains(StatusFlags::N_FLAG));
+  }
 
   #[test]
   fn opcode() {
