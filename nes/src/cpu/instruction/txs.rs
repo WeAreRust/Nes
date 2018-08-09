@@ -9,7 +9,7 @@ use cpu::{
 /// Flags affected: None
 #[inline(always)]
 fn txs(core: &mut Core) {
-  // TODO: implementation
+  core.reg.stack = core.reg.x_idx;
 }
 
 /// Transfer index x to stack register
@@ -30,7 +30,9 @@ mod tests {
   #[test]
   fn txs_impl() {
     let mut core = Core::new(Registers::empty());
-    // TODO: test
+    core.reg.x_idx = 0x123;
+    txs(&mut core);
+    assert_eq!(core.reg.stack, 0x123);
   }
 
   #[test]
