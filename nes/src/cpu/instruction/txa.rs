@@ -9,7 +9,10 @@ use cpu::{
 /// Flags affected: N, Z
 #[inline(always)]
 fn txa(core: &mut Core) {
-  // TODO: implementation
+  core.reg.acc = core.reg.x_idx;
+
+  core.reg.status.set_negative(core.reg.acc);
+  core.reg.status.set_zero(core.reg.acc);
 }
 
 /// Transfer index x to accumulator
@@ -25,12 +28,31 @@ pub const IMPLIED: Instruction = Instruction {
 #[cfg(test)]
 mod tests {
   use super::*;
-  use cpu::Registers;
+  use cpu::{register::StatusFlags, Registers};
 
   #[test]
   fn txa_impl() {
     let mut core = Core::new(Registers::empty());
-    // TODO: test
+    core.reg.x_idx = 0x123;
+    txa(&mut core);
+    assert_eq!(core.reg.acc, 0x123);
+  }
+
+  #[test]
+  fn txa_impl_zero_flag() {
+    let mut core = Core::new(Registers::empty());
+    txa(&mut core);
+    assert_eq!(core.reg.acc, 0);
+    assert!(core.reg.status.contains(StatusFlags::Z_FLAG));
+  }
+
+  #[test]
+  fn txa_impl_negative_flag() {
+    let mut core = Core::new(Registers::empty());
+    core.reg.x_idx = 128;
+    txa(&mut core);
+    assert_eq!(core.reg.acc, 128);
+    assert!(core.reg.status.contains(StatusFlags::N_FLAG));
   }
 
   #[test]
