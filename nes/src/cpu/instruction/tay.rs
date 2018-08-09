@@ -9,7 +9,10 @@ use cpu::{
 /// Flags affected: N, Z
 #[inline(always)]
 fn tay(core: &mut Core) {
-  // TODO: implementation
+  core.reg.y_idx = core.reg.acc;
+
+  core.reg.status.set_negative(core.reg.y_idx);
+  core.reg.status.set_zero(core.reg.y_idx);
 }
 
 /// Transfer accumulator to index y
@@ -25,12 +28,31 @@ pub const IMPLIED: Instruction = Instruction {
 #[cfg(test)]
 mod tests {
   use super::*;
-  use cpu::Registers;
+  use cpu::{register::StatusFlags, Registers};
 
   #[test]
   fn tay_impl() {
     let mut core = Core::new(Registers::empty());
-    // TODO: test
+    core.reg.acc = 0x123;
+    tay(&mut core);
+    assert_eq!(core.reg.y_idx, 0x123);
+  }
+
+  #[test]
+  fn tay_impl_zero_flag() {
+    let mut core = Core::new(Registers::empty());
+    tay(&mut core);
+    assert_eq!(core.reg.y_idx, 0);
+    assert!(core.reg.status.contains(StatusFlags::Z_FLAG));
+  }
+
+  #[test]
+  fn tay_impl_negative_flag() {
+    let mut core = Core::new(Registers::empty());
+    core.reg.acc = 128;
+    tay(&mut core);
+    assert_eq!(core.reg.y_idx, 128);
+    assert!(core.reg.status.contains(StatusFlags::N_FLAG));
   }
 
   #[test]
