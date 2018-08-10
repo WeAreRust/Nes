@@ -10,7 +10,7 @@ use memory::WriteAddr;
 /// Flags affected: None
 #[inline(always)]
 fn stx(core: &mut Core, memory: &mut WriteAddr, address: u16) {
-  // TODO: implementation
+  memory.write_addr(address, core.reg.x_idx);
 }
 
 /// Store index x in memory
@@ -47,11 +47,15 @@ pub const ABSOLUTE: Instruction = Instruction {
 mod tests {
   use super::*;
   use cpu::Registers;
+  use memory::{block::BlockMemory, ReadAddr};
 
   #[test]
   fn stx_impl() {
+    let mut memory = BlockMemory::with_bytes(vec![0xff]);
     let mut core = Core::new(Registers::empty());
-    // TODO: test
+    core.reg.x_idx = 1;
+    stx(&mut core, &mut memory, 0);
+    assert_eq!(memory.read_addr(0), 1);
   }
 
   #[test]
