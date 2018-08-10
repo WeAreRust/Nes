@@ -1,6 +1,7 @@
 use cpu::{
   instruction::{ExtraCycle, Instruction},
   operation::{Function, Operation},
+  register::StatusFlags,
   Core,
 };
 
@@ -9,7 +10,12 @@ use cpu::{
 /// Flags affected: N, Z, C
 #[inline(always)]
 fn cmp(core: &mut Core, operand: u8) {
-  // TODO: implementation
+  let acc = core.reg.acc as i8;
+  let operand = operand as i8;
+
+  core.reg.status.set(StatusFlags::C_FLAG, acc >= operand);
+  core.reg.status.set_negative(core.reg.acc);
+  core.reg.status.set_zero(core.reg.acc);
 }
 
 /// Compare memory with accumulator immediate
@@ -98,9 +104,57 @@ mod tests {
   use cpu::Registers;
 
   #[test]
-  fn cmp_impl() {
+  fn cmp_impl_eq() {
     let mut core = Core::new(Registers::empty());
-    // TODO: test
+    core.reg.acc = 2;
+    cmp(&mut core, 2);
+    assert_eq!(core.reg.acc, 2);
+    assert!(core.reg.status.contains(StatusFlags::C_FLAG));
+  }
+
+  #[test]
+  fn cmp_impl_neg_eq() {
+    let mut core = Core::new(Registers::empty());
+    core.reg.acc = -1i8 as u8;
+    cmp(&mut core, -1i8 as u8);
+    assert_eq!(core.reg.acc, -1i8 as u8);
+    assert!(core.reg.status.contains(StatusFlags::C_FLAG));
+  }
+
+  #[test]
+  fn cmp_impl_gt() {
+    let mut core = Core::new(Registers::empty());
+    core.reg.acc = 2;
+    cmp(&mut core, 1);
+    assert_eq!(core.reg.acc, 2);
+    assert!(core.reg.status.contains(StatusFlags::C_FLAG));
+  }
+
+  #[test]
+  fn cmp_impl_gt_neg() {
+    let mut core = Core::new(Registers::empty());
+    core.reg.acc = 0;
+    cmp(&mut core, -2i8 as u8);
+    assert_eq!(core.reg.acc, 0);
+    assert!(core.reg.status.contains(StatusFlags::C_FLAG));
+  }
+
+  #[test]
+  fn cmp_impl_zero_flag() {
+    let mut core = Core::new(Registers::empty());
+    core.reg.acc = 0;
+    cmp(&mut core, 0);
+    assert_eq!(core.reg.acc, 0);
+    assert!(core.reg.status.contains(StatusFlags::Z_FLAG));
+  }
+
+  #[test]
+  fn cmp_impl_negative_flag() {
+    let mut core = Core::new(Registers::empty());
+    core.reg.acc = -1i8 as u8;
+    cmp(&mut core, 0);
+    assert_eq!(core.reg.acc, -1i8 as u8);
+    assert!(core.reg.status.contains(StatusFlags::N_FLAG));
   }
 
   #[test]
