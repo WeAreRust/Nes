@@ -33,9 +33,9 @@ mod tests {
   #[test]
   fn tya_impl() {
     let mut core = Core::new(Registers::empty());
-    core.reg.y_idx = 0x123;
+    core.reg.y_idx = 1;
     tya(&mut core);
-    assert_eq!(core.reg.acc, 0x123);
+    assert_eq!(core.reg.acc, 1);
   }
 
   #[test]

@@ -30,9 +30,9 @@ mod tests {
   #[test]
   fn txs_impl() {
     let mut core = Core::new(Registers::empty());
-    core.reg.x_idx = 0x123;
+    core.reg.x_idx = 1;
     txs(&mut core);
-    assert_eq!(core.reg.stack, 0x123);
+    assert_eq!(core.reg.stack, 1);
   }
 
   #[test]

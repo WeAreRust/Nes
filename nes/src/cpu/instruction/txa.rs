@@ -33,9 +33,9 @@ mod tests {
   #[test]
   fn txa_impl() {
     let mut core = Core::new(Registers::empty());
-    core.reg.x_idx = 0x123;
+    core.reg.x_idx = 1;
     txa(&mut core);
-    assert_eq!(core.reg.acc, 0x123);
+    assert_eq!(core.reg.acc, 1);
   }
 
   #[test]

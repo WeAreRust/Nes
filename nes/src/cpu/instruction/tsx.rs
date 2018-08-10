@@ -33,9 +33,9 @@ mod tests {
   #[test]
   fn tsx_impl() {
     let mut core = Core::new(Registers::empty());
-    core.reg.stack = 0x123;
+    core.reg.stack = 1;
     tsx(&mut core);
-    assert_eq!(core.reg.x_idx, 0x123);
+    assert_eq!(core.reg.x_idx, 1);
   }
 
   #[test]
