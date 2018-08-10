@@ -10,7 +10,7 @@ use memory::WriteAddr;
 /// Flags affected: None
 #[inline(always)]
 fn sta(core: &mut Core, memory: &mut WriteAddr, address: u16) {
-  // TODO: implementation
+  memory.write_addr(address, core.reg.acc);
 }
 
 /// Store accumulator in memory
@@ -87,11 +87,15 @@ pub const INDIRECT_Y: Instruction = Instruction {
 mod tests {
   use super::*;
   use cpu::Registers;
+  use memory::{block::BlockMemory, ReadAddr};
 
   #[test]
   fn sta_impl() {
+    let mut memory = BlockMemory::with_bytes(vec![0xff]);
     let mut core = Core::new(Registers::empty());
-    // TODO: test
+    core.reg.acc = 1;
+    sta(&mut core, &mut memory, 0);
+    assert_eq!(memory.read_addr(0), 1);
   }
 
   #[test]
