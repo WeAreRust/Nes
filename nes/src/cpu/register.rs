@@ -111,7 +111,7 @@ impl StatusFlags {
   ///
   /// TODO: Explain why it's the 7th flag (2's compliment).
   pub fn set_negative(&mut self, result: u8) {
-    self.set(Self::N_FLAG, (result >> 7) == 1);
+    self.set(Self::N_FLAG, (result as i8) < 0);
   }
 }
 
