@@ -1,6 +1,7 @@
 use cpu::{
   instruction::{ExtraCycle, Instruction},
   operation::{Function, Operation},
+  register::StatusFlags,
   Core,
 };
 
@@ -9,7 +10,12 @@ use cpu::{
 /// Flags affected: N, Z, C
 #[inline(always)]
 fn cpy(core: &mut Core, operand: u8) {
-  // TODO: implementation
+  let y_idx = core.reg.y_idx as i8;
+  let operand = operand as i8;
+
+  core.reg.status.set(StatusFlags::C_FLAG, y_idx >= operand);
+  core.reg.status.set_negative(core.reg.y_idx);
+  core.reg.status.set_zero(core.reg.y_idx);
 }
 
 /// Compare memory with index y immediate
@@ -48,9 +54,57 @@ mod tests {
   use cpu::Registers;
 
   #[test]
-  fn cpy_impl() {
+  fn cpy_impl_eq() {
     let mut core = Core::new(Registers::empty());
-    // TODO: test
+    core.reg.y_idx = 2;
+    cpy(&mut core, 2);
+    assert_eq!(core.reg.y_idx, 2);
+    assert!(core.reg.status.contains(StatusFlags::C_FLAG));
+  }
+
+  #[test]
+  fn cpy_impl_neg_eq() {
+    let mut core = Core::new(Registers::empty());
+    core.reg.y_idx = -1i8 as u8;
+    cpy(&mut core, -1i8 as u8);
+    assert_eq!(core.reg.y_idx, -1i8 as u8);
+    assert!(core.reg.status.contains(StatusFlags::C_FLAG));
+  }
+
+  #[test]
+  fn cpy_impl_gt() {
+    let mut core = Core::new(Registers::empty());
+    core.reg.y_idx = 2;
+    cpy(&mut core, 1);
+    assert_eq!(core.reg.y_idx, 2);
+    assert!(core.reg.status.contains(StatusFlags::C_FLAG));
+  }
+
+  #[test]
+  fn cpy_impl_gt_neg() {
+    let mut core = Core::new(Registers::empty());
+    core.reg.y_idx = 0;
+    cpy(&mut core, -2i8 as u8);
+    assert_eq!(core.reg.y_idx, 0);
+    assert!(core.reg.status.contains(StatusFlags::C_FLAG));
+  }
+
+  #[test]
+  fn cpy_impl_zero_flag() {
+    let mut core = Core::new(Registers::empty());
+    core.reg.y_idx = 0;
+    cpy(&mut core, 0);
+    assert_eq!(core.reg.y_idx, 0);
+    assert!(core.reg.status.contains(StatusFlags::Z_FLAG));
+  }
+
+  #[test]
+  fn cpy_impl_negative_flag() {
+    let mut core = Core::new(Registers::empty());
+    core.reg.y_idx = -1i8 as u8;
+    cpy(&mut core, 0);
+    assert_eq!(core.reg.y_idx, -1i8 as u8);
+    assert!(core.reg.status.contains(StatusFlags::N_FLAG));
   }
 
   #[test]
