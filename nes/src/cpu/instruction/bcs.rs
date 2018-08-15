@@ -1,6 +1,7 @@
 use cpu::{
   instruction::{ExtraCycle, Instruction},
   operation::{Function, Operation},
+  register::StatusFlags,
   Core,
 };
 use memory::WriteAddr;
@@ -9,9 +10,10 @@ use memory::WriteAddr;
 ///
 /// Flags affected: none
 #[inline(always)]
-fn bcs(core: &mut Core, memory: &mut WriteAddr, address: u16) {
-  // TODO: implementation
-  unimplemented!();
+fn bcs(core: &mut Core, _memory: &mut WriteAddr, address: u16) {
+  if core.reg.status.contains(StatusFlags::C_FLAG) {
+    core.reg.pc = address;
+  }
 }
 
 /// Branch on carry set relative
@@ -28,11 +30,30 @@ pub const RELATIVE: Instruction = Instruction {
 mod tests {
   use super::*;
   use cpu::Registers;
+  use memory::block::BlockMemory;
 
   #[test]
-  fn bcs_impl() {
+  fn bcs_carry_not_set() {
+    let mut memory: BlockMemory = BlockMemory::with_bytes(vec![0x00]);
     let mut core = Core::new(Registers::empty());
-    // TODO: test
+    core.reg.status.set(StatusFlags::C_FLAG, false);
+    core.reg.pc = 0x01;
+
+    bcs(&mut core, &mut memory, 0xFF);
+
+    assert_eq!(core.reg.pc, 0x01);
+  }
+
+  #[test]
+  fn bcs_carry_set() {
+    let mut memory: BlockMemory = BlockMemory::with_bytes(vec![0x00]);
+    let mut core = Core::new(Registers::empty());
+    core.reg.status.set(StatusFlags::C_FLAG, true);
+    core.reg.pc = 0x01;
+
+    bcs(&mut core, &mut memory, 0xFF);
+
+    assert_eq!(core.reg.pc, 0xFF);
   }
 
   #[test]
