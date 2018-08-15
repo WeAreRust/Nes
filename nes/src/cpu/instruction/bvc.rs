@@ -1,20 +1,22 @@
 use cpu::{
   instruction::{ExtraCycle, Instruction},
   operation::{Function, Operation},
+  register::StatusFlags,
   Core,
 };
 use memory::WriteAddr;
 
-/// Brank on overflow clear
+/// Branch on overflow clear
 ///
 /// Flags affected: none
 #[inline(always)]
-fn bvc(core: &mut Core, memory: &mut WriteAddr, address: u16) {
-  // TODO: implementation
-  unimplemented!();
+fn bvc(core: &mut Core, _memory: &mut WriteAddr, address: u16) {
+  if !core.reg.status.contains(StatusFlags::V_FLAG) {
+    core.reg.pc = address;
+  }
 }
 
-/// Brank on overflow clear relative
+/// Branch on overflow clear relative
 ///
 /// Flags affected: none
 pub const RELATIVE: Instruction = Instruction {
@@ -28,11 +30,30 @@ pub const RELATIVE: Instruction = Instruction {
 mod tests {
   use super::*;
   use cpu::Registers;
+  use memory::block::BlockMemory;
 
   #[test]
-  fn bvc_impl() {
+  fn bvc_overflow_not_set() {
+    let mut memory: BlockMemory = BlockMemory::with_bytes(vec![0x00]);
     let mut core = Core::new(Registers::empty());
-    // TODO: test
+    core.reg.status.set(StatusFlags::V_FLAG, false);
+    core.reg.pc = 0x01;
+
+    bvc(&mut core, &mut memory, 0xFF);
+
+    assert_eq!(core.reg.pc, 0xFF);
+  }
+
+  #[test]
+  fn bvc_overflow_set() {
+    let mut memory: BlockMemory = BlockMemory::with_bytes(vec![0x00]);
+    let mut core = Core::new(Registers::empty());
+    core.reg.status.set(StatusFlags::V_FLAG, true);
+    core.reg.pc = 0x01;
+
+    bvc(&mut core, &mut memory, 0xFF);
+
+    assert_eq!(core.reg.pc, 0x01);
   }
 
   #[test]
