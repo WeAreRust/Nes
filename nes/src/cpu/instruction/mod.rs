@@ -1,5 +1,5 @@
 use cpu::operation::Operation;
-use cpu::Core;
+use cpu::{self, Core};
 use memory::{ReadAddr, WriteAddr};
 use std::convert::From;
 
@@ -269,19 +269,20 @@ impl Instruction {
   }
 
   // TODO: test.
-  pub fn cycles(&self, core: &Core, memory: &mut ReadAddr) -> usize {
+  pub fn cycles<T: ReadAddr>(&self, core: &Core, memory: &mut T) -> usize {
     match self.extra_cycle {
       ExtraCycle::None => self.cycles,
       ExtraCycle::Boundary => {
-        let lo = u16::from(memory.read_addr(core.reg.pc));
-        let hi = u16::from(memory.read_addr(core.reg.pc + 1));
-        let addr = lo | hi << 8;
-
+        let addr = cpu::read_absolute_addr(core, memory);
         self.cycles + is_upper_page_boundary(addr) as usize
       }
       ExtraCycle::Branch => {
-        // TODO: branch logic
-        unimplemented!();
+        let extra_cycle = if let Operation::ZeroPage(_) = self.operation {
+          cpu::read_zero_page_addr(core, memory)
+        } else {
+          cpu::read_absolute_addr(core, memory)
+        } as usize;
+        self.cycles + 1 + extra_cycle
       }
     }
   }
@@ -298,9 +299,26 @@ pub fn is_upper_page_boundary(addr: u16) -> bool {
   addr & 0x00ff == 0x00ff
 }
 
+#[inline(always)]
+fn get_page(addr: u16) -> usize {
+  usize::from(addr) / 0xff
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;
+
+  #[test]
+  fn get_page_for_addr() {
+      assert_eq!(get_page(0), 0);
+      assert_eq!(get_page(254), 0);
+
+      assert_eq!(get_page(255), 1);
+      assert_eq!(get_page(256), 1);
+
+      assert_eq!(get_page(512), 2);
+      assert_eq!(get_page(513), 2);
+  }
 
   #[test]
   fn page_boundary() {

@@ -73,10 +73,10 @@ impl Core {
   /// (important for space saving) and one less memory fetch during execution (important for
   /// speed)
   fn zero_page_addr<T: ReadAddr>(&mut self, memory: &mut T) -> u16 {
-    let lo = memory.read_addr(self.reg.pc);
+    let addr = read_zero_page_addr(self, memory);
     self.reg.pc += 1;
 
-    lo.into()
+    addr
   }
 
   /// The address to be accessed by an instruction using indexed zero page addressing is
@@ -127,11 +127,10 @@ impl Core {
 
   /// Absolute addressing allows the use of an 16 bit address to identify the target location.
   fn absolute_addr<T: ReadAddr>(&mut self, memory: &mut T) -> u16 {
-    let lo = u16::from(memory.read_addr(self.reg.pc));
-    let hi = u16::from(memory.read_addr(self.reg.pc + 1));
+    let addr = read_absolute_addr(self, memory);
     self.reg.pc += 2;
 
-    lo | hi << 8
+    addr
   }
 
   /// The address to be accessed by an instruction using X register indexed absolute addressing
@@ -214,6 +213,17 @@ impl Core {
 
     (lo | hi << 8).wrapping_add(self.reg.y_idx.into())
   }
+}
+
+pub fn read_absolute_addr<T: ReadAddr>(core: &Core, memory: &mut T) -> u16 {
+  let lo = u16::from(memory.read_addr(core.reg.pc));
+  let hi = u16::from(memory.read_addr(core.reg.pc + 1));
+  lo | hi << 8
+}
+
+pub fn read_zero_page_addr<T: ReadAddr>(core: &Core, memory: &mut T) -> u16 {
+  let lo = memory.read_addr(core.reg.pc);
+  lo.into()
 }
 
 #[cfg(test)]
