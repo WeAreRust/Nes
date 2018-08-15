@@ -68,20 +68,20 @@ bitflags! {
     /// | +--------------- Overflow Flag
     /// +----------------- Negative Flag
     pub struct StatusFlags: u8 {
-       const C_FLAG = 0b0000_0001;
-       const Z_FLAG = 0b0000_0010;
-       const I_FLAG = 0b0000_0100;
-       const D_FLAG = 0b0000_1000; //unused, always on
-       const B_FLAG = 0b0001_0000;
-       const X_FLAG = 0b0010_0000; //unused, always on
-       const V_FLAG = 0b0100_0000;
-       const N_FLAG = 0b1000_0000;
+      const C_FLAG = 0b0000_0001;
+      const Z_FLAG = 0b0000_0010;
+      const I_FLAG = 0b0000_0100;
+      const D_FLAG = 0b0000_1000; //unused, always on
+      const B_FLAG = 0b0001_0000;
+      const X_FLAG = 0b0010_0000; //unused, always on
+      const V_FLAG = 0b0100_0000;
+      const N_FLAG = 0b1000_0000;
 
-       const NZ_FLAG = Self::N_FLAG.bits | Self::Z_FLAG.bits;
-       const NZC_FLAG = Self::NZ_FLAG.bits | Self::C_FLAG.bits;
-       const NVZC_FLAG = Self::NZC_FLAG.bits | Self::V_FLAG.bits;
-       const NV_FLAG = Self::N_FLAG.bits | Self::V_FLAG.bits;
-       const DX_FLAG = Self::D_FLAG.bits | Self::X_FLAG.bits;
+      const NZ_FLAG = Self::N_FLAG.bits | Self::Z_FLAG.bits;
+      const NZC_FLAG = Self::NZ_FLAG.bits | Self::C_FLAG.bits;
+      const NVZC_FLAG = Self::NZC_FLAG.bits | Self::V_FLAG.bits;
+      const NV_FLAG = Self::N_FLAG.bits | Self::V_FLAG.bits;
+      const DX_FLAG = Self::D_FLAG.bits | Self::X_FLAG.bits;
     }
 }
 
