@@ -1,8 +1,8 @@
-use apu::Apu;
 use apu::channel::{ApuChannelDelta, WhichPulse};
 use apu::channel_differ::{
   ChannelSnapshot, NoiseDiffer, PulseDiffer, TriangleDiffer, APU_CHANNEL_SIZE,
 };
+use apu::Apu;
 use clock::Processor;
 use memory::{ReadAddr, WriteAddr};
 use std::sync::mpsc::Sender;
@@ -52,15 +52,15 @@ impl<T: ReadAddr + WriteAddr> Processor<T> for ApuImpl {
 }
 
 impl ReadAddr for ApuImpl {
-    fn read_addr(self: &mut Self, addr: u16) -> u8 {
-        0
-    }
+  fn read_addr(self: &mut Self, addr: u16) -> u8 {
+    0
+  }
 }
 
 impl WriteAddr for ApuImpl {
-    fn write_addr(self: &mut Self, addr: u16, value: u8) -> u8 {
-        0
-    }
+  fn write_addr(self: &mut Self, addr: u16, value: u8) -> u8 {
+    0
+  }
 }
 
 impl Apu for ApuImpl {}

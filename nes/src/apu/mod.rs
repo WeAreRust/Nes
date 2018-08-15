@@ -1,4 +1,4 @@
-use memory::{WriteAddr};
+use memory::WriteAddr;
 
 pub mod channel;
 pub mod channel_differ;
