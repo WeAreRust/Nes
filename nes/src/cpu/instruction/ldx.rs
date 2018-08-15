@@ -67,8 +67,7 @@ pub const ABSOLUTE_Y: Instruction = Instruction {
 #[cfg(test)]
 mod tests {
   use super::*;
-  use cpu::register::StatusFlags;
-  use cpu::Registers;
+  use cpu::{register::StatusFlags, Registers};
 
   #[test]
   fn ldx_impl() {
