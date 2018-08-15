@@ -67,26 +67,27 @@ pub const ABSOLUTE_Y: Instruction = Instruction {
 #[cfg(test)]
 mod tests {
   use super::*;
-  use cpu::instruction::into_byte;
   use cpu::register::StatusFlags;
   use cpu::Registers;
 
   #[test]
   fn ldx_impl() {
     let mut core = Core::new(Registers::empty());
+    let negative28: u8 = -28i8 as u8;
+    let positive42: u8 = 42;
 
-    ldx(&mut core, into_byte(42));
-    assert_eq!(core.reg.x_idx, into_byte(42));
+    ldx(&mut core, positive42);
+    assert_eq!(core.reg.x_idx, positive42);
     assert!(!core.reg.status.contains(StatusFlags::N_FLAG));
     assert!(!core.reg.status.contains(StatusFlags::Z_FLAG));
 
-    ldx(&mut core, into_byte(0));
-    assert_eq!(core.reg.x_idx, into_byte(0));
+    ldx(&mut core, 0);
+    assert_eq!(core.reg.x_idx, 0);
     assert!(!core.reg.status.contains(StatusFlags::N_FLAG));
     assert!(core.reg.status.contains(StatusFlags::Z_FLAG));
 
-    ldx(&mut core, into_byte(-28));
-    assert_eq!(core.reg.x_idx, into_byte(-28));
+    ldx(&mut core, negative28);
+    assert_eq!(core.reg.x_idx, negative28);
     assert!(core.reg.status.contains(StatusFlags::N_FLAG));
     assert!(!core.reg.status.contains(StatusFlags::Z_FLAG));
   }
