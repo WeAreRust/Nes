@@ -273,21 +273,24 @@ impl Instruction {
     match self.extra_cycle {
       ExtraCycle::None => self.cycles,
       ExtraCycle::Boundary => {
-        let addr = cpu::read_absolute_addr(core, memory);
-        self.cycles + is_upper_page_boundary(addr) as usize
+        let lo = u16::from(memory.read_addr(core.reg.pc));
+        let hi = u16::from(memory.read_addr(core.reg.pc + 1));
+
+        self.cycles + is_upper_page_boundary(hi | lo << 8) as usize
       }
       ExtraCycle::Branch => {
-        let extra_cycle = if let Operation::ZeroPage(_) = self.operation {
-          cpu::read_zero_page_addr(core, memory)
-        } else {
-          cpu::read_absolute_addr(core, memory)
-        } as usize;
-        self.cycles + 1 + extra_cycle
+        unimplemented!();
+        // let lo = u16::from(memory.read_addr(core.reg.pc));
+        // let hi = u16::from(memory.read_addr(core.reg.pc + 1));
+
+        // self.cycles + 1 + (get_page(lo | hi << 8) != get_page(core.reg.pc)) as usize
       }
     }
   }
 
   // TODO: test.
+  // TODO: shouldn't this jump the number of arguments, to the next instruction, and not just
+  // increment by one?
   pub fn execute<M: ReadAddr + WriteAddr>(&self, core: &mut Core, memory: &mut M) {
     core.reg.pc += 1;
     self.operation.call(core, memory);
@@ -307,17 +310,46 @@ fn get_page(addr: u16) -> usize {
 #[cfg(test)]
 mod tests {
   use super::*;
+  use cpu::register::Registers;
+  use memory::{block::BlockMemory, ReadAddr};
+
+  #[test]
+  fn no_extra_cycles() {
+    let mut memory = BlockMemory::with_bytes(vec![0]);
+    let mut core = Core::new(Registers::empty());
+    let instr = cpu::instruction::nop::IMPLIED;
+
+    assert_eq!(instr.cycles(&core, &mut memory), instr.cycles);
+  }
+
+  #[test]
+  fn extra_boundary_cycle() {
+    let mut memory = BlockMemory::with_bytes(vec![0, 0]);
+    let mut core = Core::new(Registers::empty());
+    let instr = cpu::instruction::lda::ABSOLUTE_X;
+
+    assert_eq!(instr.cycles(&core, &mut memory), instr.cycles);
+  }
+
+  #[test]
+  fn extra_boundary_cycle_extra() {
+    let mut memory = BlockMemory::with_bytes(vec![0x00, 0xff]);
+    let mut core = Core::new(Registers::empty());
+    let instr = cpu::instruction::lda::ABSOLUTE_X;
+
+    assert_eq!(instr.cycles(&core, &mut memory), instr.cycles + 1);
+  }
 
   #[test]
   fn get_page_for_addr() {
-      assert_eq!(get_page(0), 0);
-      assert_eq!(get_page(254), 0);
+    assert_eq!(get_page(0), 0);
+    assert_eq!(get_page(254), 0);
 
-      assert_eq!(get_page(255), 1);
-      assert_eq!(get_page(256), 1);
+    assert_eq!(get_page(255), 1);
+    assert_eq!(get_page(256), 1);
 
-      assert_eq!(get_page(512), 2);
-      assert_eq!(get_page(513), 2);
+    assert_eq!(get_page(512), 2);
+    assert_eq!(get_page(513), 2);
   }
 
   #[test]
