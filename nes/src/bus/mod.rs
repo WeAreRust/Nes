@@ -1,11 +1,13 @@
 use cartridge::Cartridge;
+use apu::Apu;
 use controller::Controller;
 use memory::block::BlockMemory;
 use memory::{ReadAddr, WriteAddr};
 
-pub struct Bus<'a, C1: 'a + Controller, C2: 'a + Controller> {
+pub struct Bus<'a, C1: 'a + Controller, C2: 'a + Controller, A1: 'a + Apu> {
   cartridge: &'a mut Cartridge,
   ram: Box<BlockMemory>,
+  apu: &'a mut A1,
   controller1: Option<&'a mut C1>,
   controller2: Option<&'a mut C2>,
 }
@@ -14,19 +16,21 @@ impl<'a, C1: Controller, C2: Controller> Bus<'a, C1, C2> {
   pub fn new(
     cartridge: &'a mut Cartridge,
     ram: Box<BlockMemory>,
+    apu: &'a mut A1,
     controller1: Option<&'a mut C1>,
     controller2: Option<&'a mut C2>,
   ) -> Self {
     Bus {
       cartridge: cartridge,
       ram: ram,
+      apu: apu,
       controller1: controller1,
       controller2: controller2,
     }
   }
 }
 
-impl<'a, C1: Controller, C2: Controller> ReadAddr for Bus<'a, C1, C2> {
+impl<'a, C1: Controller, C2: Controller, A1: Apu> ReadAddr for Bus<'a, C1, C2, A1> {
   fn read_addr(&mut self, addr: u16) -> u8 {
     match addr {
       // RAM
@@ -64,7 +68,7 @@ impl<'a, C1: Controller, C2: Controller> ReadAddr for Bus<'a, C1, C2> {
   }
 }
 
-impl<'a, C1: Controller, C2: Controller> WriteAddr for Bus<'a, C1, C2> {
+impl<'a, C1: Controller, C2: Controller, A1: Apu> WriteAddr for Bus<'a, C1, C2, A1> {
   fn write_addr(&mut self, addr: u16, value: u8) -> u8 {
     match addr {
       // RAM
