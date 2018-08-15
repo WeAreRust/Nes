@@ -51,10 +51,16 @@ fn main() {
     .unwrap();
 
   let (event_tx, event_rx) = mpsc::channel();
-  let mut controller = joypad::Joypad::new(event_rx);
+  let mut controller1 = joypad::Joypad::new(event_rx);
+  let controller2: Option<&mut joypad::Joypad> = None;
   let (video_output, _receiver) = video::ChannelVideoOutput::new();
 
-  let mut console = Console::new(&mut cartridge, &mut controller, video_output);
+  let mut console = Console::new(
+    &mut cartridge,
+    Some(&mut controller1),
+    controller2,
+    video_output,
+  );
   console.reset();
 
   // Run the controller loop
