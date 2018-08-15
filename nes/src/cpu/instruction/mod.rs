@@ -279,11 +279,11 @@ impl Instruction {
         self.cycles + is_upper_page_boundary(hi | lo << 8) as usize
       }
       ExtraCycle::Branch => {
-        unimplemented!();
-        // let lo = u16::from(memory.read_addr(core.reg.pc));
-        // let hi = u16::from(memory.read_addr(core.reg.pc + 1));
+        let lo = u16::from(memory.read_addr(core.reg.pc));
+        let hi = u16::from(memory.read_addr(core.reg.pc + 1));
 
-        // self.cycles + 1 + (get_page(lo | hi << 8) != get_page(core.reg.pc)) as usize
+        let extra_cycle = (get_page((lo | hi << 8) + 2) != get_page(core.reg.pc)) as usize;
+        self.cycles + 1 + extra_cycle
       }
     }
   }
@@ -338,6 +338,24 @@ mod tests {
     let instr = cpu::instruction::lda::ABSOLUTE_X;
 
     assert_eq!(instr.cycles(&core, &mut memory), instr.cycles + 1);
+  }
+
+  #[test]
+  fn extra_branch_cycle() {
+    let mut memory = BlockMemory::with_bytes(vec![0, 0]);
+    let mut core = Core::new(Registers::empty());
+    let instr = cpu::instruction::beq::RELATIVE;
+
+    assert_eq!(instr.cycles(&core, &mut memory), instr.cycles + 1);
+  }
+
+  #[test]
+  fn extra_branch_cycle_extra() {
+    let mut memory = BlockMemory::with_bytes(vec![0x00, 0xff]);
+    let mut core = Core::new(Registers::empty());
+    let instr = cpu::instruction::beq::RELATIVE;
+
+    assert_eq!(instr.cycles(&core, &mut memory), instr.cycles + 2);
   }
 
   #[test]
