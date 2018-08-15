@@ -9,7 +9,9 @@ use cpu::{
 /// Flags affected: N, Z
 #[inline(always)]
 fn ldx(core: &mut Core, operand: u8) {
-  // TODO: implementation
+  core.reg.x_idx = operand;
+  core.reg.status.set_negative(core.reg.x_idx);
+  core.reg.status.set_zero(core.reg.x_idx);
 }
 
 /// Load index x with memory
@@ -65,12 +67,30 @@ pub const ABSOLUTE_Y: Instruction = Instruction {
 #[cfg(test)]
 mod tests {
   use super::*;
+  use cpu::register::StatusFlags;
   use cpu::Registers;
 
   #[test]
   fn ldx_impl() {
     let mut core = Core::new(Registers::empty());
-    // TODO: test
+    let zero: u8 = 0b_0000_0000;
+    let pos1: u8 = 0b_0000_0001;
+    let neg1: u8 = 0b_1111_1111;
+
+    ldx(&mut core, pos1);
+    assert_eq!(core.reg.x_idx, pos1);
+    assert!(!core.reg.status.contains(StatusFlags::N_FLAG));
+    assert!(!core.reg.status.contains(StatusFlags::Z_FLAG));
+
+    ldx(&mut core, zero);
+    assert_eq!(core.reg.x_idx, zero);
+    assert!(!core.reg.status.contains(StatusFlags::N_FLAG));
+    assert!(core.reg.status.contains(StatusFlags::Z_FLAG));
+
+    ldx(&mut core, neg1);
+    assert_eq!(core.reg.x_idx, neg1);
+    assert!(core.reg.status.contains(StatusFlags::N_FLAG));
+    assert!(!core.reg.status.contains(StatusFlags::Z_FLAG));
   }
 
   #[test]

@@ -9,7 +9,9 @@ use cpu::{
 /// Flags affected: N, Z
 #[inline(always)]
 fn ldy(core: &mut Core, operand: u8) {
-  // TODO: implementation
+  core.reg.y_idx = operand;
+  core.reg.status.set_negative(core.reg.y_idx);
+  core.reg.status.set_zero(core.reg.y_idx);
 }
 
 /// Load index y with memory
@@ -65,12 +67,29 @@ pub const ABSOLUTE_X: Instruction = Instruction {
 #[cfg(test)]
 mod tests {
   use super::*;
-  use cpu::Registers;
+  use cpu::{register::StatusFlags, Registers};
 
   #[test]
   fn ldy_impl() {
     let mut core = Core::new(Registers::empty());
-    // TODO: test
+    let zero: u8 = 0b_0000_0000;
+    let pos1: u8 = 0b_0000_0001;
+    let neg1: u8 = 0b_1111_1111;
+
+    ldy(&mut core, pos1);
+    assert_eq!(core.reg.y_idx, pos1);
+    assert!(!core.reg.status.contains(StatusFlags::N_FLAG));
+    assert!(!core.reg.status.contains(StatusFlags::Z_FLAG));
+
+    ldy(&mut core, zero);
+    assert_eq!(core.reg.y_idx, zero);
+    assert!(!core.reg.status.contains(StatusFlags::N_FLAG));
+    assert!(core.reg.status.contains(StatusFlags::Z_FLAG));
+
+    ldy(&mut core, neg1);
+    assert_eq!(core.reg.y_idx, neg1);
+    assert!(core.reg.status.contains(StatusFlags::N_FLAG));
+    assert!(!core.reg.status.contains(StatusFlags::Z_FLAG));
   }
 
   #[test]
