@@ -73,21 +73,22 @@ mod tests {
   #[test]
   fn ldx_impl() {
     let mut core = Core::new(Registers::empty());
-    let negative28: u8 = -28i8 as u8;
-    let positive42: u8 = 42;
+    let zero: u8 = 0b_0000_0000;
+    let pos1: u8 = 0b_0000_0001;
+    let neg1: u8 = 0b_1111_1111;
 
-    ldx(&mut core, positive42);
-    assert_eq!(core.reg.x_idx, positive42);
+    ldx(&mut core, pos1);
+    assert_eq!(core.reg.x_idx, pos1);
     assert!(!core.reg.status.contains(StatusFlags::N_FLAG));
     assert!(!core.reg.status.contains(StatusFlags::Z_FLAG));
 
-    ldx(&mut core, 0);
-    assert_eq!(core.reg.x_idx, 0);
+    ldx(&mut core, zero);
+    assert_eq!(core.reg.x_idx, zero);
     assert!(!core.reg.status.contains(StatusFlags::N_FLAG));
     assert!(core.reg.status.contains(StatusFlags::Z_FLAG));
 
-    ldx(&mut core, negative28);
-    assert_eq!(core.reg.x_idx, negative28);
+    ldx(&mut core, neg1);
+    assert_eq!(core.reg.x_idx, neg1);
     assert!(core.reg.status.contains(StatusFlags::N_FLAG));
     assert!(!core.reg.status.contains(StatusFlags::Z_FLAG));
   }
