@@ -25,15 +25,15 @@ fn main() {
 
   // TODO(toby): parse the file content
   let mut cartridge = nes::cartridge::parse_rom_file(&data).unwrap();
-  print!("PRG ROM DUMP");
-  for i in 0x8000..0xC000 {
-    if (i - 0x8000) % 0x10 == 0 {
-      println!();
-      print!("${:04X}", i);
-    }
-    print!(" {:02x}", cartridge.mapper.read_addr(i));
-  }
-  println!();
+  // print!("PRG ROM DUMP");
+  // for i in 0x8000..0xC000 {
+  //   if (i - 0x8000) % 0x10 == 0 {
+  //     println!();
+  //     print!("${:04X}", i);
+  //   }
+  //   print!(" {:02x}", cartridge.mapper.read_addr(i));
+  // }
+  // println!();
 
   println!("Cartridge loaded.");
 
