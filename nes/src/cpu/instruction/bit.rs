@@ -10,6 +10,7 @@ use cpu::{
 /// Flags affected: N, Z, V
 #[inline(always)]
 fn bit(core: &mut Core, operand: u8) {
+  // bits 7 and 6 of operand are transfered to bit 7 and 6 of SR (N,V);
   if operand & 0b1000_0000 > 0 {
     core.reg.status |= StatusFlags::N_FLAG;
   } else {
@@ -22,6 +23,7 @@ fn bit(core: &mut Core, operand: u8) {
     core.reg.status &= !StatusFlags::V_FLAG;
   }
 
+  // the zeroflag is set to the result of operand AND accumulator.
   if operand & core.reg.acc == 0 {
     core.reg.status |= StatusFlags::Z_FLAG;
   } else {
