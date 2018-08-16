@@ -1,0 +1,4 @@
+[package]
+name = "mos6502"
+version = "0.1.0"
+authors = ["Josh Leeb-du Toit <josh.leebdutoit@gmail.com>", "Benjamin Thompson <me@benjaminjt.com>"]
