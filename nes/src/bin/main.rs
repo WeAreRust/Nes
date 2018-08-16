@@ -1,3 +1,5 @@
+#![feature(duration_as_u128)]
+
 extern crate nes;
 extern crate sdl2;
 
@@ -5,6 +7,7 @@ use std::env;
 use std::fs::File;
 use std::io::Read;
 use std::sync::mpsc;
+use std::time::{Duration, Instant};
 
 use nes::console::Console;
 use nes::controller::joypad;
@@ -64,37 +67,54 @@ fn main() {
   console.reset();
 
   // Run the controller loop
+  let mut ticks = 0u32;
+  let mut start = Instant::now();
+  const REPORT_RATE: u32 = 1_000_000;
+  let mut report_throttle = Throttle::new(REPORT_RATE);
+  const INPUT_RATE: u32 = 100_000;
+  let mut input_throttle = Throttle::new(INPUT_RATE);
+
   'running: loop {
-    for event in event_pump.poll_iter() {
-      use joypad::ControllerEvent;
-      use sdl2::event::Event;
-      // We have to map SDL2 keyboard events to the correct
-      // controller buttons.
-      match event {
-        Event::Quit { .. }
-        | Event::KeyDown {
-          keycode: Some(Keycode::Escape),
-          ..
-        } => break 'running,
-        Event::KeyDown {
-          keycode: Some(keycode),
-          ..
-        } => event_tx
-          .send(ControllerEvent::ButtonDown {
-            button: controller1_keymap(keycode),
-          }).unwrap(),
-        Event::KeyUp {
-          keycode: Some(keycode),
-          ..
-        } => event_tx
-          .send(ControllerEvent::ButtonUp {
-            button: controller1_keymap(keycode),
-          }).unwrap(),
-        _ => {}
-      };
+    if input_throttle.test() {
+      for event in event_pump.poll_iter() {
+        use joypad::ControllerEvent;
+        use sdl2::event::Event;
+        // We have to map SDL2 keyboard events to the correct
+        // controller buttons.
+        match event {
+          Event::Quit { .. }
+          | Event::KeyDown {
+            keycode: Some(Keycode::Escape),
+            ..
+          } => break 'running,
+          Event::KeyDown {
+            keycode: Some(keycode),
+            ..
+          } => event_tx
+            .send(ControllerEvent::ButtonDown {
+              button: controller1_keymap(keycode),
+            }).unwrap(),
+          Event::KeyUp {
+            keycode: Some(keycode),
+            ..
+          } => event_tx
+            .send(ControllerEvent::ButtonUp {
+              button: controller1_keymap(keycode),
+            }).unwrap(),
+          _ => {}
+        };
+      }
     }
 
-    console.tick();
+    ticks += 1;
+    if report_throttle.test() {
+      let now = Instant::now();
+      let span = now.duration_since(start);
+      let clock_rate = ticks as f32 / span.as_millis() as f32;
+      println!("{} Hertz", clock_rate * 1_000 as f32);
+      ticks = 0;
+      start = now;
+    }
   }
 }
 
@@ -109,5 +129,29 @@ fn controller1_keymap(keycode: Keycode) -> u8 {
     Keycode::Left => joypad::BUTTON_LEFT,
     Keycode::Right => joypad::BUTTON_RIGHT,
     _ => 0u8,
+  }
+}
+
+struct Throttle {
+  rate: u32,
+  cursor: u32,
+}
+
+impl Throttle {
+  pub fn new(rate: u32) -> Self {
+    Self {
+      rate: rate,
+      cursor: 0,
+    }
+  }
+
+  pub fn test(&mut self) -> bool {
+    if self.cursor == self.rate {
+      self.cursor = 0;
+      true
+    } else {
+      self.cursor += 1;
+      false
+    }
   }
 }

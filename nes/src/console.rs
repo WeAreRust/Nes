@@ -49,12 +49,12 @@ impl<'a, C1: 'a + Controller, C2: 'a + Controller> Console<'a, C1, C2> {
 
     if self.cpu_interval == clock::CPU_PERIOD {
       self.cpu_interval = 0;
-      self.cpu.cycle(&mut self.bus);
+      // self.cpu.cycle(&mut self.bus);
     }
 
     if self.ppu_interval == clock::PPU_PERIOD {
       self.ppu_interval = 0;
-      self.ppu.cycle(&mut self.bus);
+      // self.ppu.cycle(&mut self.bus);
     }
   }
 }
