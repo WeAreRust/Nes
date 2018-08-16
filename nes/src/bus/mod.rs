@@ -33,7 +33,7 @@ impl<'a, C1: Controller, C2: Controller> ReadAddr for Bus<'a, C1, C2> {
       0x0000...0x1FFF => self.ram.read_addr(addr & 0x07FF),
       // I/O Registers
       0x2000...0x3FFF => {
-        let _mirrored_addr = ((addr - 0x2000) & 0x0007) + 0x2000;
+        let _mirrored_addr = addr & 0x2007;
         // TODO: Send to PPU
         0x00
       }
@@ -71,7 +71,7 @@ impl<'a, C1: Controller, C2: Controller> WriteAddr for Bus<'a, C1, C2> {
       0x0000...0x1FFF => self.ram.write_addr(addr & 0x07FF, value),
       // I/O Registers
       0x2000...0x3FFF => {
-        let _mirrored_addr = ((addr - 0x2000) & 0x0007) + 0x2000;
+        let _mirrored_addr = addr & 0x2007;
         // TODO: Send to PPU
         0x00
       }
