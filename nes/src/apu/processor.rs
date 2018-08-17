@@ -2,6 +2,7 @@ use apu::channel::{ApuChannelDelta, WhichPulse};
 use apu::channel_differ::{
   ChannelSnapshot, NoiseDiffer, PulseDiffer, TriangleDiffer, APU_CHANNEL_SIZE,
 };
+use apu::Apu;
 use clock::Processor;
 use memory::{ReadAddr, WriteAddr};
 use std::sync::mpsc::Sender;
@@ -16,7 +17,7 @@ const REG_NOISE_ROOT: usize = REG_TRIANGLE_ROOT + 4;
 
 type SnapshotRepr = [u8; APU_REGISTER_RANGE];
 
-pub struct APU {
+pub struct ApuImpl {
   previous_snapshot: RegisterSnapshot,
   delta_stream: Sender<ApuChannelDelta>,
 }
@@ -27,16 +28,16 @@ struct RegisterSnapshot {
   registers: SnapshotRepr,
 }
 
-impl APU {
-  fn create(sender: Sender<ApuChannelDelta>) -> Self {
-    APU {
+impl ApuImpl {
+  pub fn create(sender: Sender<ApuChannelDelta>) -> Self {
+    ApuImpl {
       delta_stream: sender,
       previous_snapshot: RegisterSnapshot::default(),
     }
   }
 }
 
-impl<T: ReadAddr + WriteAddr> Processor<T> for APU {
+impl<T: ReadAddr + WriteAddr> Processor<T> for ApuImpl {
   fn cycle(self: &mut Self, memory: &mut T) {
     let new_snapshot = RegisterSnapshot::create_from_memory(memory);
     let deltas = self.previous_snapshot.diff(&new_snapshot, memory);
@@ -49,6 +50,20 @@ impl<T: ReadAddr + WriteAddr> Processor<T> for APU {
     self.previous_snapshot = new_snapshot;
   }
 }
+
+impl ReadAddr for ApuImpl {
+  fn read_addr(self: &mut Self, addr: u16) -> u8 {
+    0
+  }
+}
+
+impl WriteAddr for ApuImpl {
+  fn write_addr(self: &mut Self, addr: u16, value: u8) -> u8 {
+    0
+  }
+}
+
+impl Apu for ApuImpl {}
 
 impl Default for RegisterSnapshot {
   fn default() -> Self {

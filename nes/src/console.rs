@@ -3,23 +3,25 @@ use clock;
 use clock::{Clock, Processor};
 use io::video::VideoOutput;
 
+use apu::Apu;
 use bus::Bus;
 use controller::Controller;
 use cpu;
 use memory::block::BlockMemory;
 use ppu;
 
-pub struct Console<'a, C1: 'a + Controller, C2: 'a + Controller> {
+pub struct Console<'a, C1: 'a + Controller, C2: 'a + Controller, A1: 'a + Apu> {
   clock: Clock,
   cpu: cpu::Core,
   ppu: ppu::Core,
-  bus: Bus<'a, C1, C2>,
+  bus: Bus<'a, C1, C2, A1>,
   cpu_interval: u8,
   ppu_interval: u8,
 }
 
-impl<'a, C1: 'a + Controller, C2: 'a + Controller> Console<'a, C1, C2> {
+impl<'a, C1: 'a + Controller, C2: 'a + Controller, A1: 'a + Apu> Console<'a, C1, C2, A1> {
   pub fn new(
+    apu: &'a mut A1,
     cartridge: &'a mut Cartridge,
     controller1: Option<&'a mut C1>,
     controller2: Option<&'a mut C2>,
@@ -31,7 +33,7 @@ impl<'a, C1: 'a + Controller, C2: 'a + Controller> Console<'a, C1, C2> {
       clock: Clock::new(),
       cpu: cpu::Core::default(),
       ppu: ppu::Core::new(Box::new(video_output)),
-      bus: Bus::new(cartridge, ram, controller1, controller2),
+      bus: Bus::new(cartridge, ram, apu, controller1, controller2),
       cpu_interval: 0,
       ppu_interval: 0,
     }

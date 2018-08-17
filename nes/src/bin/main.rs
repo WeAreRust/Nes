@@ -6,9 +6,12 @@ use std::fs::File;
 use std::io::Read;
 use std::sync::mpsc;
 
+use nes::apu::processor::ApuImpl;
 use nes::console::Console;
 use nes::controller::joypad;
+use nes::io::audio::NesAudioProcess;
 use nes::io::video;
+use sdl2::audio::AudioSpecDesired;
 use sdl2::keyboard::Keycode;
 
 fn main() {
@@ -43,6 +46,13 @@ fn main() {
   let video_subsystem = sdl_context.video().unwrap();
   let mut event_pump = sdl_context.event_pump().unwrap();
 
+  let audio_subsystem = sdl_context.audio().unwrap();
+  let audio_spec_desired = AudioSpecDesired {
+    freq: Some(48000),
+    channels: Some(1),
+    samples: Some(800),
+  };
+
   let _window = video_subsystem
     .window("WeAreRust Nes", 256, 240)
     .position_centered()
@@ -50,17 +60,28 @@ fn main() {
     .build()
     .unwrap();
 
+  let (audio_tx, audio_rx) = mpsc::channel();
+  let mut apu = ApuImpl::create(audio_tx);
+  let apu_playback = audio_subsystem
+    .open_playback(None, &audio_spec_desired, |spec| {
+      NesAudioProcess::new(audio_rx, spec.freq as u32)
+    }).unwrap();
+
+  apu_playback.resume();
+
   let (event_tx, event_rx) = mpsc::channel();
   let mut controller1 = joypad::Joypad::new(event_rx);
   let controller2: Option<&mut joypad::Joypad> = None;
   let (video_output, _receiver) = video::ChannelVideoOutput::new();
 
   let mut console = Console::new(
+    &mut apu,
     &mut cartridge,
     Some(&mut controller1),
     controller2,
     video_output,
   );
+
   console.reset();
 
   // Run the controller loop
