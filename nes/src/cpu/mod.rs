@@ -45,6 +45,30 @@ impl Core {
     }
   }
 
+  /// Get the stack memory address (between 0x0100 and 0x01FF) from the stack counter
+  fn get_stack_address(&self) -> u16 {
+    0x01FF & (self.reg.stack as u16)
+  }
+
+  /// Push a value onto the stack
+  ///
+  /// TODO: Make sure the initial state (0xff) is handled
+  /// TODO: Test
+  fn push_stack(&mut self, memory: &mut WriteAddr, value: u8) {
+    // Get next stack address (The stack grows from 0xff to 0x00)
+    self.reg.stack -= 1;
+    memory.write_addr(self.get_stack_address(), value);
+  }
+
+  /// Pop a value from the stack
+  ///
+  /// TODO: Test
+  fn pop_stack(&mut self, memory: &mut ReadAddr) -> u8 {
+    let value = memory.read_addr(self.get_stack_address());
+    self.reg.stack += 1;
+    value
+  }
+
   /// After a system initialization time of six clock cycles, the mask
   /// interrupt flag will be set and the microprocessor will load the
   /// program counter from the memory vector locations FFFC and
