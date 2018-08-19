@@ -5,20 +5,34 @@ use cpu::{
 };
 use memory::WriteAddr;
 
+/// Shift operand one bit right
+///
+/// Flags affected: Z, C
+#[inline(always)]
+fn shift_right(core: &mut Core, operand: u8) -> u8 {
+  let value = operand >> 1;
+
+  core.reg.status.set_carry((operand as u16) << 8);
+  core.reg.status.set_zero(value);
+
+  value
+}
+
 /// Shift accumulator one bit right
 ///
 /// Flags affected: Z, C
 #[inline(always)]
-fn lsr_acc(core: &mut Core, _operand: u8) {
-  // TODO: implementation
+fn lsr_acc(core: &mut Core, operand: u8) {
+  core.reg.acc = shift_right(core, operand);
 }
 
 /// Shift memory one bit right
 ///
 /// Flags affected: Z, C
 #[inline(always)]
-fn lsr_memory(core: &mut Core, memory: &mut WriteAddr, address: u16) {
-  // TODO: implementation
+fn lsr_mem(core: &mut Core, memory: &mut WriteAddr, address: u16) {
+  let value = shift_right(core, memory.read_addr(address));
+  memory.write_addr(address, value);
 }
 
 /// Shift accumulator one bit right
@@ -38,7 +52,7 @@ pub const ZERO_PAGE: Instruction = Instruction {
   opcode: 0x46,
   cycles: 5,
   extra_cycle: ExtraCycle::None,
-  operation: Operation::ZeroPage(Function::Address(&lsr_memory)),
+  operation: Operation::ZeroPage(Function::Address(&lsr_mem)),
 };
 
 /// Shift memory one bit right
@@ -48,7 +62,7 @@ pub const ZERO_PAGE_X: Instruction = Instruction {
   opcode: 0x56,
   cycles: 6,
   extra_cycle: ExtraCycle::None,
-  operation: Operation::ZeroPageX(Function::Address(&lsr_memory)),
+  operation: Operation::ZeroPageX(Function::Address(&lsr_mem)),
 };
 
 /// Shift memory one bit right
@@ -58,7 +72,7 @@ pub const ABSOLUTE: Instruction = Instruction {
   opcode: 0x4e,
   cycles: 6,
   extra_cycle: ExtraCycle::None,
-  operation: Operation::Absolute(Function::Address(&lsr_memory)),
+  operation: Operation::Absolute(Function::Address(&lsr_mem)),
 };
 
 /// Shift memory one bit right
@@ -68,24 +82,57 @@ pub const ABSOLUTE_X: Instruction = Instruction {
   opcode: 0x5e,
   cycles: 7,
   extra_cycle: ExtraCycle::None,
-  operation: Operation::AbsoluteX(Function::Address(&lsr_memory)),
+  operation: Operation::AbsoluteX(Function::Address(&lsr_mem)),
 };
 
 #[cfg(test)]
 mod tests {
   use super::*;
-  use cpu::Registers;
+  use cpu::{register::StatusFlags, Registers};
+  use memory::{block::BlockMemory, ReadAddr};
+
+  #[test]
+  fn shift_right_impl() {
+    let mut core = Core::new(Registers::empty());
+    assert_eq!(shift_right(&mut core, 0b_0000_0010), 0b_0000_0001);
+    assert!(!core.reg.status.contains(StatusFlags::N_FLAG));
+    assert!(!core.reg.status.contains(StatusFlags::Z_FLAG));
+    assert!(!core.reg.status.contains(StatusFlags::C_FLAG));
+  }
+
+  #[test]
+  fn shift_right_impl_zero() {
+    let mut core = Core::new(Registers::empty());
+    assert_eq!(shift_right(&mut core, 0b_0000_0000), 0b_0000_0000);
+    assert!(!core.reg.status.contains(StatusFlags::N_FLAG));
+    assert!(core.reg.status.contains(StatusFlags::Z_FLAG));
+    assert!(!core.reg.status.contains(StatusFlags::C_FLAG));
+  }
+
+  #[test]
+  fn shift_right_impl_carry() {
+    let mut core = Core::new(Registers::empty());
+    assert_eq!(shift_right(&mut core, 0b_0000_0011), 0b_0000_0001);
+    assert!(!core.reg.status.contains(StatusFlags::N_FLAG));
+    assert!(!core.reg.status.contains(StatusFlags::Z_FLAG));
+    assert!(core.reg.status.contains(StatusFlags::C_FLAG));
+  }
 
   #[test]
   fn lsr_acc_impl() {
     let mut core = Core::new(Registers::empty());
-    // TODO: test
+    core.reg.acc = 0b_0000_0010;
+    let operand = core.reg.acc;
+    lsr_acc(&mut core, operand);
+    assert_eq!(core.reg.acc, 0b_0000_0001);
   }
 
   #[test]
-  fn lsr_memory_impl() {
+  fn lsr_mem_impl() {
+    let mut memory: BlockMemory = BlockMemory::with_bytes(vec![0b_0000_0010]);
     let mut core = Core::new(Registers::empty());
-    // TODO: test
+    lsr_mem(&mut core, &mut memory, 0x00);
+    assert_eq!(memory.read_addr(0x00), 0b_0000_0001);
   }
 
   #[test]
