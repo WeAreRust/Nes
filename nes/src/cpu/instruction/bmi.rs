@@ -57,12 +57,6 @@ mod tests {
   }
 
   #[test]
-  fn bmi_impl() {
-    let mut core = Core::new(Registers::empty());
-    // TODO: test
-  }
-
-  #[test]
   fn opcodes() {
     assert_eq!(nes_asm!("BMI $00")[0], RELATIVE.opcode);
   }
