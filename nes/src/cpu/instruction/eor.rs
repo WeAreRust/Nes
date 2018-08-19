@@ -6,15 +6,18 @@ use cpu::{
 
 /// Exclusive-OR operand with accumulator
 ///
-/// Flags affected: N, Z, C, V
+/// Flags affected: N, Z
 #[inline(always)]
 fn eor(core: &mut Core, operand: u8) {
-  // TODO: implementation
+  core.reg.acc ^= operand;
+
+  core.reg.status.set_negative(core.reg.acc);
+  core.reg.status.set_zero(core.reg.acc);
 }
 
 /// Exclusive-OR memory with accumulator immediate
 ///
-/// Flags affected: N, Z, C, V
+/// Flags affected: N, Z
 pub const IMMEDIATE: Instruction = Instruction {
   opcode: 0x49,
   cycles: 2,
@@ -24,7 +27,7 @@ pub const IMMEDIATE: Instruction = Instruction {
 
 /// Exclusive-OR memory with accumulator zero page
 ///
-/// Flags affected: N, Z, C, V
+/// Flags affected: N, Z
 pub const ZERO_PAGE: Instruction = Instruction {
   opcode: 0x45,
   cycles: 3,
@@ -34,7 +37,7 @@ pub const ZERO_PAGE: Instruction = Instruction {
 
 /// Exclusive-OR memory with accumulator zero page X
 ///
-/// Flags affected: N, Z, C, V
+/// Flags affected: N, Z
 pub const ZERO_PAGE_X: Instruction = Instruction {
   opcode: 0x55,
   cycles: 4,
@@ -44,7 +47,7 @@ pub const ZERO_PAGE_X: Instruction = Instruction {
 
 /// Exclusive-OR memory with accumulator absolute
 ///
-/// Flags affected: N, Z, C, V
+/// Flags affected: N, Z
 pub const ABSOLUTE: Instruction = Instruction {
   opcode: 0x4d,
   cycles: 4,
@@ -54,7 +57,7 @@ pub const ABSOLUTE: Instruction = Instruction {
 
 /// Exclusive-OR memory with accumulator absolute X
 ///
-/// Flags affected: N, Z, C, V
+/// Flags affected: N, Z
 pub const ABSOLUTE_X: Instruction = Instruction {
   opcode: 0x5d,
   cycles: 4,
@@ -64,7 +67,7 @@ pub const ABSOLUTE_X: Instruction = Instruction {
 
 /// Exclusive-OR memory with accumulator absolute Y
 ///
-/// Flags affected: N, Z, C, V
+/// Flags affected: N, Z
 pub const ABSOLUTE_Y: Instruction = Instruction {
   opcode: 0x59,
   cycles: 4,
@@ -74,7 +77,7 @@ pub const ABSOLUTE_Y: Instruction = Instruction {
 
 /// Exclusive-OR memory with accumulator indirect X
 ///
-/// Flags affected: N, Z, C, V
+/// Flags affected: N, Z
 pub const INDIRECT_X: Instruction = Instruction {
   opcode: 0x41,
   cycles: 6,
@@ -84,7 +87,7 @@ pub const INDIRECT_X: Instruction = Instruction {
 
 /// Exclusive-OR memory with accumulator indirect Y
 ///
-/// Flags affected: N, Z, C, V
+/// Flags affected: N, Z
 pub const INDIRECT_Y: Instruction = Instruction {
   opcode: 0x51,
   cycles: 5,
@@ -100,7 +103,9 @@ mod tests {
   #[test]
   fn eor_impl() {
     let mut core = Core::new(Registers::empty());
-    // TODO: test
+    core.reg.acc = 0b_0000_1111;
+    eor(&mut core, 0b_0101_0101);
+    assert_eq!(core.reg.acc, 0b_0101_1010);
   }
 
   #[test]
