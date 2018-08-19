@@ -52,7 +52,6 @@ impl Core {
 
   /// Push a value onto the stack
   ///
-  /// TODO: Make sure the initial state (0xff) is handled
   /// TODO: Test
   fn push_stack(&mut self, memory: &mut WriteAddr, value: u8) {
     // Get next stack address (The stack grows from 0xff to 0x00)
