@@ -12,6 +12,7 @@ use memory::WriteAddr;
 fn shift_right(core: &mut Core, operand: u8) -> u8 {
   let value = operand >> 1;
 
+  // Move the 1st operand but into the 9th u16 bit for the carry test
   core.reg.status.set_carry((operand as u16) << 8);
   core.reg.status.set_zero(value);
 
