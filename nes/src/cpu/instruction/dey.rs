@@ -3,12 +3,13 @@ use cpu::{
   operation::Operation,
   Core,
 };
+use memory::WriteAddr;
 
 /// Decrement indey y by one
 ///
 /// Flags affected: N, Z
 #[inline(always)]
-fn dey(core: &mut Core) {
+fn dey(core: &mut Core, _memory: &mut WriteAddr) {
   core.reg.y_idx = core.reg.y_idx.wrapping_sub(1);
 
   core.reg.status.set_zero(core.reg.y_idx);
@@ -29,19 +30,20 @@ pub const IMPLIED: Instruction = Instruction {
 mod tests {
   use super::*;
   use cpu::{register::StatusFlags, Registers};
+  use memory::block::BlockMemory;
 
   #[test]
   fn dey_impl() {
     let mut core = Core::new(Registers::empty());
     core.reg.y_idx = 0xff;
-    dey(&mut core);
+    dey(&mut core, &mut BlockMemory::with_size(0));
     assert_eq!(core.reg.y_idx, 0xfe);
   }
 
   #[test]
   fn dey_impl_overflow() {
     let mut core = Core::new(Registers::empty());
-    dey(&mut core);
+    dey(&mut core, &mut BlockMemory::with_size(0));
     assert_eq!(core.reg.y_idx, 0xff);
   }
 
@@ -49,7 +51,7 @@ mod tests {
   fn dey_impl_zero_flag() {
     let mut core = Core::new(Registers::empty());
     core.reg.y_idx = 1;
-    dey(&mut core);
+    dey(&mut core, &mut BlockMemory::with_size(0));
     assert_eq!(core.reg.y_idx, 0);
     assert!(core.reg.status.contains(StatusFlags::Z_FLAG));
   }
@@ -58,7 +60,7 @@ mod tests {
   fn dey_impl_negative_flag() {
     let mut core = Core::new(Registers::empty());
     core.reg.y_idx = 129;
-    dey(&mut core);
+    dey(&mut core, &mut BlockMemory::with_size(0));
     assert_eq!(core.reg.y_idx, 128);
     assert!(core.reg.status.contains(StatusFlags::N_FLAG));
   }

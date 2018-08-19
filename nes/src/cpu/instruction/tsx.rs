@@ -3,12 +3,13 @@ use cpu::{
   operation::Operation,
   Core,
 };
+use memory::WriteAddr;
 
 /// Transfer stack pointer to index x
 ///
 /// Flags affected: N, Z
 #[inline(always)]
-fn tsx(core: &mut Core) {
+fn tsx(core: &mut Core, _memory: &mut WriteAddr) {
   core.reg.x_idx = core.reg.stack;
 
   core.reg.status.set_zero(core.reg.x_idx);
@@ -29,19 +30,20 @@ pub const IMPLIED: Instruction = Instruction {
 mod tests {
   use super::*;
   use cpu::{register::StatusFlags, Registers};
+  use memory::block::BlockMemory;
 
   #[test]
   fn tsx_impl() {
     let mut core = Core::new(Registers::empty());
     core.reg.stack = 1;
-    tsx(&mut core);
+    tsx(&mut core, &mut BlockMemory::with_size(0));
     assert_eq!(core.reg.x_idx, 1);
   }
 
   #[test]
   fn tsx_impl_zero_flag() {
     let mut core = Core::new(Registers::empty());
-    tsx(&mut core);
+    tsx(&mut core, &mut BlockMemory::with_size(0));
     assert_eq!(core.reg.x_idx, 0);
     assert!(core.reg.status.contains(StatusFlags::Z_FLAG));
   }
@@ -50,7 +52,7 @@ mod tests {
   fn tsx_impl_negative_flag() {
     let mut core = Core::new(Registers::empty());
     core.reg.stack = 128;
-    tsx(&mut core);
+    tsx(&mut core, &mut BlockMemory::with_size(0));
     assert_eq!(core.reg.x_idx, 128);
     assert!(core.reg.status.contains(StatusFlags::N_FLAG));
   }

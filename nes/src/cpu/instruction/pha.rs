@@ -3,12 +3,13 @@ use cpu::{
   operation::Operation,
   Core,
 };
+use memory::WriteAddr;
 
 /// Push accumulator onto stack
 ///
 /// Flags affected: None
 #[inline(always)]
-fn pha(core: &mut Core) {
+fn pha(_core: &mut Core, _memory: &mut WriteAddr) {
   // TODO: implementation
 }
 

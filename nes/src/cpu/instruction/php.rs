@@ -4,11 +4,13 @@ use cpu::{
   Core,
 };
 
+use memory::WriteAddr;
+
 /// Push processor status onto stack
 ///
 /// Flags affected: None
 #[inline(always)]
-fn php(core: &mut Core) {
+fn php(_core: &mut Core, _memory: &mut WriteAddr) {
   // TODO: implementation
 }
 

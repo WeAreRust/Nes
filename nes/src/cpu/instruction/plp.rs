@@ -3,12 +3,13 @@ use cpu::{
   operation::Operation,
   Core,
 };
+use memory::WriteAddr;
 
 /// Pull processor status from stack
 ///
 /// Flags affected: All
 #[inline(always)]
-fn plp(core: &mut Core) {
+fn plp(_core: &mut Core, _memory: &mut WriteAddr) {
   // TODO: implementation
 }
 

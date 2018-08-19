@@ -1,5 +1,4 @@
-use cpu::operation::Operation;
-use cpu::{self, Core};
+use cpu::{operation::Operation, Core};
 use memory::{ReadAddr, WriteAddr};
 use std::convert::From;
 
@@ -310,13 +309,14 @@ fn get_page(addr: u16) -> usize {
 #[cfg(test)]
 mod tests {
   use super::*;
+  use cpu;
   use cpu::register::Registers;
-  use memory::{block::BlockMemory, ReadAddr};
+  use memory::block::BlockMemory;
 
   #[test]
   fn no_extra_cycles() {
     let mut memory = BlockMemory::with_bytes(vec![0]);
-    let mut core = Core::new(Registers::empty());
+    let core = Core::new(Registers::empty());
     let instr = cpu::instruction::nop::IMPLIED;
 
     assert_eq!(instr.cycles(&core, &mut memory), instr.cycles);
@@ -325,7 +325,7 @@ mod tests {
   #[test]
   fn extra_boundary_cycle() {
     let mut memory = BlockMemory::with_bytes(vec![0, 0]);
-    let mut core = Core::new(Registers::empty());
+    let core = Core::new(Registers::empty());
     let instr = cpu::instruction::lda::ABSOLUTE_X;
 
     assert_eq!(instr.cycles(&core, &mut memory), instr.cycles);
@@ -334,7 +334,7 @@ mod tests {
   #[test]
   fn extra_boundary_cycle_extra() {
     let mut memory = BlockMemory::with_bytes(vec![0x00, 0xff]);
-    let mut core = Core::new(Registers::empty());
+    let core = Core::new(Registers::empty());
     let instr = cpu::instruction::lda::ABSOLUTE_X;
 
     assert_eq!(instr.cycles(&core, &mut memory), instr.cycles + 1);
@@ -343,7 +343,7 @@ mod tests {
   #[test]
   fn extra_branch_cycle() {
     let mut memory = BlockMemory::with_bytes(vec![0, 0]);
-    let mut core = Core::new(Registers::empty());
+    let core = Core::new(Registers::empty());
     let instr = cpu::instruction::beq::RELATIVE;
 
     assert_eq!(instr.cycles(&core, &mut memory), instr.cycles + 1);
@@ -352,7 +352,7 @@ mod tests {
   #[test]
   fn extra_branch_cycle_extra() {
     let mut memory = BlockMemory::with_bytes(vec![0x00, 0xff]);
-    let mut core = Core::new(Registers::empty());
+    let core = Core::new(Registers::empty());
     let instr = cpu::instruction::beq::RELATIVE;
 
     assert_eq!(instr.cycles(&core, &mut memory), instr.cycles + 2);

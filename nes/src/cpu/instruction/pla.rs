@@ -3,12 +3,13 @@ use cpu::{
   operation::Operation,
   Core,
 };
+use memory::WriteAddr;
 
 /// Pull accumulator from stack
 ///
 /// Flags affected: N, Z
 #[inline(always)]
-fn pla(core: &mut Core) {
+fn pla(_core: &mut Core, _memory: &mut WriteAddr) {
   // TODO: implementation
 }
 
