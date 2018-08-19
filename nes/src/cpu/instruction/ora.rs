@@ -9,7 +9,10 @@ use cpu::{
 /// Flags affected: N, Z
 #[inline(always)]
 fn ora(core: &mut Core, operand: u8) {
-  // TODO: implementation
+  core.reg.acc |= operand;
+
+  core.reg.status.set_negative(core.reg.acc);
+  core.reg.status.set_zero(core.reg.acc);
 }
 
 /// OR memory with accumulator immediate
@@ -100,7 +103,9 @@ mod tests {
   #[test]
   fn ora_impl() {
     let mut core = Core::new(Registers::empty());
-    // TODO: test
+    core.reg.acc = 0b_0000_1111;
+    ora(&mut core, 0b_0101_0101);
+    assert_eq!(core.reg.acc, 0b_0101_1111);
   }
 
   #[test]
