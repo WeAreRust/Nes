@@ -9,8 +9,11 @@ use memory::WriteAddr;
 ///
 /// Flags affected: N, Z
 #[inline(always)]
-fn pla(_core: &mut Core, _memory: &mut WriteAddr) {
-  // TODO: implementation
+fn pla(core: &mut Core, memory: &mut WriteAddr) {
+  core.reg.acc = core.pop_stack(memory);
+
+  core.reg.status.set_negative(core.reg.acc);
+  core.reg.status.set_zero(core.reg.acc);
 }
 
 /// Pull accumulator from stack
@@ -27,11 +30,16 @@ pub const IMPLIED: Instruction = Instruction {
 mod tests {
   use super::*;
   use cpu::Registers;
+  use memory::{block::BlockMemory, WriteAddr};
 
   #[test]
   fn pla_impl() {
     let mut core = Core::new(Registers::empty());
-    // TODO: test
+    let mut memory = BlockMemory::with_size(0x01ff);
+    memory.write_addr(0x01fe, 0x55);
+    core.reg.stack = 0xfe;
+    pla(&mut core, &mut memory);
+    assert_eq!(core.reg.acc, 0x55);
   }
 
   #[test]

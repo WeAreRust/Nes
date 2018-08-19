@@ -86,6 +86,10 @@ bitflags! {
 }
 
 impl StatusFlags {
+  pub fn adopt(&mut self, bits: u8) {
+    self.bits = bits;
+  }
+
   /// Carry flag is... 9th bit of u16...
   pub fn set_carry(&mut self, result: u16) {
     self.set(Self::C_FLAG, ((result >> 8) & 1) == 1);
@@ -118,6 +122,12 @@ impl StatusFlags {
 impl Default for StatusFlags {
   fn default() -> Self {
     Self::DX_FLAG
+  }
+}
+
+impl From<StatusFlags> for u8 {
+  fn from(status: StatusFlags) -> Self {
+    status.bits
   }
 }
 
