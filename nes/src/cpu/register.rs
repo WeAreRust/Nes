@@ -49,7 +49,7 @@ impl Default for Registers {
       x_idx: 0,
       y_idx: 0,
       pc: 0xc00,
-      stack: 0x24,
+      stack: 0xFD,
       status: StatusFlags::default(),
     }
   }
