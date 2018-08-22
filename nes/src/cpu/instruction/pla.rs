@@ -35,9 +35,9 @@ mod tests {
   #[test]
   fn pla_impl() {
     let mut core = Core::new(Registers::empty());
-    let mut memory = BlockMemory::with_size(0x01ff);
+    let mut memory = BlockMemory::with_size(0x0200);
     memory.write_addr(0x01fe, 0x55);
-    core.reg.stack = 0xfe;
+    core.reg.stack = 0xfe - 1;
     pla(&mut core, &mut memory);
     assert_eq!(core.reg.acc, 0x55);
   }

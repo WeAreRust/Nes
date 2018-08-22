@@ -32,11 +32,11 @@ mod tests {
   #[test]
   fn php_impl() {
     let mut core = Core::new(Registers::empty());
-    let mut memory = BlockMemory::with_size(0x01ff);
+    let mut memory = BlockMemory::with_size(0x0200);
     core.reg.status.set_zero(0x00);
     core.reg.stack = 0xff;
     php(&mut core, &mut memory);
-    assert_eq!(memory.read_addr(0x01fe), core.reg.status.into());
+    assert_eq!(memory.read_addr(0x01ff), core.reg.status.into());
   }
 
   #[test]

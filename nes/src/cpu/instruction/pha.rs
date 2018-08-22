@@ -32,11 +32,11 @@ mod tests {
   #[test]
   fn pha_impl() {
     let mut core = Core::new(Registers::empty());
-    let mut memory = BlockMemory::with_size(0x01ff);
+    let mut memory = BlockMemory::with_size(0x0200);
     core.reg.stack = 0xff;
     core.reg.acc = 0x01;
     pha(&mut core, &mut memory);
-    assert_eq!(memory.read_addr(0x01fe), 0x01);
+    assert_eq!(memory.read_addr(0x01ff), 0x01);
   }
 
   #[test]
