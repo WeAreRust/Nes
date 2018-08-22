@@ -20,10 +20,12 @@ fn brk(core: &mut Core, memory: &mut WriteAddr) {
   core.push_stack(memory, pc_plus_2_hi);
   core.push_stack(memory, pc_plus_2_lo);
   // Push "status at the beginning of the break instruction."
-  core.push_stack(memory, core.reg.status.into());
-
-  // Set I
-  core.reg.status |= StatusFlags::B_FLAG;
+  // "In the byte pushed, bit 5 is always set to 1, and bit 4 is 1 if from an instruction (PHP or BRK)"
+  // See: https://wiki.nesdev.com/w/index.php/CPU_status_flag_behavior
+  core.push_stack(
+    memory,
+    (core.reg.status | StatusFlags::X_FLAG | StatusFlags::B_FLAG).into(),
+  );
 
   // Fetch PC(lo) from $FFFE
   // Fetch PC(hi) from $FFFF
@@ -60,8 +62,11 @@ mod tests {
     core.reg.pc = 0x00FE;
     brk(&mut core, &mut memory);
 
-    assert_eq!(core.reg.status, StatusFlags::N_FLAG | StatusFlags::B_FLAG);
-    assert_eq!(core.pop_stack(&mut memory), StatusFlags::N_FLAG.into()); // Status flag at start
+    assert_eq!(core.reg.status, StatusFlags::N_FLAG); // Unchanged
+    assert_eq!(
+      core.pop_stack(&mut memory),
+      (StatusFlags::N_FLAG | StatusFlags::X_FLAG | StatusFlags::B_FLAG).into()
+    ); // Status flag at start + X&B
     assert_eq!(core.pop_stack(&mut memory), 0x00); // PC+2(lo)
     assert_eq!(core.pop_stack(&mut memory), 0x01); // PX+2(hi)
     assert_eq!(core.reg.pc, 0x0C10); // $FFFF -> PCH; $FFFE -> PCL
