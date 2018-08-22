@@ -57,7 +57,7 @@ impl Core {
   }
 
   /// Pop a value from the stack
-  fn pop_stack(&mut self, memory: &mut ReadAddr) -> u8 {
+  fn pop_stack(&mut self, memory: &mut WriteAddr) -> u8 {
     self.reg.stack += 1;
     let value = memory.read_addr(self.get_stack_address());
     value
