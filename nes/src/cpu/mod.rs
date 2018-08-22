@@ -50,7 +50,7 @@ impl fmt::Debug for Core {
   Y   0x{:02X}
   PC  0x{:04X}
   SP  0x{:04X}
-  P   0x{:04X}
+  P   0x{:08b}
 }}",
       self.reg.acc, self.reg.x_idx, self.reg.y_idx, self.reg.pc, self.reg.stack, status
     )
