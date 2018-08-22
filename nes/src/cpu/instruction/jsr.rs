@@ -11,6 +11,7 @@ use memory::WriteAddr;
 #[inline(always)]
 fn jsr(core: &mut Core, memory: &mut WriteAddr, address: u16) {
   // TODO: implementation
+  unimplemented!();
 }
 
 /// Jump to new location saving return address

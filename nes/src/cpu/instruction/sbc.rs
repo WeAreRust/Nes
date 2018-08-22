@@ -10,6 +10,7 @@ use cpu::{
 #[inline(always)]
 fn sbc(core: &mut Core, operand: u8) {
   // TODO: implementation
+  unimplemented!();
 }
 
 /// Subtract memory from accumulator with borrow

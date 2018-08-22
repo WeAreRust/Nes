@@ -10,6 +10,7 @@ use cpu::{
 #[inline(always)]
 fn rti(core: &mut Core) {
   // TODO: implementation
+  unimplemented!();
 }
 
 /// Return from interrupt

@@ -10,6 +10,7 @@ use cpu::{
 #[inline(always)]
 fn rts(core: &mut Core) {
   // TODO: implementation
+  unimplemented!();
 }
 
 /// Return from subroutine

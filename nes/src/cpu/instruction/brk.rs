@@ -10,6 +10,7 @@ use cpu::{
 #[inline(always)]
 fn brk(core: &mut Core) {
   // TODO: implementation
+  unimplemented!();
 }
 
 /// Force break

@@ -31,6 +31,7 @@ impl<T: ReadAddr + WriteAddr> Processor<T> for Core {
         .push(instr.opcode(), instr.cycles(self, memory));
     }
     if let Some(opcode) = self.pipeline.next() {
+      println!("Executing: 0x{:02X}", opcode);
       let instr: Instruction = opcode.into();
       instr.execute(self, memory);
     }
