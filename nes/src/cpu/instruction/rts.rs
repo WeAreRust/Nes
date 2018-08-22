@@ -11,6 +11,7 @@ use memory::WriteAddr;
 #[inline(always)]
 fn rts(_core: &mut Core, _memory: &mut WriteAddr) {
   // TODO: implementation
+  unimplemented!();
 }
 
 /// Return from subroutine

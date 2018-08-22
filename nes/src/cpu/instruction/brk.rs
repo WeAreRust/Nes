@@ -11,6 +11,7 @@ use memory::WriteAddr;
 #[inline(always)]
 fn brk(core: &mut Core, _memory: &mut WriteAddr) {
   // TODO: implementation
+  unimplemented!();
 }
 
 /// Force break

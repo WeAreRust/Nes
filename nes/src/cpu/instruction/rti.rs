@@ -11,6 +11,7 @@ use memory::WriteAddr;
 #[inline(always)]
 fn rti(_core: &mut Core, _memory: &mut WriteAddr) {
   // TODO: implementation
+  unimplemented!();
 }
 
 /// Return from interrupt
