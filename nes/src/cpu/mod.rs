@@ -47,24 +47,23 @@ impl Core {
 
   /// Get the stack memory address (between 0x0100 and 0x01FF) from the stack counter
   fn get_stack_address(&self) -> u16 {
-    0x01FF & (self.reg.stack as u16)
+    0x0100 | (self.reg.stack as u16)
   }
 
   /// Push a value onto the stack
   ///
   /// TODO: Test
   fn push_stack(&mut self, memory: &mut WriteAddr, value: u8) {
-    // Get next stack address (The stack grows from 0xff to 0x00)
-    self.reg.stack -= 1;
     memory.write_addr(self.get_stack_address(), value);
+    self.reg.stack -= 1; // Update the stack address (the stack grows from 0xff to 0x00)
   }
 
   /// Pop a value from the stack
   ///
   /// TODO: Test
   fn pop_stack(&mut self, memory: &mut ReadAddr) -> u8 {
-    let value = memory.read_addr(self.get_stack_address());
     self.reg.stack += 1;
+    let value = memory.read_addr(self.get_stack_address());
     value
   }
 
@@ -245,6 +244,33 @@ mod tests {
 
   use cpu::{instruction::Instruction, register::Registers};
   use memory::block::BlockMemory;
+
+  #[test]
+  fn get_stack_address() {
+    let mut core = Core::new(Registers::empty());
+    core.reg.stack = 0xf0;
+    assert_eq!(core.get_stack_address(), 0x01f0);
+  }
+
+  #[test]
+  fn push_stack() {
+    let mut core = Core::new(Registers::empty());
+    let mut memory = BlockMemory::with_size(0xFFFF);
+    core.reg.stack = 0xff; // init stack
+    core.push_stack(&mut memory, 0x05);
+    assert_eq!(core.reg.stack, 0xfe);
+    assert_eq!(memory.read_addr(0x01ff), 0x05);
+  }
+
+  #[test]
+  fn pop_stack() {
+    let mut core = Core::new(Registers::empty());
+    let mut memory = BlockMemory::with_size(0xFFFF);
+    memory.write_addr(0x01f0, 0x05);
+    core.reg.stack = 0xf0 - 1;
+    assert_eq!(core.pop_stack(&mut memory), 0x05);
+    assert_eq!(core.reg.stack, 0xf0);
+  }
 
   #[test]
   fn processor_cycle() {
