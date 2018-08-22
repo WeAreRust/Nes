@@ -53,7 +53,7 @@ impl Core {
   /// Push a value onto the stack
   fn push_stack(&mut self, memory: &mut WriteAddr, value: u8) {
     memory.write_addr(self.get_stack_address(), value);
-    self.reg.stack -= 1; // Update the stack address (the stack grows from 0xff to 0x00)
+    self.reg.stack -= 1; // update the stack address (the stack grows from 0xff to 0x00)
   }
 
   /// Pop a value from the stack
