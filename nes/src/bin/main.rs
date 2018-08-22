@@ -106,6 +106,7 @@ fn main() {
       }
     }
 
+    console.tick();
     ticks += 1;
     if report_throttle.test() {
       let now = Instant::now();
