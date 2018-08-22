@@ -4,12 +4,13 @@ use cpu::{
   register::StatusFlags,
   Core,
 };
+use memory::WriteAddr;
 
 /// Clear carry flag
 ///
 /// Flags affected: C
 #[inline(always)]
-fn clc(core: &mut Core) {
+fn clc(core: &mut Core, _memory: &mut WriteAddr) {
   core.reg.status.set(StatusFlags::C_FLAG, false)
 }
 
@@ -27,12 +28,13 @@ pub const IMPLIED: Instruction = Instruction {
 mod tests {
   use super::*;
   use cpu::Registers;
+  use memory::block::BlockMemory;
 
   #[test]
   fn clc_impl() {
     let mut core = Core::new(Registers::empty());
     core.reg.status.set(StatusFlags::C_FLAG, true);
-    clc(&mut core);
+    clc(&mut core, &mut BlockMemory::with_size(0));
     assert!(!core.reg.status.contains(StatusFlags::C_FLAG));
   }
 

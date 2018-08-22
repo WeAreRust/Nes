@@ -3,13 +3,14 @@ use cpu::{
   operation::Operation,
   Core,
 };
+use memory::WriteAddr;
 
 /// Push accumulator onto stack
 ///
 /// Flags affected: None
 #[inline(always)]
-fn pha(core: &mut Core) {
-  // TODO: implementation
+fn pha(core: &mut Core, memory: &mut WriteAddr) {
+  core.push_stack(memory, core.reg.acc);
 }
 
 /// Push accumulator onto stack
@@ -26,11 +27,16 @@ pub const IMPLIED: Instruction = Instruction {
 mod tests {
   use super::*;
   use cpu::Registers;
+  use memory::{block::BlockMemory, ReadAddr};
 
   #[test]
   fn pha_impl() {
     let mut core = Core::new(Registers::empty());
-    // TODO: test
+    let mut memory = BlockMemory::with_size(0x0200);
+    core.reg.stack = 0xff;
+    core.reg.acc = 0x01;
+    pha(&mut core, &mut memory);
+    assert_eq!(memory.read_addr(0x01ff), 0x01);
   }
 
   #[test]

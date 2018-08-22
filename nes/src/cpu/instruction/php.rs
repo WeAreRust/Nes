@@ -3,13 +3,14 @@ use cpu::{
   operation::Operation,
   Core,
 };
+use memory::WriteAddr;
 
 /// Push processor status onto stack
 ///
 /// Flags affected: None
 #[inline(always)]
-fn php(core: &mut Core) {
-  // TODO: implementation
+fn php(core: &mut Core, memory: &mut WriteAddr) {
+  core.push_stack(memory, core.reg.status.into());
 }
 
 /// Push processor status onto stack
@@ -26,11 +27,16 @@ pub const IMPLIED: Instruction = Instruction {
 mod tests {
   use super::*;
   use cpu::Registers;
+  use memory::{block::BlockMemory, ReadAddr};
 
   #[test]
   fn php_impl() {
     let mut core = Core::new(Registers::empty());
-    // TODO: test
+    let mut memory = BlockMemory::with_size(0x0200);
+    core.reg.status.set_zero(0x00);
+    core.reg.stack = 0xff;
+    php(&mut core, &mut memory);
+    assert_eq!(memory.read_addr(0x01ff), core.reg.status.into());
   }
 
   #[test]

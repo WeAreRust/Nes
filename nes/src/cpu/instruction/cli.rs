@@ -4,12 +4,13 @@ use cpu::{
   register::StatusFlags,
   Core,
 };
+use memory::WriteAddr;
 
 /// Clear interrupt disable bit
 ///
 /// Flags affected: I
 #[inline(always)]
-fn cli(core: &mut Core) {
+fn cli(core: &mut Core, _memory: &mut WriteAddr) {
   core.reg.status.set(StatusFlags::I_FLAG, false)
 }
 
@@ -27,12 +28,13 @@ pub const IMPLIED: Instruction = Instruction {
 mod tests {
   use super::*;
   use cpu::Registers;
+  use memory::block::BlockMemory;
 
   #[test]
   fn cli_impl() {
     let mut core = Core::new(Registers::empty());
     core.reg.status.set(StatusFlags::I_FLAG, true);
-    cli(&mut core);
+    cli(&mut core, &mut BlockMemory::with_size(0));
     assert!(!core.reg.status.contains(StatusFlags::I_FLAG));
   }
 

@@ -3,13 +3,17 @@ use cpu::{
   operation::Operation,
   Core,
 };
+use memory::WriteAddr;
 
 /// Pull accumulator from stack
 ///
 /// Flags affected: N, Z
 #[inline(always)]
-fn pla(core: &mut Core) {
-  // TODO: implementation
+fn pla(core: &mut Core, memory: &mut WriteAddr) {
+  core.reg.acc = core.pop_stack(memory);
+
+  core.reg.status.set_negative(core.reg.acc);
+  core.reg.status.set_zero(core.reg.acc);
 }
 
 /// Pull accumulator from stack
@@ -26,11 +30,16 @@ pub const IMPLIED: Instruction = Instruction {
 mod tests {
   use super::*;
   use cpu::Registers;
+  use memory::{block::BlockMemory, WriteAddr};
 
   #[test]
   fn pla_impl() {
     let mut core = Core::new(Registers::empty());
-    // TODO: test
+    let mut memory = BlockMemory::with_size(0x0200);
+    memory.write_addr(0x01fe, 0x55);
+    core.reg.stack = 0xfe - 1;
+    pla(&mut core, &mut memory);
+    assert_eq!(core.reg.acc, 0x55);
   }
 
   #[test]

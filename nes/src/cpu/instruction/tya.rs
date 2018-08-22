@@ -3,12 +3,13 @@ use cpu::{
   operation::Operation,
   Core,
 };
+use memory::WriteAddr;
 
 /// Transfer index y to accumulator
 ///
 /// Flags affected: N, Z
 #[inline(always)]
-fn tya(core: &mut Core) {
+fn tya(core: &mut Core, _memory: &mut WriteAddr) {
   core.reg.acc = core.reg.y_idx;
 
   core.reg.status.set_negative(core.reg.acc);
@@ -29,19 +30,20 @@ pub const IMPLIED: Instruction = Instruction {
 mod tests {
   use super::*;
   use cpu::{register::StatusFlags, Registers};
+  use memory::block::BlockMemory;
 
   #[test]
   fn tya_impl() {
     let mut core = Core::new(Registers::empty());
     core.reg.y_idx = 1;
-    tya(&mut core);
+    tya(&mut core, &mut BlockMemory::with_size(0));
     assert_eq!(core.reg.acc, 1);
   }
 
   #[test]
   fn tya_impl_zero_flag() {
     let mut core = Core::new(Registers::empty());
-    tya(&mut core);
+    tya(&mut core, &mut BlockMemory::with_size(0));
     assert_eq!(core.reg.acc, 0);
     assert!(core.reg.status.contains(StatusFlags::Z_FLAG));
   }
@@ -50,7 +52,7 @@ mod tests {
   fn tya_impl_negative_flag() {
     let mut core = Core::new(Registers::empty());
     core.reg.y_idx = 128;
-    tya(&mut core);
+    tya(&mut core, &mut BlockMemory::with_size(0));
     assert_eq!(core.reg.acc, 128);
     assert!(core.reg.status.contains(StatusFlags::N_FLAG));
   }

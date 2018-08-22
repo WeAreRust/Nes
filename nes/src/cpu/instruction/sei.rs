@@ -4,12 +4,13 @@ use cpu::{
   register::StatusFlags,
   Core,
 };
+use memory::WriteAddr;
 
 /// Set interrupt disable status
 ///
 /// Flags affected: I
 #[inline(always)]
-fn sei(core: &mut Core) {
+fn sei(core: &mut Core, _memory: &mut WriteAddr) {
   core.reg.status.set(StatusFlags::I_FLAG, true)
 }
 
@@ -27,11 +28,12 @@ pub const IMPLIED: Instruction = Instruction {
 mod tests {
   use super::*;
   use cpu::Registers;
+  use memory::block::BlockMemory;
 
   #[test]
   fn sei_impl() {
     let mut core = Core::new(Registers::empty());
-    sei(&mut core);
+    sei(&mut core, &mut BlockMemory::with_size(0));
     assert!(core.reg.status.contains(StatusFlags::I_FLAG));
   }
 

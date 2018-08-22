@@ -1,7 +1,7 @@
 use cpu::Core;
 use memory::{ReadAddr, WriteAddr};
 
-type ImpliedFunction = &'static Fn(&mut Core);
+type ImpliedFunction = &'static Fn(&mut Core, &mut WriteAddr);
 type AddressFunction = &'static Fn(&mut Core, &mut WriteAddr, u16);
 type ValueFunction = &'static Fn(&mut Core, u8);
 
@@ -141,7 +141,7 @@ impl Operation {
       }
 
       Operation::Implied(func) => {
-        func(core);
+        func(core, memory);
       }
 
       Operation::IndirectX(func) => {

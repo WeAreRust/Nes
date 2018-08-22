@@ -3,12 +3,13 @@ use cpu::{
   operation::Operation,
   Core,
 };
+use memory::WriteAddr;
 
 /// Force break
 ///
 /// Flags affected: I
 #[inline(always)]
-fn brk(core: &mut Core) {
+fn brk(core: &mut Core, _memory: &mut WriteAddr) {
   // TODO: implementation
 }
 

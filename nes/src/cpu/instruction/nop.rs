@@ -3,12 +3,13 @@ use cpu::{
   operation::Operation,
   Core,
 };
+use memory::WriteAddr;
 
 /// No Operation
 ///
 /// Flags affected: None
 #[inline(always)]
-fn nop(_core: &mut Core) {}
+fn nop(_core: &mut Core, _memory: &mut WriteAddr) {}
 
 /// No Operation
 ///

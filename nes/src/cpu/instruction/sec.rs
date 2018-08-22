@@ -4,12 +4,13 @@ use cpu::{
   register::StatusFlags,
   Core,
 };
+use memory::WriteAddr;
 
 /// Set carry flag
 ///
 /// Flags affected: C
 #[inline(always)]
-fn sec(core: &mut Core) {
+fn sec(core: &mut Core, _memory: &mut WriteAddr) {
   core.reg.status.set(StatusFlags::C_FLAG, true)
 }
 
@@ -27,11 +28,12 @@ pub const IMPLIED: Instruction = Instruction {
 mod tests {
   use super::*;
   use cpu::Registers;
+  use memory::block::BlockMemory;
 
   #[test]
   fn sec_impl() {
     let mut core = Core::new(Registers::empty());
-    sec(&mut core);
+    sec(&mut core, &mut BlockMemory::with_size(0));
     assert!(core.reg.status.contains(StatusFlags::C_FLAG));
   }
 

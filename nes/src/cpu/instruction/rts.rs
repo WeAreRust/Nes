@@ -3,12 +3,13 @@ use cpu::{
   operation::Operation,
   Core,
 };
+use memory::WriteAddr;
 
 /// Return from subroutine
 ///
 /// Flags affected: None
 #[inline(always)]
-fn rts(core: &mut Core) {
+fn rts(_core: &mut Core, _memory: &mut WriteAddr) {
   // TODO: implementation
 }
 

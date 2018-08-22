@@ -3,12 +3,13 @@ use cpu::{
   operation::Operation,
   Core,
 };
+use memory::WriteAddr;
 
 /// Transfer index x to stack register
 ///
 /// Flags affected: None
 #[inline(always)]
-fn txs(core: &mut Core) {
+fn txs(core: &mut Core, _memory: &mut WriteAddr) {
   core.reg.stack = core.reg.x_idx;
 }
 
@@ -26,12 +27,13 @@ pub const IMPLIED: Instruction = Instruction {
 mod tests {
   use super::*;
   use cpu::Registers;
+  use memory::block::BlockMemory;
 
   #[test]
   fn txs_impl() {
     let mut core = Core::new(Registers::empty());
     core.reg.x_idx = 1;
-    txs(&mut core);
+    txs(&mut core, &mut BlockMemory::with_size(0));
     assert_eq!(core.reg.stack, 1);
   }
 
