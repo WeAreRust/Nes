@@ -11,7 +11,6 @@ use memory::WriteAddr;
 /// Flags affected: I
 #[inline(always)]
 fn brk(core: &mut Core, memory: &mut WriteAddr) {
-
   let pc_plus_2 = core.reg.pc + 2;
   let pc_plus_2_hi: u8 = (pc_plus_2 >> 8) as u8;
   let pc_plus_2_lo: u8 = (pc_plus_2 & 0x00FF) as u8;
