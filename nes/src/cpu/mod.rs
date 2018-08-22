@@ -1,7 +1,7 @@
 use clock::Processor;
 use cpu::{instruction::Instruction, pipeline::Pipeline, register::Registers};
 use memory::{ReadAddr, WriteAddr};
-use std::u8;
+use std::{fmt, u8};
 
 pub mod instruction;
 pub mod operation;
@@ -31,10 +31,29 @@ impl<T: ReadAddr + WriteAddr> Processor<T> for Core {
         .push(instr.opcode(), instr.cycles(self, memory));
     }
     if let Some(opcode) = self.pipeline.next() {
+      println!("{:?}", self);
       println!("Executing: 0x{:02X}", opcode);
       let instr: Instruction = opcode.into();
       instr.execute(self, memory);
     }
+  }
+}
+
+impl fmt::Debug for Core {
+  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    let status: u8 = self.reg.status.into();
+    write!(
+      f,
+      "CPU {{
+  A   0x{:02X}
+  X   0x{:02X}
+  Y   0x{:02X}
+  PC  0x{:04X}
+  SP  0x{:04X}
+  P   0x{:04X}
+}}",
+      self.reg.acc, self.reg.x_idx, self.reg.y_idx, self.reg.pc, self.reg.stack, status
+    )
   }
 }
 
@@ -70,10 +89,10 @@ impl Core {
   /// FFFD. This is the start location for program control.
   /// Reference: http://archive.6502.org/datasheets/mos_6500_mpu_nov_1985.pdf
   pub fn reset<T: ReadAddr>(&mut self, memory: &mut T) {
-    let a: u8 = memory.read_addr(0xFFFC);
-    let b: u8 = memory.read_addr(0xFFFD);
+    let pclo: u8 = memory.read_addr(0xFFFC);
+    let pchi: u8 = memory.read_addr(0xFFFD);
 
-    self.reg.pc = (b as u16) << 8 | a as u16;
+    self.reg.pc = (pchi as u16) << 8 | pclo as u16;
   }
 
   /// Immediate addressing allows the use of an 8 bit constant as the arguments to an address.
