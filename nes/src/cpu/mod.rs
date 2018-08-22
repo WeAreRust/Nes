@@ -51,16 +51,12 @@ impl Core {
   }
 
   /// Push a value onto the stack
-  ///
-  /// TODO: Test
   fn push_stack(&mut self, memory: &mut WriteAddr, value: u8) {
     memory.write_addr(self.get_stack_address(), value);
     self.reg.stack -= 1; // Update the stack address (the stack grows from 0xff to 0x00)
   }
 
   /// Pop a value from the stack
-  ///
-  /// TODO: Test
   fn pop_stack(&mut self, memory: &mut ReadAddr) -> u8 {
     self.reg.stack += 1;
     let value = memory.read_addr(self.get_stack_address());
@@ -255,7 +251,7 @@ mod tests {
   #[test]
   fn push_stack() {
     let mut core = Core::new(Registers::empty());
-    let mut memory = BlockMemory::with_size(0xFFFF);
+    let mut memory = BlockMemory::with_size(0x0200);
     core.reg.stack = 0xff; // init stack
     core.push_stack(&mut memory, 0x05);
     assert_eq!(core.reg.stack, 0xfe);
@@ -265,7 +261,7 @@ mod tests {
   #[test]
   fn pop_stack() {
     let mut core = Core::new(Registers::empty());
-    let mut memory = BlockMemory::with_size(0xFFFF);
+    let mut memory = BlockMemory::with_size(0x0200);
     memory.write_addr(0x01f0, 0x05);
     core.reg.stack = 0xf0 - 1;
     assert_eq!(core.pop_stack(&mut memory), 0x05);
