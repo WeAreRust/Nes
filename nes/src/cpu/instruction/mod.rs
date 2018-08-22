@@ -288,8 +288,9 @@ impl Instruction {
   }
 
   // TODO: test.
-  // TODO: shouldn't this jump the number of arguments, to the next instruction, and not just
-  // increment by one?
+  // Operations which expect arguments should read those arguments from the PC and advance it.
+  // We handle these extra increments within the operation call.
+  // See pp 31-35 of http://archive.6502.org/datasheets/synertek_programming_manual.pdf
   pub fn execute<M: ReadAddr + WriteAddr>(&self, core: &mut Core, memory: &mut M) {
     core.reg.pc += 1;
     self.operation.call(core, memory);
