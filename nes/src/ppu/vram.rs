@@ -17,11 +17,17 @@ pub struct Memory {
   bytes: Vec<u8>,
 }
 
-impl Memory {
-  pub fn new() -> Self {
+impl Default for Memory {
+  fn default() -> Self {
     Memory {
       bytes: vec![0; 0x4000],
     }
+  }
+}
+
+impl Memory {
+  pub fn new() -> Self {
+    Memory::default()
   }
 
   pub fn read_addr(&self, addr: Addr) -> u8 {
@@ -44,7 +50,8 @@ fn wrapped_addr(addr: Addr) -> Addr {
     0x3F20...0x3FFF => 0x3F00 + ((addr - 0x3F20) % 0x0020),
 
     // Physical memory addressing
-    0x0000...0x3FFF => addr,
+    0x0000...0x2FFF => addr,
+    0x3F00...0x3F1F => addr,
 
     // Remaining address space mirroring
     0x4000...0xFFFF => wrapped_addr(addr % 0x4000),

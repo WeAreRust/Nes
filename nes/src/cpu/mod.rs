@@ -67,7 +67,7 @@ impl Core {
 
   /// Get the stack memory address (between 0x0100 and 0x01FF) from the stack counter
   fn get_stack_address(&self) -> u16 {
-    0x0100 | (self.reg.stack as u16)
+    0x0100 | u16::from(self.reg.stack)
   }
 
   /// Push a value onto the stack
@@ -79,8 +79,7 @@ impl Core {
   /// Pop a value from the stack
   fn pop_stack(&mut self, memory: &mut WriteAddr) -> u8 {
     self.reg.stack += 1;
-    let value = memory.read_addr(self.get_stack_address());
-    value
+    memory.read_addr(self.get_stack_address())
   }
 
   /// After a system initialization time of six clock cycles, the mask
@@ -92,7 +91,7 @@ impl Core {
     let pclo: u8 = memory.read_addr(0xFFFC);
     let pchi: u8 = memory.read_addr(0xFFFD);
 
-    self.reg.pc = (pchi as u16) << 8 | pclo as u16;
+    self.reg.pc = u16::from(pchi) << 8 | u16::from(pclo);
   }
 
   /// Immediate addressing allows the use of an 8 bit constant as the arguments to an address.

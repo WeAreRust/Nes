@@ -137,7 +137,7 @@ mod tests {
 
   #[test]
   fn default_status_flags() {
-    assert_eq!(StatusFlags::default().bits, 0b001_01000);
+    assert_eq!(StatusFlags::default().bits, 0b0010_1000);
   }
 
   #[test]

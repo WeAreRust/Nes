@@ -34,12 +34,18 @@ pub struct Clock {
   next_batch: Instant,
 }
 
-impl Clock {
-  pub fn new() -> Self {
+impl Default for Clock {
+  fn default() -> Self {
     Clock {
       batch: 0,
       next_batch: Instant::now().add(Duration::new(0, NANOS_PER_BATCH)),
     }
+  }
+}
+
+impl Clock {
+  pub fn new() -> Self {
+    Clock::default()
   }
 
   pub fn cycle(&mut self) {

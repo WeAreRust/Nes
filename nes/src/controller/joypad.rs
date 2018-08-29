@@ -81,16 +81,14 @@ impl Joypad {
   }
 
   fn strobe(&mut self) {
-    match self.strobe_state {
-      State::Init => self.strobe_state = State::Strobe,
-      _ => (),
+    if let State::Init = self.strobe_state {
+      self.strobe_state = State::Strobe
     }
   }
 
   fn strobe_end(&mut self) {
-    match self.strobe_state {
-      State::Strobe => self.strobe_state = State::ReportA,
-      _ => (),
+    if let State::Strobe = self.strobe_state {
+      self.strobe_state = State::ReportA
     }
   }
 
@@ -119,20 +117,21 @@ impl Joypad {
   }
 
   fn next_state(current: &State, strobe: bool) -> State {
-    match strobe {
-      true => State::Strobe,
-      false => match current {
-        State::Init => State::Init,
-        State::Strobe => State::ReportA,
-        State::ReportA => State::ReportB,
-        State::ReportB => State::ReportSelect,
-        State::ReportSelect => State::ReportStart,
-        State::ReportStart => State::ReportUp,
-        State::ReportUp => State::ReportDown,
-        State::ReportDown => State::ReportLeft,
-        State::ReportLeft => State::ReportRight,
-        State::ReportRight => State::Init,
-      },
+    if strobe {
+      return State::Strobe;
+    }
+
+    match current {
+      State::Init => State::Init,
+      State::Strobe => State::ReportA,
+      State::ReportA => State::ReportB,
+      State::ReportB => State::ReportSelect,
+      State::ReportSelect => State::ReportStart,
+      State::ReportStart => State::ReportUp,
+      State::ReportUp => State::ReportDown,
+      State::ReportDown => State::ReportLeft,
+      State::ReportLeft => State::ReportRight,
+      State::ReportRight => State::Init,
     }
   }
 }
