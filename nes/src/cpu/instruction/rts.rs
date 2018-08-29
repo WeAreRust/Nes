@@ -9,9 +9,14 @@ use memory::WriteAddr;
 ///
 /// Flags affected: None
 #[inline(always)]
-fn rts(_core: &mut Core, _memory: &mut WriteAddr) {
-  // TODO: implementation
-  unimplemented!();
+fn rts(core: &mut Core, memory: &mut WriteAddr) {
+  // pop PC
+  let pc_lo = core.pop_stack(memory);
+  let pc_hi = core.pop_stack(memory);
+  core.reg.pc = (pc_hi as u16) << 8 | pc_lo as u16;
+
+  // INC PC
+  core.reg.pc += 1;
 }
 
 /// Return from subroutine
@@ -28,11 +33,18 @@ pub const IMPLIED: Instruction = Instruction {
 mod tests {
   use super::*;
   use cpu::Registers;
+  use memory::block::BlockMemory;
 
   #[test]
-  fn rti_impl() {
-    let mut _core = Core::new(Registers::empty());
-    // TODO: test
+  fn rts_impl() {
+    let mut core = Core::new(Registers::empty());
+    let mut memory = BlockMemory::with_size(0x0300);
+    core.reg.stack = 0xff; // init stack
+    core.reg.pc = 0x0200;
+    core.push_stack(&mut memory, 0x03);
+    core.push_stack(&mut memory, 0x0e);
+    rts(&mut core, &mut memory);
+    assert_eq!(core.reg.pc, 0x030f);
   }
 
   #[test]
