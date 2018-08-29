@@ -157,10 +157,10 @@ impl Core {
   /// program counter itself is incremented during the instruction execution, so the distance to
   /// jump is truly in the range [-126, +129].
   fn relative_addr<T: ReadAddr>(&mut self, memory: &mut T) -> u16 {
-    let offset = memory.read_addr(self.reg.pc).into();
-    self.reg.pc += 2;
+    let offset: i8 = memory.read_addr(self.reg.pc).into();
+    self.reg.pc += 1;
 
-    self.reg.pc.wrapping_add(offset)
+    self.reg.pc + offset
   }
 
   /// Absolute addressing allows the use of an 16 bit address to identify the target location.
