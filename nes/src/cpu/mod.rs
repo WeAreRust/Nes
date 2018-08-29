@@ -156,10 +156,10 @@ impl Core {
   /// program counter itself is incremented during the instruction execution, so the distance to
   /// jump is truly in the range [-126, +129].
   fn relative_addr<T: ReadAddr>(&mut self, memory: &mut T) -> u16 {
-    let offset = memory.read_addr(self.reg.pc).into();
-    self.reg.pc += 2;
+    let offset: i8 = memory.read_addr(self.reg.pc) as i8;
+    self.reg.pc += 1;
 
-    self.reg.pc.wrapping_add(offset)
+    ((self.reg.pc as i16) + (offset as i16)) as u16
   }
 
   /// Absolute addressing allows the use of an 16 bit address to identify the target location.
@@ -409,19 +409,19 @@ mod tests {
     core.reg.pc = 2;
 
     let addr = core.relative_addr(&mut memory);
-    assert_eq!(addr, core.reg.pc + 0x12);
-    assert_eq!(core.reg.pc, 4);
+    assert_eq!(addr, 0x15);
+    assert_eq!(core.reg.pc, 3);
   }
 
   #[test]
-  fn relative_address_overflow() {
-    let mut memory = BlockMemory::with_bytes(vec![0x00, 0x00, 0x80]);
+  fn relative_address_negative() {
+    let mut memory = BlockMemory::with_bytes(vec![0x00, 0x00, 0xFE]);
     let mut core = Core::new(Registers::empty());
     core.reg.pc = 2;
 
     let addr = core.relative_addr(&mut memory);
-    assert_eq!(addr, 256 - 0x80 + core.reg.pc);
-    assert_eq!(core.reg.pc, 4);
+    assert_eq!(addr, 0x01);
+    assert_eq!(core.reg.pc, 3);
   }
 
   #[test]
