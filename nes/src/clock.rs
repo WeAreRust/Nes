@@ -55,8 +55,9 @@ impl Clock {
     }
 
     self.batch = 0;
-    if self.next_batch > Instant::now() {
-      let delay = self.next_batch.duration_since(Instant::now());
+    let present = Instant::now();
+    if self.next_batch > present {
+      let delay = self.next_batch.duration_since(present);
       thread::sleep(delay);
     }
     self.next_batch = self.next_batch.add(Duration::new(0, NANOS_PER_BATCH));
