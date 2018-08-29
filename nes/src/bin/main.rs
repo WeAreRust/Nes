@@ -7,7 +7,7 @@ use std::env;
 use std::fs::File;
 use std::io::Read;
 use std::sync::mpsc;
-use std::time::{Duration, Instant};
+use std::time::Instant;
 
 use nes::apu::processor::ApuImpl;
 use nes::console::Console;

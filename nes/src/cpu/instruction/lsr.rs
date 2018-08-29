@@ -13,7 +13,7 @@ fn shift_right(core: &mut Core, operand: u8) -> u8 {
   let value = operand >> 1;
 
   // Move the 1st operand but into the 9th u16 bit for the carry test
-  core.reg.status.set_carry((operand as u16) << 8);
+  core.reg.status.set_carry(u16::from(operand) << 8);
   core.reg.status.set_zero(value);
 
   value
@@ -95,7 +95,7 @@ mod tests {
   #[test]
   fn shift_right_impl() {
     let mut core = Core::new(Registers::empty());
-    assert_eq!(shift_right(&mut core, 0b_0000_0010), 0b_0000_0001);
+    assert_eq!(shift_right(&mut core, 0b0000_0010), 0b0000_0001);
     assert!(!core.reg.status.contains(StatusFlags::N_FLAG));
     assert!(!core.reg.status.contains(StatusFlags::Z_FLAG));
     assert!(!core.reg.status.contains(StatusFlags::C_FLAG));
@@ -104,7 +104,7 @@ mod tests {
   #[test]
   fn shift_right_impl_zero() {
     let mut core = Core::new(Registers::empty());
-    assert_eq!(shift_right(&mut core, 0b_0000_0000), 0b_0000_0000);
+    assert_eq!(shift_right(&mut core, 0b0000_0000), 0b0000_0000);
     assert!(!core.reg.status.contains(StatusFlags::N_FLAG));
     assert!(core.reg.status.contains(StatusFlags::Z_FLAG));
     assert!(!core.reg.status.contains(StatusFlags::C_FLAG));
@@ -113,7 +113,7 @@ mod tests {
   #[test]
   fn shift_right_impl_carry() {
     let mut core = Core::new(Registers::empty());
-    assert_eq!(shift_right(&mut core, 0b_0000_0011), 0b_0000_0001);
+    assert_eq!(shift_right(&mut core, 0b0000_0011), 0b0000_0001);
     assert!(!core.reg.status.contains(StatusFlags::N_FLAG));
     assert!(!core.reg.status.contains(StatusFlags::Z_FLAG));
     assert!(core.reg.status.contains(StatusFlags::C_FLAG));
@@ -122,18 +122,18 @@ mod tests {
   #[test]
   fn lsr_acc_impl() {
     let mut core = Core::new(Registers::empty());
-    core.reg.acc = 0b_0000_0010;
+    core.reg.acc = 0b0000_0010;
     let operand = core.reg.acc;
     lsr_acc(&mut core, operand);
-    assert_eq!(core.reg.acc, 0b_0000_0001);
+    assert_eq!(core.reg.acc, 0b0000_0001);
   }
 
   #[test]
   fn lsr_mem_impl() {
-    let mut memory: BlockMemory = BlockMemory::with_bytes(vec![0b_0000_0010]);
+    let mut memory: BlockMemory = BlockMemory::with_bytes(vec![0b0000_0010]);
     let mut core = Core::new(Registers::empty());
     lsr_mem(&mut core, &mut memory, 0x00);
-    assert_eq!(memory.read_addr(0x00), 0b_0000_0001);
+    assert_eq!(memory.read_addr(0x00), 0b0000_0001);
   }
 
   #[test]

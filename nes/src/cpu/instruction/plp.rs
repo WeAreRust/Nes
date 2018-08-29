@@ -34,11 +34,11 @@ mod tests {
   fn plp_impl() {
     let mut core = Core::new(Registers::empty());
     let mut memory = BlockMemory::with_size(0x0200);
-    memory.write_addr(0x01fe, 0b_0101_0101);
+    memory.write_addr(0x01fe, 0b0101_0101);
     core.reg.stack = 0xfe - 1;
     plp(&mut core, &mut memory);
     let status_bits: u8 = core.reg.status.into();
-    assert_eq!(status_bits, 0b_0101_0101);
+    assert_eq!(status_bits, 0b0101_0101);
   }
 
   #[test]

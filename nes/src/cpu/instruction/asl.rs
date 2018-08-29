@@ -9,7 +9,7 @@ use memory::WriteAddr;
 ///
 /// Flags affected: N, Z, C
 fn shift_left(core: &mut Core, operand: u8) -> u8 {
-  let value: u16 = (operand as u16) << 1;
+  let value = u16::from(operand) << 1;
   let lo_value = value as u8;
 
   core.reg.status.set_carry(value);
@@ -95,7 +95,7 @@ mod tests {
   #[test]
   fn shift_left_impl() {
     let mut core = Core::new(Registers::empty());
-    assert_eq!(shift_left(&mut core, 0b_0000_0001), 0b_0000_0010);
+    assert_eq!(shift_left(&mut core, 0b0000_0001), 0b0000_0010);
     assert!(!core.reg.status.contains(StatusFlags::N_FLAG));
     assert!(!core.reg.status.contains(StatusFlags::Z_FLAG));
     assert!(!core.reg.status.contains(StatusFlags::C_FLAG));
@@ -104,7 +104,7 @@ mod tests {
   #[test]
   fn shift_left_impl_negative() {
     let mut core = Core::new(Registers::empty());
-    assert_eq!(shift_left(&mut core, 0b_0100_0000), 0b_1000_0000);
+    assert_eq!(shift_left(&mut core, 0b0100_0000), 0b1000_0000);
     assert!(core.reg.status.contains(StatusFlags::N_FLAG));
     assert!(!core.reg.status.contains(StatusFlags::Z_FLAG));
     assert!(!core.reg.status.contains(StatusFlags::C_FLAG));
@@ -113,7 +113,7 @@ mod tests {
   #[test]
   fn shift_left_impl_zero() {
     let mut core = Core::new(Registers::empty());
-    assert_eq!(shift_left(&mut core, 0b_0000_0000), 0b_0000_0000);
+    assert_eq!(shift_left(&mut core, 0b0000_0000), 0b0000_0000);
     assert!(!core.reg.status.contains(StatusFlags::N_FLAG));
     assert!(core.reg.status.contains(StatusFlags::Z_FLAG));
     assert!(!core.reg.status.contains(StatusFlags::C_FLAG));
@@ -122,7 +122,7 @@ mod tests {
   #[test]
   fn shift_left_impl_carry() {
     let mut core = Core::new(Registers::empty());
-    assert_eq!(shift_left(&mut core, 0b_1000_0001), 0b_0000_0010);
+    assert_eq!(shift_left(&mut core, 0b1000_0001), 0b0000_0010);
     assert!(!core.reg.status.contains(StatusFlags::N_FLAG));
     assert!(!core.reg.status.contains(StatusFlags::Z_FLAG));
     assert!(core.reg.status.contains(StatusFlags::C_FLAG));
@@ -131,18 +131,18 @@ mod tests {
   #[test]
   fn asl_acc_impl() {
     let mut core = Core::new(Registers::empty());
-    core.reg.acc = 0b_0000_0001;
+    core.reg.acc = 0b0000_0001;
     let operand = core.reg.acc;
     asl_acc(&mut core, operand);
-    assert_eq!(core.reg.acc, 0b_0000_0010);
+    assert_eq!(core.reg.acc, 0b0000_0010);
   }
 
   #[test]
   fn asl_mem_impl() {
-    let mut memory: BlockMemory = BlockMemory::with_bytes(vec![0b_0000_0001]);
+    let mut memory: BlockMemory = BlockMemory::with_bytes(vec![0b0000_0001]);
     let mut core = Core::new(Registers::empty());
     asl_mem(&mut core, &mut memory, 0x00);
-    assert_eq!(memory.read_addr(0x00), 0b_0000_0010);
+    assert_eq!(memory.read_addr(0x00), 0b0000_0010);
   }
 
   #[test]

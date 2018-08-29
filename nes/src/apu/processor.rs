@@ -52,13 +52,13 @@ impl<T: ReadAddr + WriteAddr> Processor<T> for ApuImpl {
 }
 
 impl ReadAddr for ApuImpl {
-  fn read_addr(self: &mut Self, addr: u16) -> u8 {
+  fn read_addr(self: &mut Self, _addr: u16) -> u8 {
     0
   }
 }
 
 impl WriteAddr for ApuImpl {
-  fn write_addr(self: &mut Self, addr: u16, value: u8) -> u8 {
+  fn write_addr(self: &mut Self, _addr: u16, _value: u8) -> u8 {
     0
   }
 }
@@ -88,7 +88,7 @@ impl RegisterSnapshot {
   }
 
   fn has_changed_at(self: &Self, other: &Self, at: usize) -> bool {
-    return self.registers[at] != other.registers[at];
+    self.registers[at] != other.registers[at]
   }
 
   fn diff<M: ReadAddr>(self: &Self, other: &Self, _memory: &M) -> Vec<ApuChannelDelta> {
@@ -96,47 +96,47 @@ impl RegisterSnapshot {
 
     let mut changes = vec![];
 
-    self.make_pulse_differ(other, P1).diff(&mut changes);
-    self.make_pulse_differ(other, P2).diff(&mut changes);
+    self.make_pulse_differ(other, &P1).diff(&mut changes);
+    self.make_pulse_differ(other, &P2).diff(&mut changes);
     self.make_triangle_differ(other).diff(&mut changes);
     self.make_noise_differ(other).diff(&mut changes);
-    return changes;
+    changes
   }
 
   fn get_channel(self: &Self, root: usize) -> ChannelSnapshot {
     let mut channel_registers = [0; APU_CHANNEL_SIZE];
     channel_registers.clone_from_slice(&self.registers[root..root + 4]);
-    return channel_registers;
+    channel_registers
   }
 
-  fn make_pulse_differ(self: &Self, other: &Self, which: WhichPulse) -> PulseDiffer {
+  fn make_pulse_differ(self: &Self, other: &Self, which: &WhichPulse) -> PulseDiffer {
     let channel_offset = match which {
       WhichPulse::P1 => REG_PULSE1_ROOT,
       WhichPulse::P2 => REG_PULSE2_ROOT,
     };
 
-    return PulseDiffer::create(
+    PulseDiffer::create(
       self.get_channel(channel_offset),
       other.get_channel(channel_offset),
       match which {
         WhichPulse::P1 => ApuChannelDelta::Pulse1,
         WhichPulse::P2 => ApuChannelDelta::Pulse2,
       },
-    );
+    )
   }
 
   fn make_triangle_differ(self: &Self, other: &Self) -> TriangleDiffer {
-    return TriangleDiffer::create(
+    TriangleDiffer::create(
       self.get_channel(REG_TRIANGLE_ROOT),
       other.get_channel(REG_TRIANGLE_ROOT),
-    );
+    )
   }
 
   fn make_noise_differ(self: &Self, other: &Self) -> NoiseDiffer {
-    return NoiseDiffer::create(
+    NoiseDiffer::create(
       self.get_channel(REG_NOISE_ROOT),
       other.get_channel(REG_NOISE_ROOT),
-    );
+    )
   }
 }
 
@@ -165,13 +165,14 @@ mod tests {
     fn with(at: usize, value: u8) -> Self {
       let mut r = RegisterSnapshot::default();
       r.registers[at] = value;
-      return r;
+      r
     }
   }
 
   #[test]
   fn duty_changes() {
-    let channel_conf: [(usize, fn(PulseDelta) -> A); 2] = [(0, A::Pulse1), (4, A::Pulse2)];
+    type Channel = (usize, fn(PulseDelta) -> A);
+    let channel_conf: [Channel; 2] = [(0, A::Pulse1), (4, A::Pulse2)];
 
     for (offset, make) in channel_conf.iter() {
       let memory = init_memory(0);

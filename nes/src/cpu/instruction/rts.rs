@@ -31,7 +31,7 @@ mod tests {
 
   #[test]
   fn rti_impl() {
-    let mut core = Core::new(Registers::empty());
+    let mut _core = Core::new(Registers::empty());
     // TODO: test
   }
 

@@ -8,7 +8,7 @@ use cpu::{
 ///
 /// Flags affected: N, Z, C, V
 #[inline(always)]
-fn sbc(core: &mut Core, operand: u8) {
+fn sbc(_core: &mut Core, _operand: u8) {
   // TODO: implementation
   unimplemented!();
 }
@@ -100,7 +100,7 @@ mod tests {
 
   #[test]
   fn sbc_impl() {
-    let mut core = Core::new(Registers::empty());
+    let mut _core = Core::new(Registers::empty());
     // TODO: test
   }
 

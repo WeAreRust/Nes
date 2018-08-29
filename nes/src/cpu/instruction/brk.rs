@@ -32,7 +32,7 @@ fn brk(core: &mut Core, memory: &mut WriteAddr) {
   let pclo = memory.read_addr(0xFFFE);
   let pchi = memory.read_addr(0xFFFF);
 
-  core.reg.pc = (pchi as u16) << 8 | (pclo as u16);
+  core.reg.pc = u16::from(pchi) << 8 | u16::from(pclo);
 }
 
 /// Force break

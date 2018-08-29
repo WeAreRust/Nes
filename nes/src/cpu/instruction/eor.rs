@@ -103,9 +103,9 @@ mod tests {
   #[test]
   fn eor_impl() {
     let mut core = Core::new(Registers::empty());
-    core.reg.acc = 0b_0000_1111;
-    eor(&mut core, 0b_0101_0101);
-    assert_eq!(core.reg.acc, 0b_0101_1010);
+    core.reg.acc = 0b0000_1111;
+    eor(&mut core, 0b0101_0101);
+    assert_eq!(core.reg.acc, 0b0101_1010);
   }
 
   #[test]

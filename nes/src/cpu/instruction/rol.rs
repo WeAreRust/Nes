@@ -17,7 +17,7 @@ fn rotate_left(core: &mut Core, operand: u8) -> u8 {
     0
   };
 
-  let result = (operand as u16) << 1 | bit_0;
+  let result = u16::from(operand) << 1 | bit_0;
   let lo = result as u8;
 
   core.reg.status.set_carry(result);
@@ -105,7 +105,7 @@ mod tests {
     let mut core = Core::new(Registers::empty());
 
     core.reg.status.set(StatusFlags::C_FLAG, false);
-    assert_eq!(rotate_left(&mut core, 0b_0000_1111), 0b_0001_1110);
+    assert_eq!(rotate_left(&mut core, 0b0000_1111), 0b0001_1110);
   }
 
   #[test]
@@ -113,18 +113,18 @@ mod tests {
     let mut core = Core::new(Registers::empty());
 
     core.reg.status.set(StatusFlags::C_FLAG, true);
-    assert_eq!(rotate_left(&mut core, 0b_0000_1111), 0b_0001_1111);
+    assert_eq!(rotate_left(&mut core, 0b0000_1111), 0b0001_1111);
   }
 
   #[test]
   fn rotate_left_sets_carry() {
     let mut core = Core::new(Registers::empty());
 
-    rotate_left(&mut core, 0b_0000_0001);
+    rotate_left(&mut core, 0b0000_0001);
 
     assert!(!core.reg.status.contains(StatusFlags::C_FLAG));
 
-    rotate_left(&mut core, 0b_1000_0001);
+    rotate_left(&mut core, 0b1000_0001);
 
     assert!(core.reg.status.contains(StatusFlags::C_FLAG));
   }
@@ -133,11 +133,11 @@ mod tests {
   fn rotate_left_sets_negative() {
     let mut core = Core::new(Registers::empty());
 
-    rotate_left(&mut core, 0b_0000_0001);
+    rotate_left(&mut core, 0b0000_0001);
 
     assert!(!core.reg.status.contains(StatusFlags::N_FLAG));
 
-    rotate_left(&mut core, 0b_0100_0000);
+    rotate_left(&mut core, 0b0100_0000);
 
     assert!(core.reg.status.contains(StatusFlags::N_FLAG));
   }
@@ -146,11 +146,11 @@ mod tests {
   fn rotate_left_sets_zero() {
     let mut core = Core::new(Registers::empty());
 
-    rotate_left(&mut core, 0b_0000_0001);
+    rotate_left(&mut core, 0b0000_0001);
 
     assert!(!core.reg.status.contains(StatusFlags::Z_FLAG));
 
-    rotate_left(&mut core, 0b_0000_0000);
+    rotate_left(&mut core, 0b0000_0000);
 
     assert!(core.reg.status.contains(StatusFlags::Z_FLAG));
   }
@@ -158,18 +158,18 @@ mod tests {
   #[test]
   fn rol_acc_impl() {
     let mut core = Core::new(Registers::empty());
-    core.reg.acc = 0b_0000_0001;
+    core.reg.acc = 0b0000_0001;
     let operand = core.reg.acc;
     rol_acc(&mut core, operand);
-    assert_eq!(core.reg.acc, 0b_0000_0010);
+    assert_eq!(core.reg.acc, 0b0000_0010);
   }
 
   #[test]
   fn rol_mem_impl() {
-    let mut memory: BlockMemory = BlockMemory::with_bytes(vec![0b_0000_0001]);
+    let mut memory: BlockMemory = BlockMemory::with_bytes(vec![0b0000_0001]);
     let mut core = Core::new(Registers::empty());
     rol_mem(&mut core, &mut memory, 0x00);
-    assert_eq!(memory.read_addr(0x00), 0b_0000_0010);
+    assert_eq!(memory.read_addr(0x00), 0b0000_0010);
   }
 
   #[test]

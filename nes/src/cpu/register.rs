@@ -137,7 +137,7 @@ mod tests {
 
   #[test]
   fn default_status_flags() {
-    assert_eq!(StatusFlags::default().bits, 0b00101000);
+    assert_eq!(StatusFlags::default().bits, 0b001_01000);
   }
 
   #[test]
@@ -199,7 +199,7 @@ mod tests {
   #[test]
   fn negative_flag_hi() {
     let mut flags = StatusFlags::empty();
-    flags.set_negative(0b10011000);
+    flags.set_negative(0b1001_1000);
 
     assert!(flags.contains(StatusFlags::N_FLAG));
   }

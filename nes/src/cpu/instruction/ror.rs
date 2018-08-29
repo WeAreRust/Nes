@@ -12,7 +12,7 @@ use memory::WriteAddr;
 #[inline(always)]
 fn rotate_right(core: &mut Core, operand: u8) -> u8 {
   let hi: u8 = if core.reg.status.contains(StatusFlags::C_FLAG) {
-    0b_1000_0000
+    0b1000_0000
   } else {
     0
   };
@@ -20,7 +20,7 @@ fn rotate_right(core: &mut Core, operand: u8) -> u8 {
   let result = hi | (operand >> 1);
 
   // Move operand bit 0 into bit for carry test
-  core.reg.status.set_carry((operand as u16) << 8);
+  core.reg.status.set_carry(u16::from(operand) << 8);
   core.reg.status.set_negative(result);
   core.reg.status.set_zero(result);
 
@@ -105,7 +105,7 @@ mod tests {
     let mut core = Core::new(Registers::empty());
 
     core.reg.status.set(StatusFlags::C_FLAG, false);
-    assert_eq!(rotate_right(&mut core, 0b_0000_1111), 0b_0000_0111);
+    assert_eq!(rotate_right(&mut core, 0b0000_1111), 0b0000_0111);
   }
 
   #[test]
@@ -113,18 +113,18 @@ mod tests {
     let mut core = Core::new(Registers::empty());
 
     core.reg.status.set(StatusFlags::C_FLAG, true);
-    assert_eq!(rotate_right(&mut core, 0b_0000_1111), 0b_1000_0111);
+    assert_eq!(rotate_right(&mut core, 0b0000_1111), 0b1000_0111);
   }
 
   #[test]
   fn rotate_right_sets_carry() {
     let mut core = Core::new(Registers::empty());
 
-    rotate_right(&mut core, 0b_0000_0010);
+    rotate_right(&mut core, 0b0000_0010);
 
     assert!(!core.reg.status.contains(StatusFlags::C_FLAG));
 
-    rotate_right(&mut core, 0b_0000_0001);
+    rotate_right(&mut core, 0b0000_0001);
 
     assert!(core.reg.status.contains(StatusFlags::C_FLAG));
   }
@@ -133,12 +133,12 @@ mod tests {
   fn rotate_right_sets_negative() {
     let mut core = Core::new(Registers::empty());
 
-    rotate_right(&mut core, 0b_0000_0000);
+    rotate_right(&mut core, 0b0000_0000);
 
     assert!(!core.reg.status.contains(StatusFlags::N_FLAG));
 
     core.reg.status.set(StatusFlags::C_FLAG, true); // Carry flag has to be set to get a neg result
-    rotate_right(&mut core, 0b_0000_0000);
+    rotate_right(&mut core, 0b0000_0000);
 
     assert!(core.reg.status.contains(StatusFlags::N_FLAG));
   }
@@ -147,11 +147,11 @@ mod tests {
   fn rotate_right_sets_zero() {
     let mut core = Core::new(Registers::empty());
 
-    rotate_right(&mut core, 0b_0000_0010);
+    rotate_right(&mut core, 0b0000_0010);
 
     assert!(!core.reg.status.contains(StatusFlags::Z_FLAG));
 
-    rotate_right(&mut core, 0b_0000_0000);
+    rotate_right(&mut core, 0b0000_0000);
 
     assert!(core.reg.status.contains(StatusFlags::Z_FLAG));
   }
@@ -159,18 +159,18 @@ mod tests {
   #[test]
   fn ror_acc_impl() {
     let mut core = Core::new(Registers::empty());
-    core.reg.acc = 0b_0000_0010;
+    core.reg.acc = 0b0000_0010;
     let operand = core.reg.acc;
     ror_acc(&mut core, operand);
-    assert_eq!(core.reg.acc, 0b_0000_0001);
+    assert_eq!(core.reg.acc, 0b0000_0001);
   }
 
   #[test]
   fn ror_mem_impl() {
-    let mut memory: BlockMemory = BlockMemory::with_bytes(vec![0b_0000_0010]);
+    let mut memory: BlockMemory = BlockMemory::with_bytes(vec![0b0000_0010]);
     let mut core = Core::new(Registers::empty());
     ror_mem(&mut core, &mut memory, 0x00);
-    assert_eq!(memory.read_addr(0x00), 0b_0000_0001);
+    assert_eq!(memory.read_addr(0x00), 0b0000_0001);
   }
 
   #[test]

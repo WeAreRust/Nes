@@ -9,7 +9,7 @@ use memory::WriteAddr;
 ///
 /// Flags affected: None
 #[inline(always)]
-fn jump(core: &mut Core, memory: &mut WriteAddr, address: u16) {
+fn jump(core: &mut Core, _memory: &mut WriteAddr, address: u16) {
   core.reg.pc = address;
 }
 

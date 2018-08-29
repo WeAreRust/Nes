@@ -21,8 +21,8 @@ fn jsr(core: &mut Core, memory: &mut WriteAddr, _address: u16) {
 
   // (PC+1) -> PCL
   // (PC+2) -> PCH
-  let new_pc_lo: u16 = memory.read_addr(pc_plus_1) as u16;
-  let new_pc_hi: u16 = memory.read_addr(pc_plus_2) as u16;
+  let new_pc_lo = u16::from(memory.read_addr(pc_plus_1));
+  let new_pc_hi = u16::from(memory.read_addr(pc_plus_2));
   core.reg.pc = new_pc_lo | (new_pc_hi << 8);
 }
 

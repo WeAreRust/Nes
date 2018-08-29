@@ -72,9 +72,9 @@ mod tests {
   #[test]
   fn ldy_impl() {
     let mut core = Core::new(Registers::empty());
-    let zero: u8 = 0b_0000_0000;
-    let pos1: u8 = 0b_0000_0001;
-    let neg1: u8 = 0b_1111_1111;
+    let zero: u8 = 0b0000_0000;
+    let pos1: u8 = 0b0000_0001;
+    let neg1: u8 = 0b1111_1111;
 
     ldy(&mut core, pos1);
     assert_eq!(core.reg.y_idx, pos1);
