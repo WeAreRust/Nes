@@ -281,12 +281,12 @@ mod tests {
   #[test]
   fn period_change_when_hi_unchanged_but_lo_is() {
     let change = make_pulse()
-            .set_old(2, 0b0000_0000)
-            .set_new(2, 0b0000_0001)
-            // stuff that should be ignored by mask
-            .set_old(3, 0b0001_0101)
-            .set_new(3, 0b0000_0001)
-            .diff_period();
+      .set_old(2, 0b0000_0000)
+      .set_new(2, 0b0000_0001)
+      // stuff that should be ignored by mask
+      .set_old(3, 0b0001_0101)
+      .set_new(3, 0b0000_0001)
+      .diff_period();
     assert_eq!(change, Some(1));
   }
 
