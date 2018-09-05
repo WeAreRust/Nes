@@ -7,6 +7,7 @@ use std::env;
 use std::fs::File;
 use std::io::Read;
 use std::sync::mpsc;
+use std::thread;
 use std::time::Instant;
 
 use nes::apu::processor::ApuImpl;
@@ -16,6 +17,8 @@ use nes::io::audio::NesAudioProcess;
 use nes::io::video;
 use sdl2::audio::AudioSpecDesired;
 use sdl2::keyboard::Keycode;
+use sdl2::pixels::PixelFormatEnum;
+use sdl2::rect::Rect;
 
 fn main() {
   let args: Vec<String> = env::args().collect();
@@ -28,20 +31,6 @@ fn main() {
   let mut f = File::open(filename).expect("File not found");
   let mut data: Vec<u8> = vec![];
   f.read_to_end(&mut data).unwrap();
-
-  // TODO(toby): parse the file content
-  let mut cartridge = nes::cartridge::parse_rom_file(&data).unwrap();
-  // print!("PRG ROM DUMP");
-  // for i in 0x8000..0xC000 {
-  //   if (i - 0x8000) % 0x10 == 0 {
-  //     println!();
-  //     print!("${:04X}", i);
-  //   }
-  //   print!(" {:02x}", cartridge.mapper.read_addr(i));
-  // }
-  // println!();
-
-  println!("Cartridge loaded.");
 
   println!("Initializing SDL2...");
 
@@ -56,7 +45,7 @@ fn main() {
     samples: Some(800),
   };
 
-  let _window = video_subsystem
+  let window = video_subsystem
     .window("WeAreRust Nes", 256, 240)
     .position_centered()
     .opengl()
@@ -75,68 +64,114 @@ fn main() {
   let (event_tx, event_rx) = mpsc::channel();
   let mut controller1 = joypad::Joypad::new(event_rx);
   let controller2: Option<&mut joypad::Joypad> = None;
-  let (video_output, _receiver) = video::ChannelVideoOutput::new();
+  let (video_output, vid_receiver) = video::ChannelVideoOutput::new();
 
-  let mut console = Console::new(
-    &mut apu,
-    &mut cartridge,
-    Some(&mut controller1),
-    controller2,
-    video_output,
-  );
+  let mut canvas = window.into_canvas().build().unwrap();
+  let texture_creator = canvas.texture_creator();
+  let mut texture = texture_creator
+    .create_texture_streaming(PixelFormatEnum::RGB24, 256, 240)
+    .unwrap();
 
-  console.reset();
+  // Spawn console thread
+  thread::spawn(move || {
+    let mut cartridge = nes::cartridge::parse_rom_file(&data).unwrap();
+    // print!("PRG ROM DUMP");
+    // for i in 0x8000..0xC000 {
+    //   if (i - 0x8000) % 0x10 == 0 {
+    //     println!();
+    //     print!("${:04X}", i);
+    //   }
+    //   print!(" {:02x}", cartridge.mapper.read_addr(i));
+    // }
+    // println!();
 
-  // Run the controller loop
-  let mut ticks = 0u32;
-  let mut start = Instant::now();
-  const REPORT_RATE: u32 = 1_000_000;
-  let mut report_throttle = Throttle::new(REPORT_RATE);
-  const INPUT_RATE: u32 = 100_000;
-  let mut input_throttle = Throttle::new(INPUT_RATE);
+    println!("Cartridge loaded.");
 
-  'running: loop {
-    if input_throttle.test() {
-      for event in event_pump.poll_iter() {
-        use joypad::ControllerEvent;
-        use sdl2::event::Event;
-        // We have to map SDL2 keyboard events to the correct
-        // controller buttons.
-        match event {
-          Event::Quit { .. }
-          | Event::KeyDown {
-            keycode: Some(Keycode::Escape),
-            ..
-          } => break 'running,
-          Event::KeyDown {
-            keycode: Some(keycode),
-            ..
-          } => event_tx
-            .send(ControllerEvent::ButtonDown {
-              button: controller1_keymap(keycode),
-            }).unwrap(),
-          Event::KeyUp {
-            keycode: Some(keycode),
-            ..
-          } => event_tx
-            .send(ControllerEvent::ButtonUp {
-              button: controller1_keymap(keycode),
-            }).unwrap(),
-          _ => {}
-        };
+    let mut console = Console::new(
+      &mut apu,
+      &mut cartridge,
+      Some(&mut controller1),
+      controller2,
+      video_output,
+    );
+
+    console.reset();
+
+    const REPORT_RATE: u32 = 1_000_000;
+    let mut report_throttle = Throttle::new(REPORT_RATE);
+    let mut start = Instant::now();
+
+    // Run the controller loop
+    let mut ticks = 0u32;
+    loop {
+      console.tick();
+      ticks += 1;
+      if report_throttle.test() {
+        let now = Instant::now();
+        let span = now.duration_since(start);
+        let clock_rate = ticks as f32 / span.as_millis() as f32;
+        println!("{} Hertz", clock_rate * 1_000 as f32);
+        ticks = 0;
+        start = now;
       }
     }
+  });
 
-    console.tick();
-    ticks += 1;
-    if report_throttle.test() {
-      let now = Instant::now();
-      let span = now.duration_since(start);
-      let clock_rate = ticks as f32 / span.as_millis() as f32;
-      println!("{} Hertz", clock_rate * 1_000 as f32);
-      ticks = 0;
-      start = now;
+  'running: loop {
+    for event in event_pump.poll_iter() {
+      use joypad::ControllerEvent;
+      use sdl2::event::Event;
+      // We have to map SDL2 keyboard events to the correct
+      // controller buttons.
+      match event {
+        Event::Quit { .. }
+        | Event::KeyDown {
+          keycode: Some(Keycode::Escape),
+          ..
+        } => break 'running,
+        Event::KeyDown {
+          keycode: Some(keycode),
+          ..
+        } => event_tx
+          .send(ControllerEvent::ButtonDown {
+            button: controller1_keymap(keycode),
+          }).unwrap(),
+        Event::KeyUp {
+          keycode: Some(keycode),
+          ..
+        } => event_tx
+          .send(ControllerEvent::ButtonUp {
+            button: controller1_keymap(keycode),
+          }).unwrap(),
+        _ => {}
+      };
     }
+
+    // Block until a video frame is received
+    let frame = match vid_receiver.recv() {
+      Err(_) => {
+        println!("video feed disconnected");
+        break 'running;
+      }
+      Ok(f) => f,
+    };
+
+    // Write frame data to texture data
+    texture
+      .with_lock(None, |buffer: &mut [u8], pitch: usize| {
+        frame.write_to_buffer(buffer, pitch);
+      }).unwrap();
+
+    // Draw the texture to the window
+    let (width, height) = canvas.output_size().unwrap();
+    canvas.clear();
+    canvas
+      .copy(
+        &texture,
+        Some(Rect::new(0, 0, 255, 240)),
+        Some(Rect::new(0, 0, width, height)),
+      ).unwrap();
+    canvas.present();
   }
 }
 

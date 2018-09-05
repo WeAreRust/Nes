@@ -49,12 +49,12 @@ impl Core {
 impl<T: ReadAddr + WriteAddr> Processor<T> for Core {
   fn cycle(&mut self, memory: &mut T) {
     self.cycle += 1;
-    if self.cycle > 341 {
+    if self.cycle == 342 {
       self.cycle = 0;
       self.scanline += 1;
       self.video_output.horizontal_sync();
 
-      if self.scanline > 261 {
+      if self.scanline == 262 {
         self.scanline = 0;
         self.video_output.vertical_sync();
       }
