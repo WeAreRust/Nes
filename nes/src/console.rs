@@ -56,7 +56,7 @@ impl<'a, C1: 'a + Controller, C2: 'a + Controller, A1: 'a + Apu> Console<'a, C1,
 
     if self.ppu_interval == clock::PPU_PERIOD {
       self.ppu_interval = 0;
-      // self.ppu.cycle(&mut self.bus);
+      self.ppu.cycle(&mut self.bus);
     }
   }
 }
