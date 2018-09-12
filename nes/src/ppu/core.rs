@@ -1,4 +1,5 @@
 use io::video::VideoOutput;
+use memory::{ReadAddr, WriteAddr};
 use ppu::palette::Color;
 use ppu::vram::Memory;
 
@@ -7,6 +8,23 @@ pub struct Core {
   cycle: u16,
   video_output: Box<VideoOutput>,
   vram: Memory,
+  reg: Registers,
+}
+
+struct Registers {
+  cr1: u8,
+  cr2: u8,
+  sr: u8,
+}
+
+impl Default for Registers {
+  fn default() -> Self {
+    Registers {
+      cr1: 0b0000_0000,
+      cr2: 0b0000_0000,
+      sr: 0b0000_0000,
+    }
+  }
 }
 
 struct DummyVideoOutput {}
@@ -25,14 +43,13 @@ impl Default for Core {
 
 impl Core {
   pub fn new(video_output: Box<VideoOutput>) -> Self {
-    let vram = Memory::default();
-
     Core {
       // Start on pre-render scanline
       scanline: 261,
       cycle: 0,
       video_output,
-      vram: vram,
+      vram: Memory::default(),
+      reg: Registers::default(),
     }
   }
 
@@ -73,6 +90,32 @@ impl Core {
 
       // Visible scanline (0-240)
       _ => self.cycle_visible(true),
+    }
+  }
+}
+
+impl ReadAddr for Core {
+  fn read_addr(&mut self, addr: u16) -> u8 {
+    match addr {
+      0x2002 => self.reg.sr,
+      _ => panic!("ppu read: {:04X}", addr),
+    }
+  }
+}
+
+impl WriteAddr for Core {
+  fn write_addr(&mut self, addr: u16, value: u8) -> u8 {
+    match addr {
+      0x2000 => {
+        self.reg.cr1 = value;
+        0x00
+      },
+      0x2001 => {
+        self.reg.cr2 = value;
+        0x00
+      },
+      0x2002 => panic!("illegal write to PPU status register {:04X}", addr),
+      _ => panic!("ppu write: {:04X}", addr),
     }
   }
 }

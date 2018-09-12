@@ -50,12 +50,14 @@ impl ApuImpl {
 
 impl ReadAddr for ApuImpl {
   fn read_addr(self: &mut Self, _addr: u16) -> u8 {
+    // TODO
     0
   }
 }
 
 impl WriteAddr for ApuImpl {
   fn write_addr(self: &mut Self, _addr: u16, _value: u8) -> u8 {
+    // TODO
     0
   }
 }
