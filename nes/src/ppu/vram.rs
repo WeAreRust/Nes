@@ -11,6 +11,8 @@
 //! Additionally, the name table and palette memory ranges
 //! are wrapped towards the end of their range.
 
+use memory::{ReadAddr, WriteAddr};
+
 type Addr = u16;
 
 pub struct Memory {
@@ -29,15 +31,22 @@ impl Memory {
   pub fn new() -> Self {
     Memory::default()
   }
+}
 
-  pub fn read_addr(&self, addr: Addr) -> u8 {
+impl ReadAddr for Memory {
+  fn read_addr(&mut self, addr: Addr) -> u8 {
     let addr: usize = wrapped_addr(addr).into();
     self.bytes[addr]
   }
+}
 
-  pub fn write_addr(&mut self, addr: Addr, val: u8) {
+impl WriteAddr for Memory {
+  fn write_addr(&mut self, addr: Addr, val: u8) -> u8 {
     let addr: usize = wrapped_addr(addr).into();
+    let orig = self.bytes[addr];
     self.bytes[addr] = val;
+
+    orig
   }
 }
 

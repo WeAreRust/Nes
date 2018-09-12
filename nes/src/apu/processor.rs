@@ -3,7 +3,6 @@ use apu::channel_differ::{
   ChannelSnapshot, NoiseDiffer, PulseDiffer, TriangleDiffer, APU_CHANNEL_SIZE,
 };
 use apu::Apu;
-use clock::Processor;
 use memory::{ReadAddr, WriteAddr};
 use std::sync::mpsc::Sender;
 
@@ -35,10 +34,8 @@ impl ApuImpl {
       previous_snapshot: RegisterSnapshot::default(),
     }
   }
-}
 
-impl<T: ReadAddr + WriteAddr> Processor<T> for ApuImpl {
-  fn cycle(self: &mut Self, memory: &mut T) {
+  pub fn cycle<T: ReadAddr + WriteAddr>(self: &mut Self, memory: &mut T) {
     let new_snapshot = RegisterSnapshot::create_from_memory(memory);
     let deltas = self.previous_snapshot.diff(&new_snapshot, memory);
     let result = self.delta_stream.send(ApuChannelDelta::Many(deltas));
