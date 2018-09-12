@@ -131,6 +131,14 @@ impl From<StatusFlags> for u8 {
   }
 }
 
+impl From<u8> for StatusFlags {
+  fn from(bits: u8) -> Self {
+    let mut status = StatusFlags::default();
+    status.adopt(bits);
+    status
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;

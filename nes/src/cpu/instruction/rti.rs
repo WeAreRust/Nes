@@ -9,9 +9,13 @@ use memory::WriteAddr;
 ///
 /// Flags affected: All
 #[inline(always)]
-fn rti(_core: &mut Core, _memory: &mut WriteAddr) {
-  // TODO: implementation
-  unimplemented!();
+fn rti(core: &mut Core, memory: &mut WriteAddr) {
+  core.reg.status = core.pop_stack(memory).into();
+
+  // To pull the PC off the stack, we have to do the reverse of BRK:
+  let pc_lo = core.pop_stack(memory);
+  let pc_hi = core.pop_stack(memory);
+  core.reg.pc = u16::from(pc_hi) << 8 | u16::from(pc_lo);
 }
 
 /// Return from interrupt

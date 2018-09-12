@@ -10,10 +10,10 @@ use memory::WriteAddr;
 /// Flags affected: None
 #[inline(always)]
 fn rts(core: &mut Core, memory: &mut WriteAddr) {
-  // pop PC
+  // To pull the PC off the stack, we have to do the reverse of JSR:
   let pc_lo = core.pop_stack(memory);
   let pc_hi = core.pop_stack(memory);
-  core.reg.pc = (pc_hi as u16) << 8 | pc_lo as u16;
+  core.reg.pc = u16::from(pc_hi) << 8 | u16::from(pc_lo);
 
   // INC PC
   core.reg.pc += 1;
