@@ -1,6 +1,6 @@
 use cartridge::Cartridge;
 use clock;
-use clock::{Clock, Processor};
+use clock::Clock;
 use io::video::VideoOutput;
 
 use apu::Apu;
@@ -8,12 +8,10 @@ use bus::Bus;
 use controller::Controller;
 use cpu;
 use memory::block::BlockMemory;
-use ppu;
 
 pub struct Console<'a, C1: 'a + Controller, C2: 'a + Controller, A1: 'a + Apu> {
   clock: Clock,
   cpu: cpu::Core,
-  ppu: ppu::Core,
   bus: Bus<'a, C1, C2, A1>,
   cpu_interval: u8,
   ppu_interval: u8,
@@ -32,8 +30,7 @@ impl<'a, C1: 'a + Controller, C2: 'a + Controller, A1: 'a + Apu> Console<'a, C1,
     Self {
       clock: Clock::new(),
       cpu: cpu::Core::default(),
-      ppu: ppu::Core::new(Box::new(video_output)),
-      bus: Bus::new(cartridge, ram, apu, controller1, controller2),
+      bus: Bus::new(cartridge, ram, apu, controller1, controller2, video_output),
       cpu_interval: 0,
       ppu_interval: 0,
     }
@@ -56,7 +53,7 @@ impl<'a, C1: 'a + Controller, C2: 'a + Controller, A1: 'a + Apu> Console<'a, C1,
 
     if self.ppu_interval == clock::PPU_PERIOD {
       self.ppu_interval = 0;
-      self.ppu.cycle(&mut self.bus);
+      self.bus.ppu.cycle();
     }
   }
 }

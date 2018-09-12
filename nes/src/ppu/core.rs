@@ -1,12 +1,12 @@
-use clock::Processor;
 use io::video::VideoOutput;
-use memory::{ReadAddr, WriteAddr};
 use ppu::palette::Color;
+use ppu::vram::Memory;
 
 pub struct Core {
   scanline: u16,
   cycle: u16,
   video_output: Box<VideoOutput>,
+  vram: Memory,
 }
 
 struct DummyVideoOutput {}
@@ -25,29 +25,30 @@ impl Default for Core {
 
 impl Core {
   pub fn new(video_output: Box<VideoOutput>) -> Self {
+    let vram = Memory::default();
+
     Core {
       // Start on pre-render scanline
       scanline: 261,
       cycle: 0,
       video_output,
+      vram: vram,
     }
   }
 
   /// The prerender scanline loads
-  fn cycle_vblank(&mut self, _memory: &mut ReadAddr) {
+  fn cycle_vblank(&mut self) {
     if self.cycle == 1 {
       // Set vblank flag
     }
   }
-  fn cycle_visible(&mut self, _memory: &mut ReadAddr, _render: bool) {
+  fn cycle_visible(&mut self, _render: bool) {
     self
       .video_output
       .output_pixel(Color(self.cycle as u8, (self.cycle >> 8) as u8, 0x30));
   }
-}
 
-impl<T: ReadAddr + WriteAddr> Processor<T> for Core {
-  fn cycle(&mut self, memory: &mut T) {
+  pub fn cycle(&mut self) {
     self.cycle += 1;
     if self.cycle == 342 {
       self.cycle = 0;
@@ -62,16 +63,16 @@ impl<T: ReadAddr + WriteAddr> Processor<T> for Core {
 
     match self.scanline {
       // Prerender - same as a visible scanline but nothing is drawn
-      261 => self.cycle_visible(memory, false),
+      261 => self.cycle_visible(false),
 
       // Postrender - PPU just idles on this scanline
       240 => (),
 
       // Vertical blanking scanlines (240-260)
-      s if s > 240 => self.cycle_vblank(memory),
+      s if s > 240 => self.cycle_vblank(),
 
       // Visible scanline (0-240)
-      _ => self.cycle_visible(memory, true),
+      _ => self.cycle_visible(true),
     }
   }
 }

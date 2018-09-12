@@ -2,8 +2,6 @@ use std::ops::Add;
 use std::thread;
 use std::time::{Duration, Instant};
 
-use memory::{ReadAddr, WriteAddr};
-
 /// NTSC master clock frequency (per second)
 pub const MASTER_FREQUENCY: u32 = 21_477_272;
 
@@ -24,10 +22,6 @@ pub const PPU_PERIOD: u8 = 4;
 const BATCHES_PER_SECOND: u32 = 352;
 const CYCLE_BATCH_SIZE: u32 = MASTER_FREQUENCY / BATCHES_PER_SECOND;
 const NANOS_PER_BATCH: u32 = 1_000_000_000 / BATCHES_PER_SECOND;
-
-pub trait Processor<T: ReadAddr + WriteAddr> {
-  fn cycle(&mut self, memory: &mut T);
-}
 
 pub struct Clock {
   batch: u32,

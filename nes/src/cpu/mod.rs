@@ -1,4 +1,3 @@
-use clock::Processor;
 use cpu::{instruction::Instruction, pipeline::Pipeline, register::Registers};
 use memory::{ReadAddr, WriteAddr};
 use std::{fmt, u8};
@@ -18,24 +17,6 @@ pub struct Core {
 impl Default for Core {
   fn default() -> Self {
     Core::new(Registers::default())
-  }
-}
-
-impl<T: ReadAddr + WriteAddr> Processor<T> for Core {
-  /// Execute a Core
-  fn cycle(&mut self, memory: &mut T) {
-    if self.pipeline.is_empty() {
-      let instr: Instruction = memory.read_addr(self.reg.pc).into();
-      self
-        .pipeline
-        .push(instr.opcode(), instr.cycles(self, memory));
-    }
-    if let Some(opcode) = self.pipeline.next() {
-      // println!("{:?}", self);
-      // println!("Executing: 0x{:02X}", opcode);
-      let instr: Instruction = opcode.into();
-      instr.execute(self, memory);
-    }
   }
 }
 
@@ -62,6 +43,22 @@ impl Core {
     Core {
       reg,
       pipeline: Pipeline::default(),
+    }
+  }
+
+  /// Execute a Core
+  pub fn cycle<T: ReadAddr + WriteAddr>(&mut self, memory: &mut T) {
+    if self.pipeline.is_empty() {
+      let instr: Instruction = memory.read_addr(self.reg.pc).into();
+      self
+        .pipeline
+        .push(instr.opcode(), instr.cycles(self, memory));
+    }
+    if let Some(opcode) = self.pipeline.next() {
+      // println!("{:?}", self);
+      // println!("Executing: 0x{:02X}", opcode);
+      let instr: Instruction = opcode.into();
+      instr.execute(self, memory);
     }
   }
 

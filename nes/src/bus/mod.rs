@@ -1,13 +1,16 @@
 use apu::Apu;
 use cartridge::Cartridge;
 use controller::Controller;
+use io::video::VideoOutput;
 use memory::block::BlockMemory;
 use memory::{ReadAddr, WriteAddr};
+use ppu;
 
 pub struct Bus<'a, C1: 'a + Controller, C2: 'a + Controller, A1: 'a + Apu> {
   cartridge: &'a mut Cartridge,
   ram: Box<BlockMemory>,
   apu: &'a mut A1,
+  pub ppu: ppu::Core,
   controller1: Option<&'a mut C1>,
   controller2: Option<&'a mut C2>,
 }
@@ -19,11 +22,13 @@ impl<'a, C1: Controller, C2: Controller, A1: Apu> Bus<'a, C1, C2, A1> {
     apu: &'a mut A1,
     controller1: Option<&'a mut C1>,
     controller2: Option<&'a mut C2>,
+    video_output: impl VideoOutput + 'static,
   ) -> Self {
     Bus {
       cartridge: cartridge,
       ram: ram,
       apu: apu,
+      ppu: ppu::Core::new(Box::new(video_output)),
       controller1: controller1,
       controller2: controller2,
     }
