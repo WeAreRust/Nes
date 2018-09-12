@@ -42,14 +42,12 @@ impl<'a, C1: Controller, C2: Controller, A1: Apu> ReadAddr for Bus<'a, C1, C2, A
       0x0000...0x1FFF => self.ram.read_addr(addr & 0x07FF),
       // I/O Registers
       0x2000...0x3FFF => {
-        let _mirrored_addr = addr & 0x2007;
-        // TODO: Send to PPU
-        0x00
+        let mirrored_addr = addr & 0x2007;
+        self.ppu.read_addr(mirrored_addr)
       }
-      0x4000...0x4015 => {
-        // TODO: Send to APU
-        0x00
-      }
+      0x4000...0x4013 => self.apu.read_addr(addr),
+      0x4014 => panic!("Attempted illegal read from {:04X}", addr),
+      0x4015 => self.apu.read_addr(addr),
       // Controller 1
       0x4016 => match &mut self.controller1 {
         Some(controller) => controller.read_addr(addr),
@@ -80,14 +78,15 @@ impl<'a, C1: Controller, C2: Controller, A1: Apu> WriteAddr for Bus<'a, C1, C2, 
       0x0000...0x1FFF => self.ram.write_addr(addr & 0x07FF, value),
       // I/O Registers
       0x2000...0x3FFF => {
-        let _mirrored_addr = addr & 0x2007;
-        // TODO: Send to PPU
-        0x00
+        let mirrored_addr = addr & 0x2007;
+        self.ppu.write_addr(mirrored_addr, value)
       }
-      0x4000...0x4015 => {
-        // TODO: Send to APU
-        0x00
+      0x4000...0x4013 => self.apu.write_addr(addr, value),
+      0x4014 => {
+        // TODO: DMA to ppu
+        unimplemented!("DMA not implemented");
       }
+      0x4015 => self.apu.write_addr(addr, value),
       // Controller 1
       0x4016 => match &mut self.controller1 {
         Some(controller) => controller.write_addr(addr, value),
