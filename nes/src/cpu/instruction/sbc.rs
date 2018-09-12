@@ -1,6 +1,7 @@
 use cpu::{
   instruction::{ExtraCycle, Instruction},
   operation::{Function, Operation},
+  register::StatusFlags,
   Core,
 };
 
@@ -8,9 +9,15 @@ use cpu::{
 ///
 /// Flags affected: N, Z, C, V
 #[inline(always)]
-fn sbc(_core: &mut Core, _operand: u8) {
-  // TODO: implementation
-  unimplemented!();
+fn sbc(core: &mut Core, operand: u8) {
+  let carry = u16::from(core.reg.status.contains(StatusFlags::C_FLAG));
+  let result = u16::from(core.reg.acc) - u16::from(operand) - carry;
+  core.reg.acc = result as u8; // Place the lo 8 bits into acc.
+
+  core.reg.status.set_carry(result);
+  core.reg.status.set_overflow(result);
+  core.reg.status.set_zero(core.reg.acc);
+  core.reg.status.set_negative(core.reg.acc);
 }
 
 /// Subtract memory from accumulator with borrow
@@ -100,8 +107,20 @@ mod tests {
 
   #[test]
   fn sbc_impl() {
-    let mut _core = Core::new(Registers::empty());
-    // TODO: test
+    let mut core = Core::new(Registers::empty());
+    core.reg.acc = 3;
+    sbc(&mut core, 1);
+    assert_eq!(core.reg.acc, 3 - 1);
+    assert!(!core.reg.status.contains(StatusFlags::C_FLAG));
+  }
+
+  #[test]
+  fn sbc_impl_sub_carry() {
+    let mut core = Core::new(Registers::empty());
+    core.reg.acc = 37;
+    sbc(&mut core, 18);
+    assert_eq!(core.reg.acc, 37 - 18);
+    assert!(!core.reg.status.contains(StatusFlags::C_FLAG));
   }
 
   #[test]
