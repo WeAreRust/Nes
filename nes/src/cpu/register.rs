@@ -86,6 +86,12 @@ bitflags! {
 }
 
 impl StatusFlags {
+  pub fn with_bits(bits: u8) -> Self {
+    let mut status = Self::default();
+    status.adopt(bits);
+    status
+  }
+
   pub fn adopt(&mut self, bits: u8) {
     self.bits = bits;
   }
@@ -133,9 +139,7 @@ impl From<StatusFlags> for u8 {
 
 impl From<u8> for StatusFlags {
   fn from(bits: u8) -> Self {
-    let mut status = StatusFlags::default();
-    status.adopt(bits);
-    status
+    StatusFlags::with_bits(bits)
   }
 }
 
