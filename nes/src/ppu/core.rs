@@ -109,11 +109,11 @@ impl WriteAddr for Core {
       0x2000 => {
         self.reg.cr1 = value;
         0x00
-      },
+      }
       0x2001 => {
         self.reg.cr2 = value;
         0x00
-      },
+      }
       0x2002 => panic!("illegal write to PPU status register {:04X}", addr),
       _ => panic!("ppu write: {:04X}", addr),
     }

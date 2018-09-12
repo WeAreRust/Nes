@@ -85,7 +85,7 @@ impl<'a, C1: Controller, C2: Controller, A1: Apu> WriteAddr for Bus<'a, C1, C2, 
       0x4014 => {
         // TODO: DMA to ppu
         unimplemented!("DMA not implemented");
-      },
+      }
       0x4015 => self.apu.write_addr(addr, value),
       // Controller 1
       0x4016 => match &mut self.controller1 {
