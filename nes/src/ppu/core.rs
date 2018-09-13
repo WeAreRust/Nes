@@ -1,13 +1,14 @@
 use io::video::VideoOutput;
 use memory::{ReadAddr, WriteAddr};
 use ppu::palette::Color;
-use ppu::vram::Memory;
+use ppu::vram;
 
 pub struct Core {
   scanline: u16,
   cycle: u16,
   video_output: Box<VideoOutput>,
-  vram: Memory,
+  vram: vram::Memory,
+  spr_ram: [u8; 0x0100],
   reg: Registers,
 }
 
@@ -48,7 +49,8 @@ impl Core {
       scanline: 261,
       cycle: 0,
       video_output,
-      vram: Memory::default(),
+      vram: vram::Memory::default(),
+      spr_ram: [0x00; 0x0100],
       reg: Registers::default(),
     }
   }
@@ -60,6 +62,12 @@ impl Core {
     }
   }
   fn cycle_visible(&mut self, _render: bool) {
+    match self.cycle {
+      0 => {
+        // Idle Cycle - noop
+      }
+      _ => panic!("Unexpected cycle {:04X}", self.cycle);
+    }
     self
       .video_output
       .output_pixel(Color(self.cycle as u8, (self.cycle >> 8) as u8, 0x30));
