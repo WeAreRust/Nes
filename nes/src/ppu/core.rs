@@ -62,12 +62,6 @@ impl Core {
     }
   }
   fn cycle_visible(&mut self, _render: bool) {
-    match self.cycle {
-      0 => {
-        // Idle Cycle - noop
-      }
-      _ => panic!("Unexpected cycle {:04X}", self.cycle);
-    }
     self
       .video_output
       .output_pixel(Color(self.cycle as u8, (self.cycle >> 8) as u8, 0x30));
