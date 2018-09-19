@@ -1,13 +1,14 @@
 use io::video::VideoOutput;
 use memory::{ReadAddr, WriteAddr};
 use ppu::palette::Color;
-use ppu::vram::Memory;
+use ppu::vram;
 
 pub struct Core {
   scanline: u16,
   cycle: u16,
   video_output: Box<VideoOutput>,
-  vram: Memory,
+  vram: vram::Memory,
+  spr_ram: [u8; 0x0100],
   reg: Registers,
 }
 
@@ -48,7 +49,8 @@ impl Core {
       scanline: 261,
       cycle: 0,
       video_output,
-      vram: Memory::default(),
+      vram: vram::Memory::default(),
+      spr_ram: [0x00; 0x0100],
       reg: Registers::default(),
     }
   }

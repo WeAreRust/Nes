@@ -16,13 +16,13 @@ use memory::{ReadAddr, WriteAddr};
 type Addr = u16;
 
 pub struct Memory {
-  bytes: Vec<u8>,
+  bytes: [u8; 0x4000],
 }
 
 impl Default for Memory {
   fn default() -> Self {
     Memory {
-      bytes: vec![0; 0x4000],
+      bytes: [0x00; 0x4000],
     }
   }
 }
@@ -99,9 +99,7 @@ mod tests {
 
   #[test]
   fn read_addr() {
-    let mut mem = Memory {
-      bytes: vec![0; 0x4000],
-    };
+    let mut mem = Memory { bytes: [0; 0x4000] };
     mem.bytes[0x2000] = 15;
     assert_eq!(mem.read_addr(0x1FFF), 0);
     assert_eq!(mem.read_addr(0x2000), 15);
@@ -110,9 +108,7 @@ mod tests {
 
   #[test]
   fn read_addr_reads_wrapped_address() {
-    let mut mem = Memory {
-      bytes: vec![0; 0x4000],
-    };
+    let mut mem = Memory { bytes: [0; 0x4000] };
     mem.bytes[0x20FF] = 15;
     assert_eq!(mem.read_addr(0x20FF), 15);
     assert_eq!(mem.read_addr(0x30FF), 15);
@@ -122,9 +118,7 @@ mod tests {
 
   #[test]
   fn write_addr() {
-    let mut mem = Memory {
-      bytes: vec![0; 0x4000],
-    };
+    let mut mem = Memory { bytes: [0; 0x4000] };
     mem.write_addr(0x1FFF, 254);
     mem.write_addr(0x2000, 255);
     mem.write_addr(0x2001, 1);
@@ -136,9 +130,7 @@ mod tests {
 
   #[test]
   fn write_addr_writes_wrapped_address() {
-    let mut mem = Memory {
-      bytes: vec![0; 0x4000],
-    };
+    let mut mem = Memory { bytes: [0; 0x4000] };
     mem.write_addr(0x5FFF, 254);
     mem.write_addr(0x6000, 255);
     mem.write_addr(0x6001, 1);
