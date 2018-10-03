@@ -57,7 +57,8 @@ fn main() {
   let apu_playback = audio_subsystem
     .open_playback(None, &audio_spec_desired, |spec| {
       NesAudioProcess::new(audio_rx, spec.freq as u32)
-    }).unwrap();
+    })
+    .unwrap();
 
   apu_playback.resume();
 
@@ -135,14 +136,16 @@ fn main() {
         } => event_tx
           .send(ControllerEvent::ButtonDown {
             button: controller1_keymap(keycode),
-          }).unwrap(),
+          })
+          .unwrap(),
         Event::KeyUp {
           keycode: Some(keycode),
           ..
         } => event_tx
           .send(ControllerEvent::ButtonUp {
             button: controller1_keymap(keycode),
-          }).unwrap(),
+          })
+          .unwrap(),
         _ => {}
       };
     }
@@ -160,7 +163,8 @@ fn main() {
     texture
       .with_lock(None, |buffer: &mut [u8], pitch: usize| {
         frame.write_to_buffer(buffer, pitch);
-      }).unwrap();
+      })
+      .unwrap();
 
     // Draw the texture to the window
     let (width, height) = canvas.output_size().unwrap();
@@ -170,7 +174,8 @@ fn main() {
         &texture,
         Some(Rect::new(0, 0, 255, 240)),
         Some(Rect::new(0, 0, width, height)),
-      ).unwrap();
+      )
+      .unwrap();
     canvas.present();
   }
 }

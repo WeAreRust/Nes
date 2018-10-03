@@ -105,6 +105,7 @@ impl VideoOutput for ChannelVideoOutput {
       .sender
       .send(VideoFrame {
         frame_data: self.frame_data.clone(),
-      }).unwrap();
+      })
+      .unwrap();
   }
 }
