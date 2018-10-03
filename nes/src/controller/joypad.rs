@@ -172,10 +172,12 @@ mod tests {
       .unwrap();
     tx.send(ControllerEvent::ButtonDown {
       button: BUTTON_SELECT,
-    }).unwrap();
+    })
+    .unwrap();
     tx.send(ControllerEvent::ButtonDown {
       button: BUTTON_RIGHT,
-    }).unwrap();
+    })
+    .unwrap();
 
     // An annoying hack to avoid a race condition
     // with event handling vs following reads.

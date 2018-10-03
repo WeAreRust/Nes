@@ -90,7 +90,8 @@ fn main() {
     texture
       .with_lock(None, |buffer: &mut [u8], pitch: usize| {
         frame.write_to_buffer(buffer, pitch);
-      }).unwrap();
+      })
+      .unwrap();
 
     // Draw the texture to the window
     let (width, height) = canvas.output_size().unwrap();
@@ -100,7 +101,8 @@ fn main() {
         &texture,
         Some(Rect::new(0, 0, 255, 240)),
         Some(Rect::new(0, 0, width, height)),
-      ).unwrap();
+      )
+      .unwrap();
     canvas.present();
   }
 }
